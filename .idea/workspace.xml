@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="27a7f6c0-db89-4392-9a92-1d60d1d43a9a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/진짜 졸작.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/진짜 졸작.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Sentiment_analysis_gemini.py" beforeDir="false" afterPath="$PROJECT_DIR$/Sentiment_analysis_gemini.py" afterDir="false" />
-    </list>
+    <list default="true" id="27a7f6c0-db89-4392-9a92-1d60d1d43a9a" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -32,29 +28,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Sentiment_analysis.executor": "Run",
-    "Python.Sentiment_analysis_binary.executor": "Run",
-    "Python.Sentiment_analysis_custom.executor": "Run",
-    "Python.Sentiment_analysis_gemini.executor": "Run",
-    "Python.Stock_risk_analysis.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.naver_crawling.executor": "Run",
-    "Python.toss_crawling.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "chan",
-    "last_opened_file_path": "C:/Users/dnjsr/AppData/Local/Programs/Python/Python39",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PythonContentEntriesConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Sentiment_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_binary.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_custom.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_gemini.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Stock_risk_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.naver_crawling.executor&quot;: &quot;Run&quot;,
+    &quot;Python.toss_crawling.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;chan&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/dnjsr/AppData/Local/Programs/Python/Python39&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PythonContentEntriesConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Python.Sentiment_analysis_gemini">
     <configuration name="Sentiment_analysis" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="진짜 졸작" />
@@ -173,7 +169,7 @@
       <workItem from="1744366383620" duration="834000" />
       <workItem from="1744368107203" duration="2316000" />
       <workItem from="1744432798437" duration="455000" />
-      <workItem from="1744775987625" duration="6601000" />
+      <workItem from="1744775987625" duration="6762000" />
     </task>
     <servers />
   </component>
