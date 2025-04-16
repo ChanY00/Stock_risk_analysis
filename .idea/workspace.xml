@@ -5,109 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="27a7f6c0-db89-4392-9a92-1d60d1d43a9a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/진짜 졸작.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/진짜 졸작.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/naver_crawling.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/000100_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/000150_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/000270_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/000660_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/000720_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/000810_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/001040_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/003230_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/003490_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/003550_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/003670_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/004020_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005380_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005385_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005387_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005490_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005830_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005930_stock_data_today.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/stock_data/005930_stock_data_today.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005935_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/005940_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/006260_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/006400_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/006800_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/009150_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/009540_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/010120_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/010130_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/010140_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/010620_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/010950_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/011070_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/011200_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/011790_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/012330_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/012450_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/015760_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/016360_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/017670_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/018260_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/022100_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/024110_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/028050_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/028260_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/029780_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/030200_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/032640_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/032830_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/033780_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/034020_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/034220_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/034730_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/035250_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/035420_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/035720_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/036570_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/042660_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/042700_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/047050_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/047810_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/051900_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/051910_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/055550_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/064350_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/064400_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/066570_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/068270_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/071050_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/078930_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/079550_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/086280_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/086790_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/088980_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/090430_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/096770_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/097950_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/105560_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/138040_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/161390_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/180640_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/207940_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/241560_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/251270_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/259960_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/267250_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/267260_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/271560_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/272210_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/298040_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/307950_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/316140_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/323410_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/326030_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/329180_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/352820_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/373220_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/377300_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/402340_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/443060_stock_data_today.xlsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stock_data/450080_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Sentiment_analysis_gemini.py" beforeDir="false" afterPath="$PROJECT_DIR$/Sentiment_analysis_gemini.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -273,7 +171,7 @@
       <workItem from="1744366383620" duration="834000" />
       <workItem from="1744368107203" duration="2316000" />
       <workItem from="1744432798437" duration="455000" />
-      <workItem from="1744775987625" duration="4998000" />
+      <workItem from="1744775987625" duration="5218000" />
     </task>
     <servers />
   </component>
