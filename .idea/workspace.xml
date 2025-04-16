@@ -4,7 +4,111 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b590cdfd-e8fb-4c57-8067-1f1469d4e599" name="Changes" comment="" />
+    <list default="true" id="27a7f6c0-db89-4392-9a92-1d60d1d43a9a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/진짜 졸작.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/진짜 졸작.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/naver_crawling.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/000100_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/000150_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/000270_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/000660_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/000720_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/000810_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/001040_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/003230_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/003490_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/003550_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/003670_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/004020_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005380_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005385_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005387_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005490_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005830_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005930_stock_data_today.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/stock_data/005930_stock_data_today.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005935_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/005940_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/006260_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/006400_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/006800_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/009150_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/009540_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/010120_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/010130_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/010140_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/010620_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/010950_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/011070_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/011200_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/011790_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/012330_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/012450_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/015760_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/016360_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/017670_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/018260_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/022100_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/024110_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/028050_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/028260_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/029780_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/030200_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/032640_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/032830_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/033780_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/034020_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/034220_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/034730_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/035250_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/035420_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/035720_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/036570_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/042660_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/042700_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/047050_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/047810_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/051900_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/051910_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/055550_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/064350_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/064400_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/066570_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/068270_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/071050_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/078930_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/079550_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/086280_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/086790_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/088980_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/090430_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/096770_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/097950_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/105560_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/138040_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/161390_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/180640_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/207940_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/241560_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/251270_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/259960_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/267250_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/267260_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/271560_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/272210_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/298040_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/307950_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/316140_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/323410_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/326030_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/329180_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/352820_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/373220_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/377300_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/402340_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/443060_stock_data_today.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stock_data/450080_stock_data_today.xlsx" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -30,21 +134,105 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Python.Sentiment_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_binary.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_custom.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_gemini.executor&quot;: &quot;Run&quot;,
     &quot;Python.Stock_risk_analysis.executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.naver_crawling.executor&quot;: &quot;Run&quot;,
     &quot;Python.toss_crawling.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/dnjsr/Desktop/진짜 졸작&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;chan&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/dnjsr/AppData/Local/Programs/Python/Python39&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RunManager" selected="Python.Sentiment_analysis_gemini">
+    <configuration name="Sentiment_analysis" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="진짜 졸작" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Sentiment_analysis.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Sentiment_analysis_gemini" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="진짜 졸작" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\dnjsr\Desktop\진짜 졸작\Sentiment_analysis_gemini.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="naver_crawling" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="진짜 졸작" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/naver_crawling.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.Sentiment_analysis_gemini" />
+        <item itemvalue="Python.Sentiment_analysis" />
+        <item itemvalue="Python.naver_crawling" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -55,7 +243,7 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="b590cdfd-e8fb-4c57-8067-1f1469d4e599" name="Changes" comment="" />
+      <changelist id="27a7f6c0-db89-4392-9a92-1d60d1d43a9a" name="Changes" comment="" />
       <created>1742469724846</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -72,6 +260,20 @@
       <workItem from="1742988546232" duration="1842000" />
       <workItem from="1742998040616" duration="3550000" />
       <workItem from="1743051185994" duration="1222000" />
+      <workItem from="1743055866186" duration="21000" />
+      <workItem from="1743566913176" duration="8018000" />
+      <workItem from="1743574986032" duration="1587000" />
+      <workItem from="1743576602923" duration="3122000" />
+      <workItem from="1743654970198" duration="23000" />
+      <workItem from="1744125834708" duration="723000" />
+      <workItem from="1744171675465" duration="7910000" />
+      <workItem from="1744179885744" duration="5592000" />
+      <workItem from="1744192067181" duration="147000" />
+      <workItem from="1744364707239" duration="653000" />
+      <workItem from="1744366383620" duration="834000" />
+      <workItem from="1744368107203" duration="2316000" />
+      <workItem from="1744432798437" duration="455000" />
+      <workItem from="1744775987625" duration="4998000" />
     </task>
     <servers />
   </component>
@@ -79,9 +281,13 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/_$Sentiment_analysis.coverage" NAME="Sentiment_analysis Coverage Results" MODIFIED="1744776503260" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/_$Stock_risk_analysis.coverage" NAME="Stock_risk_analysis Coverage Results" MODIFIED="1742472243091" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/_$toss_crawling.coverage" NAME="toss_crawling Coverage Results" MODIFIED="1743047576282" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/_$naver_crawling.coverage" NAME="naver_crawling Coverage Results" MODIFIED="1743050025698" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/_$Sentiment_analysis_custom.coverage" NAME="Sentiment_analysis_binary Coverage Results" MODIFIED="1744179773382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/_$Sentiment_analysis_binary.coverage" NAME="Sentiment_analysis_gemini Coverage Results" MODIFIED="1744370415159" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/_$Sentiment_analysis_gemini.coverage" NAME="Sentiment_analysis_gemini Coverage Results" MODIFIED="1744777850127" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/_$naver_crawling.coverage" NAME="naver_crawling Coverage Results" MODIFIED="1744171092678" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/_$main.coverage" NAME="main Coverage Results" MODIFIED="1742977120163" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
