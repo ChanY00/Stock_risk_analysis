@@ -7,9 +7,12 @@ import re
 from collections import Counter
 import json
 import time
+import os
+from dotenv import load_dotenv
 
 # ✅ 여기에 너의 Gemini API 키 입력
-GEMINI_API_KEY = ""
+load_dotenv()
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # 공통 헤더
 headers = {"Content-Type": "application/json"}
