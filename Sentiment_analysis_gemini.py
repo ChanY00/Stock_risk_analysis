@@ -9,7 +9,7 @@ import json
 import time
 
 # ✅ 여기에 너의 Gemini API 키 입력
-GEMINI_API_KEY = "AIzaSyB05cqDA9PjNZyIN_cgNUFSwP7d1FuYH98"
+GEMINI_API_KEY = ""
 
 # 공통 헤더
 headers = {"Content-Type": "application/json"}
