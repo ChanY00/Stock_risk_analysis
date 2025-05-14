@@ -1,0 +1,23 @@
+[
+  {
+    "stock_code": "005930",
+    "stock_name": "삼성전자",
+    "updated_at": "2025-05-14T06:07:43.586657Z",
+    "positive": 0.15,
+    "negative": 0.85
+  },
+  {
+    "stock_code": "000660",
+    "stock_name": "SK하이닉스",
+    "updated_at": "2025-05-14T06:08:49.226563Z",
+    "positive": 0.38,
+    "negative": 0.62
+  },
+  {
+    "stock_code": "373220",
+    "stock_name": "LG에너지솔루션",
+    "updated_at": "2025-05-14T06:09:38.514296Z",
+    "positive": 0.27,
+    "negative": 0.73
+  }
+]
