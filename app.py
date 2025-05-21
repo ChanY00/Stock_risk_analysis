@@ -6,9 +6,9 @@ from datetime import datetime
 from flask import Flask, jsonify  # Flask 앱과 JSON 응답 기능을 사용하기 위해 Flask, jsonify 임포트
 from apscheduler.schedulers.background import BackgroundScheduler
                                   # APScheduler의 백그라운드 스케줄러를 사용하기 위해 임포트
-from crawler import get_today_posts
-from gemini_sentiment import batch_sentiment_analysis
-from keywords import extract_top_keywords
+from sentiment_analysis.crawler import get_today_posts
+from sentiment_analysis.gemini_sentiment import batch_sentiment_analysis
+from sentiment_analysis.keywords import extract_top_keywords
 
 # ===================== 환경 설정 =====================
 DJANGO_ENDPOINT = os.getenv(

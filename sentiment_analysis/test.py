@@ -89,7 +89,7 @@ def evaluate_cross_validation(texts, labels, n_splits=5, batch_size=5, max_worke
 
 # ===================== 실행 예시 =====================
 if __name__ == "__main__":
-    test_file_path = r"C:\Users\dnjsr\Desktop\진짜 졸작\test_dataset\test_data.xlsx"
+    test_file_path = r"/test_dataset/test_data.xlsx"
     batch_size = 5
     max_workers = 5
 
