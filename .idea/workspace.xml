@@ -6,6 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="27a7f6c0-db89-4392-9a92-1d60d1d43a9a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crawler.py" beforeDir="false" afterPath="$PROJECT_DIR$/crawler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,33 +36,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Sentiment_analysis.executor": "Run",
-    "Python.Sentiment_analysis_binary.executor": "Run",
-    "Python.Sentiment_analysis_custom.executor": "Run",
-    "Python.Sentiment_analysis_gemini.executor": "Run",
-    "Python.Stock_risk_analysis.executor": "Run",
-    "Python.kospi200.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.naver_crawling.executor": "Run",
-    "Python.test.executor": "Run",
-    "Python.test_data_crawler.executor": "Run",
-    "Python.toss_crawling.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "chan",
-    "last_opened_file_path": "C:/Users/dnjsr/AppData/Local/Programs/Python/Python39",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PythonContentEntriesConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Sentiment_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_binary.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_custom.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Sentiment_analysis_gemini.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Stock_risk_analysis.executor&quot;: &quot;Run&quot;,
+    &quot;Python.kospi200.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.naver_crawling.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_data_crawler.executor&quot;: &quot;Run&quot;,
+    &quot;Python.toss_crawling.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;chan&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/dnjsr/AppData/Local/Programs/Python/Python39&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PythonContentEntriesConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
-  <component name="RunManager" selected="Python.main">
+}</component>
+  <component name="RunManager" selected="Python.test">
     <configuration name="Sentiment_analysis_gemini" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="진짜 졸작" />
       <option name="ENV_FILES" value="" />
@@ -177,9 +180,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.main" />
         <item itemvalue="Python.kospi200" />
-        <item itemvalue="Python.test" />
         <item itemvalue="Python.Sentiment_analysis_gemini" />
         <item itemvalue="Python.test_data_crawler" />
       </list>
@@ -240,7 +243,9 @@
       <workItem from="1746159225615" duration="4000" />
       <workItem from="1746590345757" duration="11455000" />
       <workItem from="1746676746723" duration="13000" />
-      <workItem from="1747195630235" duration="10437000" />
+      <workItem from="1747195630235" duration="10652000" />
+      <workItem from="1747284344151" duration="12000" />
+      <workItem from="1747800139958" duration="7277000" />
     </task>
     <servers />
   </component>
@@ -255,7 +260,7 @@
     <SUITE FILE_PATH="coverage/_$Sentiment_analysis_custom.coverage" NAME="Sentiment_analysis_binary Coverage Results" MODIFIED="1744179773382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/_$Sentiment_analysis_binary.coverage" NAME="Sentiment_analysis_gemini Coverage Results" MODIFIED="1744370415159" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/_$Sentiment_analysis_gemini.coverage" NAME="Sentiment_analysis_gemini Coverage Results" MODIFIED="1746082845270" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/_$test.coverage" NAME="test Coverage Results" MODIFIED="1747196890859" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/_$test.coverage" NAME="test Coverage Results" MODIFIED="1747806983760" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/_$naver_crawling.coverage" NAME="naver_crawling Coverage Results" MODIFIED="1744171092678" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/_$main.coverage" NAME="main Coverage Results" MODIFIED="1747202766862" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

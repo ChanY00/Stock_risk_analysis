@@ -93,14 +93,14 @@ if __name__ == "__main__":
     batch_size = 5
     max_workers = 5
 
-    mode = "cross_validation"  # "single" 또는 "cross_validation"
+    mode = "single"  # "single" 또는 "cross_validation"
 
     if mode == "single":
         evaluate_sentiment_model(
             test_file_path,
             batch_size=batch_size,
             max_workers=max_workers,
-            sample_fraction=0.7
+            sample_fraction=1.0
         )
     elif mode == "cross_validation":
         texts, labels = load_test_data(test_file_path)
