@@ -1,9 +1,9 @@
 import pandas as pd
 import json
 from datetime import datetime
-from crawler import get_today_posts
-from gemini_sentiment import batch_sentiment_analysis
-from keywords import extract_top_keywords
+from sentiment_analysis.crawler import get_today_posts
+from sentiment_analysis.gemini_sentiment import batch_sentiment_analysis
+from sentiment_analysis.keywords import extract_top_keywords
 import os
 
 def main(file_path="kospi200.csv", max_stocks=None):
