@@ -19,6 +19,7 @@ def fetch_page(item_code: str, page_no: int) -> pd.DataFrame:
     df['날짜'] = df['날짜'].str.split().str[0]
     return df
 
+# 최대 500개 수집
 def get_today_posts(item_code: str, max_pages: int = 25, max_rows: int = 500) -> pd.DataFrame:
     today = datetime.today()
     yesterday = today - timedelta(days=1)
