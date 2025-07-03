@@ -1,0 +1,26 @@
+[
+  {
+    "stock_code": "005930",
+    "stock_name": "삼성전자",
+    "updated_at": "2025-05-28T07:28:30.110760+00:00Z",
+    "positive": 0.19,
+    "negative": 0.81,
+    "top_keywords": "이준석, 김문수, 부정선거, 대선"
+  },
+  {
+    "stock_code": "000660",
+    "stock_name": "SK하이닉스",
+    "updated_at": "2025-05-28T07:28:57.531071+00:00Z",
+    "positive": 0.39,
+    "negative": 0.61,
+    "top_keywords": "엔비디아, 오늘, 만, 엔비"
+  },
+  {
+    "stock_code": "373220",
+    "stock_name": "LG에너지솔루션",
+    "updated_at": "2025-05-28T07:29:20.991867+00:00Z",
+    "positive": 0.41,
+    "negative": 0.59,
+    "top_keywords": "오늘, 배터리, 차전지, 만원"
+  }
+]

@@ -1,0 +1,111 @@
+# Django Docker 이미지에서 제외할 파일들
+
+# Git 관련
+.git
+.gitignore
+
+# Python 관련
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 가상환경
+venv/
+env/
+ENV/
+.venv/
+
+# IDE 및 에디터
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 환경변수 파일 (보안)
+.env
+.env.local
+.env.production
+
+# 데이터베이스 파일
+db.sqlite3
+*.sqlite3
+
+# 로그 파일
+*.log
+logs/
+
+# 캐시 파일
+.cache/
+.pytest_cache/
+
+# 정적 파일 (빌드 시 생성됨)
+staticfiles/
+static/
+media/
+
+# 테스트 관련
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# 문서
+docs/
+*.md
+README*
+
+# 임시 파일
+*.tmp
+*.temp
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 백업 파일
+*.bak
+*.backup
+*.sql
+
+# 테스트 스크립트들
+test_*.py
+debug_*.py
+check_*.py
+analyze_*.py
+verify_*.py
+compare_*.py
+
+# CSV 데이터 파일
+*.csv
+
+# 프로젝트 특화 파일들
+cookies.txt
+financial_data_backup_*.json
+*.jar 

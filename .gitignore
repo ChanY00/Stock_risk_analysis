@@ -1,0 +1,332 @@
+# ==============================================
+# 🐍 Python (통합 - Stock_risk_analysis 포함)
+# ==============================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+.pdm-python
+.pdm-build/
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Ruff
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# ==============================================
+# 🎯 Django 백엔드
+# ==============================================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# ==============================================
+# 🎨 Flask 감정분석 서비스
+# ==============================================
+instance/
+.webassets-cache
+
+# ==============================================
+# 🕷️ Scrapy (뉴스 크롤링)
+# ==============================================
+.scrapy
+
+# ==============================================
+# 📚 Sphinx documentation
+# ==============================================
+docs/_build/
+
+# ==============================================
+# 🔨 PyBuilder
+# ==============================================
+.pybuilder/
+target/
+
+# PostgreSQL
+*.sql
+*.sqlite3
+
+# ==============================================
+# 🔐 Environment & Secrets
+# ==============================================
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+myenv/
+
+# 프로젝트별 환경변수 파일들
+stock_backend/.env
+Stock_risk_analysis/.env
+stock-dashboard/.env.local
+stock-dashboard/.env.development.local
+stock-dashboard/.env.test.local
+stock-dashboard/.env.production.local
+
+# API 키 및 민감한 설정 파일들
+**/config/secrets.json
+**/config/api_keys.json
+**/*_secrets.py
+**/*_config_local.py
+
+# ==============================================
+# 💻 IDE & Editor
+# ==============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# PyCharm (추가)
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+# Visual Studio Code (추가)
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/*.code-snippets
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*~
+.*.swp
+.*.swo
+
+# Emacs
+\#*\#
+.\#*
+
+# macOS (추가)
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Windows (추가)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# React
+/frontend/kospi-frontend/build
+/frontend/kospi-frontend/dist
+/frontend/kospi-frontend/.env.local
+/frontend/kospi-frontend/.env.development.local
+/frontend/kospi-frontend/.env.test.local
+/frontend/kospi-frontend/.env.production.local
+
+# ==============================================
+# 🎯 프로젝트별 특화 설정
+# ==============================================
+
+# Django 백엔드
+stock_backend/db.sqlite3
+stock_backend/media/
+stock_backend/staticfiles/
+stock_backend/websocket_performance.log
+
+# Flask 감정분석 서비스
+Stock_risk_analysis/instance/
+Stock_risk_analysis/result_json/*_temp.json
+Stock_risk_analysis/cookies.txt
+Stock_risk_analysis/cookies_test.txt
+Stock_risk_analysis/dump.rdb
+
+# Next.js 프론트엔드
+stock-dashboard/.next/
+stock-dashboard/out/
+stock-dashboard/build/
+stock-dashboard/dist/
+
+# ==============================================
+# 📁 프로젝트 문서 및 아카이브 (Git 추적 제외)
+# ==============================================
+
+# 문서 폴더 (개발 과정 문서, 작업 로그 등)
+docs/
+/docs/
+
+# 프로젝트 아카이브 (임시 파일, 테스트 파일, 백업 등)
+project_archive/
+/project_archive/
+
+# ==============================================
+# 📊 데이터베이스 & 백업
+# ==============================================
+
+# DB 덤프 파일 관리
+# db_init/kospi_db_dump.sql 파일은 팀 공유를 위해 Git에 포함
+# 단, 큰 덤프 파일의 경우 Git LFS 사용 고려
+
+# 개발 중 생성되는 임시 덤프 파일들
+db_init/*_backup.sql
+db_init/*_temp.sql
+db_init/backup_*.sql
+
+# 환경별 DB 덤프
+db_init/production_*.sql
+db_init/staging_*.sql
+
+# Redis 덤프
+*.rdb
+
+# ==============================================
+# 🧪 테스트 & 임시 파일
+# ==============================================
+
+# 프로젝트 아카이브 (임시/테스트 파일들)
+project_archive/temp_files/*
+project_archive/debug_files/*_temp.py
+project_archive/test_files/test_*.log
+
+# 임시 데이터 파일들
+**/*_temp.*
+**/*_backup.*
+**/temp/
+**/tmp/
+
+# 로그 파일들
+**/*.log
+**/logs/
+**/log/
+
+# ==============================================
+# 🔧 개발 도구 & 유틸리티
+# ==============================================
+
+# JAR 파일 (BFG Repo-Cleaner 등)
+*.jar
+
+# UV lock file (Python package manager)
+uv.lock
+
+# 성능 프로파일링
+**/*.prof
+**/*.pstats 

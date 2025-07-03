@@ -1,0 +1,1578 @@
+[
+  {
+    "stock_code": "005930",
+    "stock_name": "삼성전자",
+    "updated_at": "2025-06-10T02:16:40.140102+00:00Z",
+    "positive": 0.21,
+    "negative": 0.79,
+    "top_keywords": "이재명, 대폭락, 코스피, 엔비디아"
+  },
+  {
+    "stock_code": "000660",
+    "stock_name": "SK하이닉스",
+    "updated_at": "2025-06-10T02:16:59.728931+00:00Z",
+    "positive": 0.42,
+    "negative": 0.58,
+    "top_keywords": "가즈아, 만, 엔비디아, 반도체"
+  },
+  {
+    "stock_code": "373220",
+    "stock_name": "LG에너지솔루션",
+    "updated_at": "2025-06-10T02:17:16.657016+00:00Z",
+    "positive": 0.31,
+    "negative": 0.69,
+    "top_keywords": "엔솔, 테슬라, 상승, 폭락"
+  },
+  {
+    "stock_code": "207940",
+    "stock_name": "삼성바이오로직스",
+    "updated_at": "2025-06-10T02:17:20.297920+00:00Z",
+    "positive": 0.1,
+    "negative": 0.9,
+    "top_keywords": "대개미, 삼바, 만원, 삼성에피스"
+  },
+  {
+    "stock_code": "005380",
+    "stock_name": "현대차",
+    "updated_at": "2025-06-10T02:17:41.346934+00:00Z",
+    "positive": 0.39,
+    "negative": 0.61,
+    "top_keywords": "모비스, 만원, 만, 오늘"
+  },
+  {
+    "stock_code": "012450",
+    "stock_name": "한화에어로스페이스",
+    "updated_at": "2025-06-10T02:17:52.238029+00:00Z",
+    "positive": 0.43,
+    "negative": 0.57,
+    "top_keywords": "만원, 또, 오늘, 한화"
+  },
+  {
+    "stock_code": "329180",
+    "stock_name": "HD현대중공업",
+    "updated_at": "2025-06-10T02:17:57.859551+00:00Z",
+    "positive": 0.29,
+    "negative": 0.71,
+    "top_keywords": "주가, 다, 오늘은, 억"
+  },
+  {
+    "stock_code": "000270",
+    "stock_name": "기아",
+    "updated_at": "2025-06-10T02:18:02.560085+00:00Z",
+    "positive": 0.54,
+    "negative": 0.46,
+    "top_keywords": "기아, 깡통주, 만주, 만원"
+  },
+  {
+    "stock_code": "105560",
+    "stock_name": "KB금융",
+    "updated_at": "2025-06-10T02:18:04.553395+00:00Z",
+    "positive": 0.06,
+    "negative": 0.94,
+    "top_keywords": "부정선거, 와, 최고의, 악질"
+  },
+  {
+    "stock_code": "068270",
+    "stock_name": "셀트리온",
+    "updated_at": "2025-06-10T02:18:35.759552+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "공매도, 공견, 주식, 현금배당"
+  },
+  {
+    "stock_code": "035420",
+    "stock_name": "NAVER",
+    "updated_at": "2025-06-10T02:18:53.021592+00:00Z",
+    "positive": 0.35,
+    "negative": 0.65,
+    "top_keywords": "네이버, 카카오, 오늘, 또"
+  },
+  {
+    "stock_code": "055550",
+    "stock_name": "신한지주",
+    "updated_at": "2025-06-10T02:18:55.206466+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "자사주, 매입, 절반이네, 유증으로"
+  },
+  {
+    "stock_code": "042660",
+    "stock_name": "한화오션",
+    "updated_at": "2025-06-10T02:19:17.540822+00:00Z",
+    "positive": 0.27,
+    "negative": 0.73,
+    "top_keywords": "오늘, 진짜, 좀, 조선주"
+  },
+  {
+    "stock_code": "012330",
+    "stock_name": "현대모비스",
+    "updated_at": "2025-06-10T02:19:21.941320+00:00Z",
+    "positive": 0.48,
+    "negative": 0.52,
+    "top_keywords": "오늘, 지배구조, 이거, 그려"
+  },
+  {
+    "stock_code": "011200",
+    "stock_name": "HMM",
+    "updated_at": "2025-06-10T02:19:35.327224+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "공매도, 코스피, 또, 대주주만"
+  },
+  {
+    "stock_code": "028260",
+    "stock_name": "삼성물산",
+    "updated_at": "2025-06-10T02:19:39.138522+00:00Z",
+    "positive": 0.32,
+    "negative": 0.68,
+    "top_keywords": "아, 만, 드럽게, 내가"
+  },
+  {
+    "stock_code": "138040",
+    "stock_name": "메리츠금융지주",
+    "updated_at": "2025-06-10T02:19:40.369285+00:00Z",
+    "positive": 0.11,
+    "negative": 0.89,
+    "top_keywords": "에, 글렀어, 결국은, 휘둘린"
+  },
+  {
+    "stock_code": "009540",
+    "stock_name": "HD한국조선해양",
+    "updated_at": "2025-06-10T02:19:42.603950+00:00Z",
+    "positive": 0.36,
+    "negative": 0.64,
+    "top_keywords": "지주사, 컨선, 대, 수주한"
+  },
+  {
+    "stock_code": "005490",
+    "stock_name": "POSCO홀딩스",
+    "updated_at": "2025-06-10T02:19:56.502425+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "오늘, 만원, 다, 이"
+  },
+  {
+    "stock_code": "034020",
+    "stock_name": "두산에너빌리티",
+    "updated_at": "2025-06-10T02:20:28.120819+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "오늘, 두빌, 대통령, 만원"
+  },
+  {
+    "stock_code": "086790",
+    "stock_name": "하나금융지주",
+    "updated_at": "2025-06-10T02:20:30.251200+00:00Z",
+    "positive": 0.44,
+    "negative": 0.56,
+    "top_keywords": "이재명, 하나, 에게, 이익금"
+  },
+  {
+    "stock_code": "000810",
+    "stock_name": "삼성화재",
+    "updated_at": "2025-06-10T02:20:31.273100+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "어제, 오늘"
+  },
+  {
+    "stock_code": "259960",
+    "stock_name": "크래프톤",
+    "updated_at": "2025-06-10T02:20:34.344301+00:00Z",
+    "positive": 0.2,
+    "negative": 0.8,
+    "top_keywords": "이재명이, 게임을, 싫어한다, 개관"
+  },
+  {
+    "stock_code": "032830",
+    "stock_name": "삼성생명",
+    "updated_at": "2025-06-10T02:20:37.563127+00:00Z",
+    "positive": 0.43,
+    "negative": 0.57,
+    "top_keywords": "삼성생명, 만원, 개미들, 목표가"
+  },
+  {
+    "stock_code": "010130",
+    "stock_name": "고려아연",
+    "updated_at": "2025-06-10T02:20:38.783612+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "인기, 없노"
+  },
+  {
+    "stock_code": "015760",
+    "stock_name": "한국전력",
+    "updated_at": "2025-06-10T02:20:48.978231+00:00Z",
+    "positive": 0.36,
+    "negative": 0.64,
+    "top_keywords": "이재명, 이, 한전, 삭제된"
+  },
+  {
+    "stock_code": "035720",
+    "stock_name": "카카오",
+    "updated_at": "2025-06-10T02:21:11.921058+00:00Z",
+    "positive": 0.37,
+    "negative": 0.63,
+    "top_keywords": "만쉐, 이재명톡, 만, 오늘"
+  },
+  {
+    "stock_code": "051910",
+    "stock_name": "LG화학",
+    "updated_at": "2025-06-10T02:21:21.231669+00:00Z",
+    "positive": 0.35,
+    "negative": 0.65,
+    "top_keywords": "공매도, 화학, 만, 만원"
+  },
+  {
+    "stock_code": "033780",
+    "stock_name": "KT&G",
+    "updated_at": "2025-06-10T02:21:22.609517+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "드디어, 나오기, 시작, 불장에"
+  },
+  {
+    "stock_code": "096770",
+    "stock_name": "SK이노베이션",
+    "updated_at": "2025-06-10T02:21:30.377960+00:00Z",
+    "positive": 0.35,
+    "negative": 0.65,
+    "top_keywords": "골드만, 원, 오늘, 이노베이션"
+  },
+  {
+    "stock_code": "402340",
+    "stock_name": "SK스퀘어",
+    "updated_at": "2025-06-10T02:21:32.649614+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "지주사, 상밥, 개정이, 스퀘어에"
+  },
+  {
+    "stock_code": "316140",
+    "stock_name": "우리금융지주",
+    "updated_at": "2025-06-10T02:21:37.057162+00:00Z",
+    "positive": 0.27,
+    "negative": 0.73,
+    "top_keywords": "금융, 오늘은, 외국인, 파는날"
+  },
+  {
+    "stock_code": "030200",
+    "stock_name": "KT",
+    "updated_at": "2025-06-10T02:21:38.324379+00:00Z",
+    "positive": 0.2,
+    "negative": 0.8,
+    "top_keywords": "주가, 영섭아, 재고가치, 자율이행"
+  },
+  {
+    "stock_code": "010140",
+    "stock_name": "삼성중공업",
+    "updated_at": "2025-06-10T02:21:49.327754+00:00Z",
+    "positive": 0.24,
+    "negative": 0.76,
+    "top_keywords": "만, 득실, 매도, 이주식"
+  },
+  {
+    "stock_code": "267260",
+    "stock_name": "HD현대일렉트릭",
+    "updated_at": "2025-06-10T02:21:52.529161+00:00Z",
+    "positive": 0.63,
+    "negative": 0.37,
+    "top_keywords": "이게, 월도, 변압기, 물량"
+  },
+  {
+    "stock_code": "024110",
+    "stock_name": "기업은행",
+    "updated_at": "2025-06-10T02:21:54.725252+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "횡재세, 형아들이, 년, 만세"
+  },
+  {
+    "stock_code": "006400",
+    "stock_name": "삼성SDI",
+    "updated_at": "2025-06-10T02:22:09.292471+00:00Z",
+    "positive": 0.19,
+    "negative": 0.81,
+    "top_keywords": "개잡주, 아, 이, 유증"
+  },
+  {
+    "stock_code": "064350",
+    "stock_name": "현대로템",
+    "updated_at": "2025-06-10T02:22:28.128496+00:00Z",
+    "positive": 0.47,
+    "negative": 0.53,
+    "top_keywords": "오늘, 만원, 공매도, 이재명"
+  },
+  {
+    "stock_code": "066570",
+    "stock_name": "LG전자",
+    "updated_at": "2025-06-10T02:22:42.740757+00:00Z",
+    "positive": 0.28,
+    "negative": 0.72,
+    "top_keywords": "인도, 원, 전자, 삭제된"
+  },
+  {
+    "stock_code": "352820",
+    "stock_name": "하이브",
+    "updated_at": "2025-06-10T02:22:56.567548+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "방탄, 오늘, 월, 안티들"
+  },
+  {
+    "stock_code": "323410",
+    "stock_name": "카카오뱅크",
+    "updated_at": "2025-06-10T02:23:14.919157+00:00Z",
+    "positive": 0.41,
+    "negative": 0.59,
+    "top_keywords": "상한가, 공매도, 만원, 카카오페이"
+  },
+  {
+    "stock_code": "017670",
+    "stock_name": "SK텔레콤",
+    "updated_at": "2025-06-10T02:23:18.089504+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "당선, 더, 아, 중국"
+  },
+  {
+    "stock_code": "003550",
+    "stock_name": "LG",
+    "updated_at": "2025-06-10T02:23:21.280098+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "만, 간다, 주식, 전고"
+  },
+  {
+    "stock_code": "034730",
+    "stock_name": "SK",
+    "updated_at": "2025-06-10T02:23:31.808930+00:00Z",
+    "positive": 0.37,
+    "negative": 0.63,
+    "top_keywords": "또, 자사주, 지주사, 피"
+  },
+  {
+    "stock_code": "180640",
+    "stock_name": "한진칼",
+    "updated_at": "2025-06-10T02:23:39.741216+00:00Z",
+    "positive": 0.28,
+    "negative": 0.72,
+    "top_keywords": "조원태, 롱숭이들, 주가, 롱숭이들아"
+  },
+  {
+    "stock_code": "018260",
+    "stock_name": "삼성에스디에스",
+    "updated_at": "2025-06-10T02:23:43.105608+00:00Z",
+    "positive": 0.31,
+    "negative": 0.69,
+    "top_keywords": "똥파리, 주주의, 철천지, 원수"
+  },
+  {
+    "stock_code": "009150",
+    "stock_name": "삼성전기",
+    "updated_at": "2025-06-10T02:23:47.494712+00:00Z",
+    "positive": 0.32,
+    "negative": 0.68,
+    "top_keywords": "신한, 파렴치들, 연속성, 제로내"
+  },
+  {
+    "stock_code": "047810",
+    "stock_name": "한국항공우주",
+    "updated_at": "2025-06-10T02:24:00.769209+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "공매도, 오늘, 방산, 다들"
+  },
+  {
+    "stock_code": "003670",
+    "stock_name": "포스코퓨처엠",
+    "updated_at": "2025-06-10T02:24:08.142514+00:00Z",
+    "positive": 0.23,
+    "negative": 0.77,
+    "top_keywords": "매수금지종목, 유상증자, 대기, 차전지"
+  },
+  {
+    "stock_code": "000100",
+    "stock_name": "유한양행",
+    "updated_at": "2025-06-10T02:24:17.860902+00:00Z",
+    "positive": 0.28,
+    "negative": 0.72,
+    "top_keywords": "오늘, 개미들, 찍, 대구"
+  },
+  {
+    "stock_code": "086280",
+    "stock_name": "현대글로비스",
+    "updated_at": "2025-06-10T02:24:19.711710+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "현대모비스가격을, 맞출려면, 만원은, 가야"
+  },
+  {
+    "stock_code": "079550",
+    "stock_name": "LIG넥스원",
+    "updated_at": "2025-06-10T02:24:25.068478+00:00Z",
+    "positive": 0.29,
+    "negative": 0.71,
+    "top_keywords": "방산주, 야, 중요한, 것은"
+  },
+  {
+    "stock_code": "272210",
+    "stock_name": "한화시스템",
+    "updated_at": "2025-06-10T02:24:42.926007+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "어제, 한화시스템, 아, 오늘"
+  },
+  {
+    "stock_code": "003490",
+    "stock_name": "대한항공",
+    "updated_at": "2025-06-10T02:24:48.093303+00:00Z",
+    "positive": 0.29,
+    "negative": 0.71,
+    "top_keywords": "종가는, 원, 꾸역, 이"
+  },
+  {
+    "stock_code": "047050",
+    "stock_name": "포스코인터내셔널",
+    "updated_at": "2025-06-10T02:24:51.928443+00:00Z",
+    "positive": 0.52,
+    "negative": 0.48,
+    "top_keywords": "단타, 지수, 공매도, 한투"
+  },
+  {
+    "stock_code": "042700",
+    "stock_name": "한미반도체",
+    "updated_at": "2025-06-10T02:25:12.037365+00:00Z",
+    "positive": 0.22,
+    "negative": 0.78,
+    "top_keywords": "공매도, 공매, 오늘도, 주가"
+  },
+  {
+    "stock_code": "003230",
+    "stock_name": "삼양식품",
+    "updated_at": "2025-06-10T02:25:16.178037+00:00Z",
+    "positive": 0.18,
+    "negative": 0.82,
+    "top_keywords": "만원, 라면값, 꼭지에서, 산"
+  },
+  {
+    "stock_code": "006800",
+    "stock_name": "미래에셋증권",
+    "updated_at": "2025-06-10T02:25:23.977364+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "미래에셋증권, 오후장, 왜, 오늘"
+  },
+  {
+    "stock_code": "090430",
+    "stock_name": "아모레퍼시픽",
+    "updated_at": "2025-06-10T02:25:28.357378+00:00Z",
+    "positive": 0.44,
+    "negative": 0.56,
+    "top_keywords": "오늘, 만, 힘, 좋다"
+  },
+  {
+    "stock_code": "021240",
+    "stock_name": "코웨이",
+    "updated_at": "2025-06-10T02:25:29.446877+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "코웨이, 보다, 금비, 무증발표"
+  },
+  {
+    "stock_code": "010120",
+    "stock_name": "LS ELECTRIC",
+    "updated_at": "2025-06-10T02:25:38.511844+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "백전백승, 만, 평단, 껄껄껄"
+  },
+  {
+    "stock_code": "326030",
+    "stock_name": "SK바이오팜",
+    "updated_at": "2025-06-10T02:25:42.450375+00:00Z",
+    "positive": 0.3,
+    "negative": 0.7,
+    "top_keywords": "절반, 손절, 치매, 오죽"
+  },
+  {
+    "stock_code": "010620",
+    "stock_name": "HD현대미포",
+    "updated_at": "2025-06-10T02:25:46.503217+00:00Z",
+    "positive": 0.3,
+    "negative": 0.7,
+    "top_keywords": "한투, 리포트, 뭐냐, 탱커발주"
+  },
+  {
+    "stock_code": "005830",
+    "stock_name": "DB손해보험",
+    "updated_at": "2025-06-10T02:25:47.578826+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "손보"
+  },
+  {
+    "stock_code": "000150",
+    "stock_name": "두산",
+    "updated_at": "2025-06-10T02:25:50.879886+00:00Z",
+    "positive": 0.45,
+    "negative": 0.55,
+    "top_keywords": "간다, 좌익, 오늘도, 한주팔아"
+  },
+  {
+    "stock_code": "009830",
+    "stock_name": "한화솔루션",
+    "updated_at": "2025-06-10T02:26:12.350041+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "오늘, 태양광, 공매도, 주주운동"
+  },
+  {
+    "stock_code": "267250",
+    "stock_name": "HD현대",
+    "updated_at": "2025-06-10T02:26:15.143706+00:00Z",
+    "positive": 0.47,
+    "negative": 0.53,
+    "top_keywords": "오늘은, 상법, 다음주, 욘기인데"
+  },
+  {
+    "stock_code": "010950",
+    "stock_name": "S-Oil",
+    "updated_at": "2025-06-10T02:26:17.260343+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "공매도, 와, 연명치료하는, 것도"
+  },
+  {
+    "stock_code": "032640",
+    "stock_name": "LG유플러스",
+    "updated_at": "2025-06-10T02:26:18.372599+00:00Z",
+    "positive": 0.67,
+    "negative": 0.33,
+    "top_keywords": "모거니행님, 유플, 뉴스, 대"
+  },
+  {
+    "stock_code": "005940",
+    "stock_name": "NH투자증권",
+    "updated_at": "2025-06-10T02:26:20.336452+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "이제는, 결정할, 때가, 된거"
+  },
+  {
+    "stock_code": "298040",
+    "stock_name": "효성중공업",
+    "updated_at": "2025-06-10T02:26:21.473812+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "만원, 미장, 오늘도, 불장이다"
+  },
+  {
+    "stock_code": "051900",
+    "stock_name": "LG생활건강",
+    "updated_at": "2025-06-10T02:26:24.379733+00:00Z",
+    "positive": 0.16,
+    "negative": 0.84,
+    "top_keywords": "똥파리, 이건, 좀, 눈여겨봐야겠어요"
+  },
+  {
+    "stock_code": "071050",
+    "stock_name": "한국금융지주",
+    "updated_at": "2025-06-10T02:26:26.533194+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "상승률, 높다고, 고평가가, 아니라니까"
+  },
+  {
+    "stock_code": "161390",
+    "stock_name": "한국타이어앤테크놀로지",
+    "updated_at": "2025-06-10T02:26:28.726330+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "좋은, 분기, 만, 법정"
+  },
+  {
+    "stock_code": "271560",
+    "stock_name": "오리온",
+    "updated_at": "2025-06-10T02:26:30.873865+00:00Z",
+    "positive": 0.43,
+    "negative": 0.57,
+    "top_keywords": "연속, 상승, 어히, 거래일"
+  },
+  {
+    "stock_code": "029780",
+    "stock_name": "삼성카드",
+    "updated_at": "2025-06-10T02:26:31.909173+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "매수햇어요, 먼일있나요, 오우야"
+  },
+  {
+    "stock_code": "006260",
+    "stock_name": "LS",
+    "updated_at": "2025-06-10T02:26:40.588570+00:00Z",
+    "positive": 0.3,
+    "negative": 0.7,
+    "top_keywords": "다, 이런, 이제, 진짜"
+  },
+  {
+    "stock_code": "016360",
+    "stock_name": "삼성증권",
+    "updated_at": "2025-06-10T02:26:43.203212+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "삼성증권, 철저히, 소외, 도"
+  },
+  {
+    "stock_code": "000720",
+    "stock_name": "현대건설",
+    "updated_at": "2025-06-10T02:26:53.515186+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "현대건설, 만원, 개미, 삭제된"
+  },
+  {
+    "stock_code": "241560",
+    "stock_name": "두산밥캣",
+    "updated_at": "2025-06-10T02:26:56.628456+00:00Z",
+    "positive": 0.43,
+    "negative": 0.57,
+    "top_keywords": "가즈아, 뭐, 이리, 가볍냐"
+  },
+  {
+    "stock_code": "034220",
+    "stock_name": "LG디스플레이",
+    "updated_at": "2025-06-10T02:27:04.725444+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "팔아라, 아, 에라이, 모르겠다"
+  },
+  {
+    "stock_code": "251270",
+    "stock_name": "넷마블",
+    "updated_at": "2025-06-10T02:27:08.077375+00:00Z",
+    "positive": 0.24,
+    "negative": 0.76,
+    "top_keywords": "왜, 가, 그냥, 넷마블"
+  },
+  {
+    "stock_code": "278470",
+    "stock_name": "에이피알",
+    "updated_at": "2025-06-10T02:27:11.389762+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "무조건, 내일은, 하락이다, 폭탄투하"
+  },
+  {
+    "stock_code": "377300",
+    "stock_name": "카카오페이",
+    "updated_at": "2025-06-10T02:27:34.728293+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "다, 상한가, 페이, 스테이블"
+  },
+  {
+    "stock_code": "028050",
+    "stock_name": "삼성E&A",
+    "updated_at": "2025-06-10T02:27:36.914291+00:00Z",
+    "positive": 0.37,
+    "negative": 0.63,
+    "top_keywords": "매도하는, 어니, 지까짓께, 감히"
+  },
+  {
+    "stock_code": "011790",
+    "stock_name": "SKC",
+    "updated_at": "2025-06-10T02:27:40.186105+00:00Z",
+    "positive": 0.3,
+    "negative": 0.7,
+    "top_keywords": "좋은데, 외인, 공매도, 대차잔고"
+  },
+  {
+    "stock_code": "128940",
+    "stock_name": "한미약품",
+    "updated_at": "2025-06-10T02:27:42.111173+00:00Z",
+    "positive": 0.31,
+    "negative": 0.69,
+    "top_keywords": "이번주네요, 기관의, 무한사랑, 한미"
+  },
+  {
+    "stock_code": "001040",
+    "stock_name": "CJ",
+    "updated_at": "2025-06-10T02:27:43.443134+00:00Z",
+    "positive": 0.42,
+    "negative": 0.58,
+    "top_keywords": "최근에, 여기저기서, 엄청, 떠들더니"
+  },
+  {
+    "stock_code": "000880",
+    "stock_name": "한화",
+    "updated_at": "2025-06-10T02:27:49.649713+00:00Z",
+    "positive": 0.37,
+    "negative": 0.63,
+    "top_keywords": "전과, 범, 잡범놈이, 만"
+  },
+  {
+    "stock_code": "078930",
+    "stock_name": "GS",
+    "updated_at": "2025-06-10T02:27:51.828467+00:00Z",
+    "positive": 0.41,
+    "negative": 0.59,
+    "top_keywords": "만만세, 만세, 진짜, 어제"
+  },
+  {
+    "stock_code": "097950",
+    "stock_name": "CJ제일제당",
+    "updated_at": "2025-06-10T02:27:53.968028+00:00Z",
+    "positive": 0.3,
+    "negative": 0.7,
+    "top_keywords": "상한가, 상법개정, 종목, 만원"
+  },
+  {
+    "stock_code": "039490",
+    "stock_name": "키움증권",
+    "updated_at": "2025-06-10T02:27:56.007502+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "엄청난, 부정선거, 이재명, 정국안정"
+  },
+  {
+    "stock_code": "022100",
+    "stock_name": "포스코DX",
+    "updated_at": "2025-06-10T02:28:00.283912+00:00Z",
+    "positive": 0.19,
+    "negative": 0.81,
+    "top_keywords": "원영이, 노가다, 개잡주, 진입"
+  },
+  {
+    "stock_code": "035250",
+    "stock_name": "강원랜드",
+    "updated_at": "2025-06-10T02:28:05.193109+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "공매도, 원, 단기고점, 조회하지"
+  },
+  {
+    "stock_code": "011070",
+    "stock_name": "LG이노텍",
+    "updated_at": "2025-06-10T02:28:10.109238+00:00Z",
+    "positive": 0.24,
+    "negative": 0.76,
+    "top_keywords": "문혁수, 흔들고, 누른다고, 겁먹을필요"
+  },
+  {
+    "stock_code": "138930",
+    "stock_name": "BNK금융지주",
+    "updated_at": "2025-06-10T02:28:11.239423+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "가즈아"
+  },
+  {
+    "stock_code": "175330",
+    "stock_name": "JB금융지주",
+    "updated_at": "2025-06-10T02:28:12.668576+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "클린봇이, 이용자, 보호를, 위해"
+  },
+  {
+    "stock_code": "450080",
+    "stock_name": "에코프로머티",
+    "updated_at": "2025-06-10T02:28:20.343114+00:00Z",
+    "positive": 0.2,
+    "negative": 0.8,
+    "top_keywords": "만원, 축하, 와, 빨리"
+  },
+  {
+    "stock_code": "036570",
+    "stock_name": "엔씨소프트",
+    "updated_at": "2025-06-10T02:28:25.980310+00:00Z",
+    "positive": 0.28,
+    "negative": 0.72,
+    "top_keywords": "아이온, 가즈아, 사리, 출시는"
+  },
+  {
+    "stock_code": "004020",
+    "stock_name": "현대제철",
+    "updated_at": "2025-06-10T02:28:31.200573+00:00Z",
+    "positive": 0.26,
+    "negative": 0.74,
+    "top_keywords": "현철이, 상법개정, 희망회로, 곧"
+  },
+  {
+    "stock_code": "036460",
+    "stock_name": "한국가스공사",
+    "updated_at": "2025-06-10T02:28:36.122647+00:00Z",
+    "positive": 0.35,
+    "negative": 0.65,
+    "top_keywords": "뉴스, 진짜, 주문, 얼마나"
+  },
+  {
+    "stock_code": "454910",
+    "stock_name": "두산로보틱스",
+    "updated_at": "2025-06-10T02:28:37.861091+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "그럼그렇지, 오, 오늘또, 오르네"
+  },
+  {
+    "stock_code": "489790",
+    "stock_name": "한화비전",
+    "updated_at": "2025-06-10T02:28:49.942432+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "여기, 개미만, 지금, 아직도"
+  },
+  {
+    "stock_code": "302440",
+    "stock_name": "SK바이오사이언스",
+    "updated_at": "2025-06-10T02:28:53.729493+00:00Z",
+    "positive": 0.39,
+    "negative": 0.61,
+    "top_keywords": "에휴, 어휴, 만, 갑니다"
+  },
+  {
+    "stock_code": "017800",
+    "stock_name": "현대엘리베이터",
+    "updated_at": "2025-06-10T02:28:55.676538+00:00Z",
+    "positive": 0.67,
+    "negative": 0.33,
+    "top_keywords": "만원, 티켓, 몇장, 안남았내요"
+  },
+  {
+    "stock_code": "011780",
+    "stock_name": "금호석유화학",
+    "updated_at": "2025-06-10T02:29:00.301204+00:00Z",
+    "positive": 0.29,
+    "negative": 0.71,
+    "top_keywords": "다, 박찬구, 개잡주, 퍼가"
+  },
+  {
+    "stock_code": "004370",
+    "stock_name": "농심",
+    "updated_at": "2025-06-10T02:29:09.632258+00:00Z",
+    "positive": 0.11,
+    "negative": 0.89,
+    "top_keywords": "라면, 원, 찢, 주가"
+  },
+  {
+    "stock_code": "383220",
+    "stock_name": "F&F",
+    "updated_at": "2025-06-10T02:29:11.341829+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "날아갑시다"
+  },
+  {
+    "stock_code": "192820",
+    "stock_name": "코스맥스",
+    "updated_at": "2025-06-10T02:29:13.004547+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "천정이, 없네요, 천장이열렸다"
+  },
+  {
+    "stock_code": "002380",
+    "stock_name": "KCC",
+    "updated_at": "2025-06-10T02:29:14.721861+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "안보이냐, 삼물, 는, 올라도"
+  },
+  {
+    "stock_code": "004990",
+    "stock_name": "롯데지주",
+    "updated_at": "2025-06-10T02:29:17.898346+00:00Z",
+    "positive": 0.17,
+    "negative": 0.83,
+    "top_keywords": "이런, 쓰레기가, 약삭빠른, 동빈상에게"
+  },
+  {
+    "stock_code": "026960",
+    "stock_name": "동서",
+    "updated_at": "2025-06-10T02:29:19.638647+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "화끈하게, 중배, 가자, 동서"
+  },
+  {
+    "stock_code": "012750",
+    "stock_name": "에스원",
+    "updated_at": "2025-06-10T02:29:21.375492+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "왜, 오르는거임"
+  },
+  {
+    "stock_code": "018880",
+    "stock_name": "한온시스템",
+    "updated_at": "2025-06-10T02:29:24.598332+00:00Z",
+    "positive": 0.22,
+    "negative": 0.78,
+    "top_keywords": "하고, 상폐, 이건, 망가지는"
+  },
+  {
+    "stock_code": "011170",
+    "stock_name": "롯데케미칼",
+    "updated_at": "2025-06-10T02:29:27.622805+00:00Z",
+    "positive": 0.29,
+    "negative": 0.71,
+    "top_keywords": "반기업정책, 친노조정책, 쏟아지는데, 갈때됐잔아"
+  },
+  {
+    "stock_code": "052690",
+    "stock_name": "한전기술",
+    "updated_at": "2025-06-10T02:29:39.860707+00:00Z",
+    "positive": 0.34,
+    "negative": 0.66,
+    "top_keywords": "원전, 오늘, 매도, 두빌이"
+  },
+  {
+    "stock_code": "066970",
+    "stock_name": "엘앤에프",
+    "updated_at": "2025-06-10T02:30:12.004289+00:00Z",
+    "positive": 0.19,
+    "negative": 0.81,
+    "top_keywords": "골드만, 이, 진짜, 그냥"
+  },
+  {
+    "stock_code": "081660",
+    "stock_name": "미스토홀딩스",
+    "updated_at": "2025-06-10T02:30:14.187953+00:00Z",
+    "positive": 0.12,
+    "negative": 0.88,
+    "top_keywords": "상폐, 최저가부터, 깔아, 놓고"
+  },
+  {
+    "stock_code": "008930",
+    "stock_name": "한미사이언스",
+    "updated_at": "2025-06-10T02:30:16.473440+00:00Z",
+    "positive": 0.64,
+    "negative": 0.36,
+    "top_keywords": "죽어라, 안팔고, 버티는, 이유를"
+  },
+  {
+    "stock_code": "111770",
+    "stock_name": "영원무역",
+    "updated_at": "2025-06-10T02:30:18.186259+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "에서"
+  },
+  {
+    "stock_code": "139480",
+    "stock_name": "이마트",
+    "updated_at": "2025-06-10T02:30:35.759347+00:00Z",
+    "positive": 0.22,
+    "negative": 0.78,
+    "top_keywords": "멸공, 이마트, 이재명, 어제"
+  },
+  {
+    "stock_code": "001440",
+    "stock_name": "대한전선",
+    "updated_at": "2025-06-10T02:31:08.006380+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "대한전선, 내, 오늘, 상법개정으로"
+  },
+  {
+    "stock_code": "088350",
+    "stock_name": "한화생명",
+    "updated_at": "2025-06-10T02:31:12.617740+00:00Z",
+    "positive": 0.17,
+    "negative": 0.83,
+    "top_keywords": "한생은, 기자들이, 일좀해라, 화나"
+  },
+  {
+    "stock_code": "112610",
+    "stock_name": "씨에스윈드",
+    "updated_at": "2025-06-10T02:31:18.827874+00:00Z",
+    "positive": 0.34,
+    "negative": 0.66,
+    "top_keywords": "리재명, 총통각하, 오늘, 난"
+  },
+  {
+    "stock_code": "030000",
+    "stock_name": "제일기획",
+    "updated_at": "2025-06-10T02:31:20.771944+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "제일기획, 이정도면, 상한가다, 추경"
+  },
+  {
+    "stock_code": "023530",
+    "stock_name": "롯데쇼핑",
+    "updated_at": "2025-06-10T02:31:25.774718+00:00Z",
+    "positive": 0.23,
+    "negative": 0.77,
+    "top_keywords": "대형마트, 이재명, 제발, 공매도"
+  },
+  {
+    "stock_code": "161890",
+    "stock_name": "한국콜마",
+    "updated_at": "2025-06-10T02:31:28.058702+00:00Z",
+    "positive": 0.47,
+    "negative": 0.53,
+    "top_keywords": "이제, 오늘, 대피하세요, 소탐대실"
+  },
+  {
+    "stock_code": "051600",
+    "stock_name": "한전KPS",
+    "updated_at": "2025-06-10T02:31:31.221195+00:00Z",
+    "positive": 0.18,
+    "negative": 0.82,
+    "top_keywords": "원전, 이런, 음, 더러워"
+  },
+  {
+    "stock_code": "000120",
+    "stock_name": "CJ대한통운",
+    "updated_at": "2025-06-10T02:31:32.959596+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "상법새정맘되면, 인생주식, 개잡주"
+  },
+  {
+    "stock_code": "028670",
+    "stock_name": "팬오션",
+    "updated_at": "2025-06-10T02:31:36.384978+00:00Z",
+    "positive": 0.37,
+    "negative": 0.63,
+    "top_keywords": "코스피, 에, 장인으른이, 치셨네"
+  },
+  {
+    "stock_code": "002790",
+    "stock_name": "아모레퍼시픽홀딩스",
+    "updated_at": "2025-06-10T02:31:38.122671+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "가즈아, 만원, 연기금, 어서오고"
+  },
+  {
+    "stock_code": "001450",
+    "stock_name": "현대해상",
+    "updated_at": "2025-06-10T02:31:40.110547+00:00Z",
+    "positive": 0.67,
+    "negative": 0.33,
+    "top_keywords": "고, 주식은, 달리는, 말에"
+  },
+  {
+    "stock_code": "000240",
+    "stock_name": "한국앤컴퍼니",
+    "updated_at": "2025-06-10T02:31:41.913789+00:00Z",
+    "positive": 0.36,
+    "negative": 0.64,
+    "top_keywords": "조현식은, 들어라, 법정구속되었으니, 이사직은"
+  },
+  {
+    "stock_code": "006360",
+    "stock_name": "GS건설",
+    "updated_at": "2025-06-10T02:31:43.769897+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "만, 조짓다, 조정없이가는게맞나, 현건"
+  },
+  {
+    "stock_code": "008770",
+    "stock_name": "호텔신라",
+    "updated_at": "2025-06-10T02:31:46.968090+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "오늘, 만, 호텔신라, 스튜"
+  },
+  {
+    "stock_code": "042670",
+    "stock_name": "HD현대인프라코어",
+    "updated_at": "2025-06-10T02:31:55.330539+00:00Z",
+    "positive": 0.44,
+    "negative": 0.56,
+    "top_keywords": "계속, 오늘은, 공매도, 부터"
+  },
+  {
+    "stock_code": "069620",
+    "stock_name": "대웅제약",
+    "updated_at": "2025-06-10T02:31:57.225257+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "최대주주, 지분이, 너무, 많음"
+  },
+  {
+    "stock_code": "103140",
+    "stock_name": "풍산",
+    "updated_at": "2025-06-10T02:32:02.753648+00:00Z",
+    "positive": 0.49,
+    "negative": 0.51,
+    "top_keywords": "오늘, 구리가격, 오늘은, 팔고"
+  },
+  {
+    "stock_code": "139130",
+    "stock_name": "iM금융지주",
+    "updated_at": "2025-06-10T02:32:04.401671+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "증권, 이라는, 현대인프라코어, 퇴출"
+  },
+  {
+    "stock_code": "204320",
+    "stock_name": "HL만도",
+    "updated_at": "2025-06-10T02:32:06.582832+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "야금, 떨어지는건, 등이네요, 이런주식은"
+  },
+  {
+    "stock_code": "282330",
+    "stock_name": "BGF리테일",
+    "updated_at": "2025-06-10T02:32:08.729575+00:00Z",
+    "positive": 0.31,
+    "negative": 0.69,
+    "top_keywords": "개미들, 좀, 털었냐, 반영되려면"
+  },
+  {
+    "stock_code": "361610",
+    "stock_name": "SK아이이테크놀로지",
+    "updated_at": "2025-06-10T02:32:10.505123+00:00Z",
+    "positive": 0.17,
+    "negative": 0.83,
+    "top_keywords": "불장에도, 여전히, 삽질중, 쓰레기"
+  },
+  {
+    "stock_code": "375500",
+    "stock_name": "DL이앤씨",
+    "updated_at": "2025-06-10T02:32:12.484491+00:00Z",
+    "positive": 0.07,
+    "negative": 0.93,
+    "top_keywords": "또, 신기허네, 현대건설의, 꼬봉으로"
+  },
+  {
+    "stock_code": "004170",
+    "stock_name": "신세계",
+    "updated_at": "2025-06-10T02:32:15.557039+00:00Z",
+    "positive": 0.14,
+    "negative": 0.86,
+    "top_keywords": "퍼, 왜, 롯쇼, 쉰세계"
+  },
+  {
+    "stock_code": "005850",
+    "stock_name": "에스엘",
+    "updated_at": "2025-06-10T02:32:17.248540+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "온다온다온다, 로, 돌진하라, 이런"
+  },
+  {
+    "stock_code": "009970",
+    "stock_name": "영원무역홀딩스",
+    "updated_at": "2025-06-10T02:32:18.934592+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "주식수가, 너무, 적다, 무증"
+  },
+  {
+    "stock_code": "007310",
+    "stock_name": "오뚜기",
+    "updated_at": "2025-06-10T02:32:21.084606+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "좀, 늙어서, 병원신세, 안지려면"
+  },
+  {
+    "stock_code": "047040",
+    "stock_name": "대우건설",
+    "updated_at": "2025-06-10T02:32:30.064215+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "대건, 대우건설, 배당, 원전"
+  },
+  {
+    "stock_code": "069960",
+    "stock_name": "현대백화점",
+    "updated_at": "2025-06-10T02:32:31.939255+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "주식에도, 품격이, 있다, 에휴"
+  },
+  {
+    "stock_code": "006280",
+    "stock_name": "녹십자",
+    "updated_at": "2025-06-10T02:32:33.783063+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "알바들, 또, 설레발, 치냐"
+  },
+  {
+    "stock_code": "010060",
+    "stock_name": "OCI홀딩스",
+    "updated_at": "2025-06-10T02:32:37.134009+00:00Z",
+    "positive": 0.47,
+    "negative": 0.53,
+    "top_keywords": "아줌씨, 대충하세요, 달다, 달아"
+  },
+  {
+    "stock_code": "300720",
+    "stock_name": "한일시멘트",
+    "updated_at": "2025-06-10T02:32:38.810322+00:00Z",
+    "positive": 0.67,
+    "negative": 0.33,
+    "top_keywords": "많이, 모아가라, 시가배당률, 높은"
+  },
+  {
+    "stock_code": "073240",
+    "stock_name": "금호타이어",
+    "updated_at": "2025-06-10T02:32:45.396790+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "삭제된, 게시물의, 답글, 금타"
+  },
+  {
+    "stock_code": "000080",
+    "stock_name": "하이트진로",
+    "updated_at": "2025-06-10T02:32:47.498454+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "매도, 엉덩이, 무겁다, 롯데칠성"
+  },
+  {
+    "stock_code": "014680",
+    "stock_name": "한솔케미칼",
+    "updated_at": "2025-06-10T02:32:49.047918+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "역시, 바닥다지고, 추세전환, 움직임"
+  },
+  {
+    "stock_code": "009420",
+    "stock_name": "한올바이오파마",
+    "updated_at": "2025-06-10T02:32:50.788781+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "한올, 어렵게, 올린거, 공매도"
+  },
+  {
+    "stock_code": "457190",
+    "stock_name": "이수스페셜티케미컬",
+    "updated_at": "2025-06-10T02:32:54.325226+00:00Z",
+    "positive": 0.35,
+    "negative": 0.65,
+    "top_keywords": "전기차, 전세계, 배터리와, 과잉생산"
+  },
+  {
+    "stock_code": "007070",
+    "stock_name": "GS리테일",
+    "updated_at": "2025-06-10T02:32:59.177961+00:00Z",
+    "positive": 0.4,
+    "negative": 0.6,
+    "top_keywords": "이, 주식, 년간, 내일"
+  },
+  {
+    "stock_code": "001800",
+    "stock_name": "오리온홀딩스",
+    "updated_at": "2025-06-10T02:33:04.173455+00:00Z",
+    "positive": 0.57,
+    "negative": 0.43,
+    "top_keywords": "역시, 팔길, 잘했네, 사업지주회사"
+  },
+  {
+    "stock_code": "003090",
+    "stock_name": "대웅",
+    "updated_at": "2025-06-10T02:33:06.139716+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "대웅, 말고, 금비, 상갈듯"
+  },
+  {
+    "stock_code": "011210",
+    "stock_name": "현대위아",
+    "updated_at": "2025-06-10T02:33:09.211724+00:00Z",
+    "positive": 0.3,
+    "negative": 0.7,
+    "top_keywords": "연기금, 회사, 정재욱은, 방산주"
+  },
+  {
+    "stock_code": "185750",
+    "stock_name": "종근당",
+    "updated_at": "2025-06-10T02:33:10.956015+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "종근당, 이재명이, 한번만, 언급해주길"
+  },
+  {
+    "stock_code": "137310",
+    "stock_name": "에스디바이오센서",
+    "updated_at": "2025-06-10T02:33:16.038759+00:00Z",
+    "positive": 0.09,
+    "negative": 0.91,
+    "top_keywords": "코로나, 끝난, 코로나는, 또"
+  },
+  {
+    "stock_code": "336260",
+    "stock_name": "두산퓨얼셀",
+    "updated_at": "2025-06-10T02:33:26.747919+00:00Z",
+    "positive": 0.45,
+    "negative": 0.55,
+    "top_keywords": "오늘, 두퓨, 원, 상한가"
+  },
+  {
+    "stock_code": "005070",
+    "stock_name": "코스모신소재",
+    "updated_at": "2025-06-10T02:33:29.995831+00:00Z",
+    "positive": 0.28,
+    "negative": 0.72,
+    "top_keywords": "다른, 속보, 대통령실, 국민들로부터"
+  },
+  {
+    "stock_code": "001120",
+    "stock_name": "LX인터내셔널",
+    "updated_at": "2025-06-10T02:33:32.130553+00:00Z",
+    "positive": 0.2,
+    "negative": 0.8,
+    "top_keywords": "쫄보들은, 나간거, 같고, 한번"
+  },
+  {
+    "stock_code": "192080",
+    "stock_name": "더블유게임즈",
+    "updated_at": "2025-06-10T02:33:34.330602+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "사이버, 조막손, 김가람대표, 주가"
+  },
+  {
+    "stock_code": "003240",
+    "stock_name": "태광산업",
+    "updated_at": "2025-06-10T02:33:37.255189+00:00Z",
+    "positive": 0.41,
+    "negative": 0.59,
+    "top_keywords": "기업들, 주식, 공개매수의, 향기가"
+  },
+  {
+    "stock_code": "014820",
+    "stock_name": "동원시스템즈",
+    "updated_at": "2025-06-10T02:33:39.206826+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "이거, 동원산업은, 슬슬, 금감원에서"
+  },
+  {
+    "stock_code": "004000",
+    "stock_name": "롯데정밀화학",
+    "updated_at": "2025-06-10T02:33:40.815665+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "화학주, 퍼센트, 다, 오르구만"
+  },
+  {
+    "stock_code": "001740",
+    "stock_name": "SK네트웍스",
+    "updated_at": "2025-06-10T02:33:42.719386+00:00Z",
+    "positive": 0.14,
+    "negative": 0.86,
+    "top_keywords": "손절하세요, 사고싶다, 폐기물, 쓰레기주답다"
+  },
+  {
+    "stock_code": "009240",
+    "stock_name": "한샘",
+    "updated_at": "2025-06-10T02:33:44.495844+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "노루홀딩스, 날아가던데, 한샘, 년간"
+  },
+  {
+    "stock_code": "285130",
+    "stock_name": "SK케미칼",
+    "updated_at": "2025-06-10T02:33:46.419937+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "두배먹고, 갑니다, 포홀은, 아직안올라서"
+  },
+  {
+    "stock_code": "298020",
+    "stock_name": "효성티앤씨",
+    "updated_at": "2025-06-10T02:33:48.178814+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "여기는, 아닌가보네"
+  },
+  {
+    "stock_code": "005300",
+    "stock_name": "롯데칠성",
+    "updated_at": "2025-06-10T02:33:49.959956+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "물타기와, 존버로, 양전환"
+  },
+  {
+    "stock_code": "298050",
+    "stock_name": "HS효성첨단소재",
+    "updated_at": "2025-06-10T02:33:51.874478+00:00Z",
+    "positive": 0.29,
+    "negative": 0.71,
+    "top_keywords": "얘가, 못오른는, 이유, 지주사"
+  },
+  {
+    "stock_code": "004490",
+    "stock_name": "세방전지",
+    "updated_at": "2025-06-10T02:33:54.017003+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "거래량이, 정말, 눈뜨고, 못보겠네"
+  },
+  {
+    "stock_code": "120110",
+    "stock_name": "코오롱인더",
+    "updated_at": "2025-06-10T02:33:56.390279+00:00Z",
+    "positive": 0.3,
+    "negative": 0.7,
+    "top_keywords": "너무, 저평가, 이노무주식, 분석좀"
+  },
+  {
+    "stock_code": "114090",
+    "stock_name": "GKL",
+    "updated_at": "2025-06-10T02:33:57.968591+00:00Z",
+    "positive": 1.0,
+    "negative": 0,
+    "top_keywords": "차트가, 아주, 예쁘네요"
+  },
+  {
+    "stock_code": "039130",
+    "stock_name": "하나투어",
+    "updated_at": "2025-06-10T02:33:59.758473+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "중국인, 무비자, 입국, 국민연금도"
+  },
+  {
+    "stock_code": "008730",
+    "stock_name": "율촌화학",
+    "updated_at": "2025-06-10T02:34:01.446606+00:00Z",
+    "positive": 0.67,
+    "negative": 0.33,
+    "top_keywords": "가상자산, 육성, 정책, 기대감"
+  },
+  {
+    "stock_code": "003620",
+    "stock_name": "KG모빌리티",
+    "updated_at": "2025-06-10T02:34:05.008498+00:00Z",
+    "positive": 0.32,
+    "negative": 0.68,
+    "top_keywords": "곽재선, 상한가, 정치판새, 조희대랑"
+  },
+  {
+    "stock_code": "001680",
+    "stock_name": "대상",
+    "updated_at": "2025-06-10T02:34:06.834217+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "대상을, 건드리면, 대상포진에, 최악의잡주부분"
+  },
+  {
+    "stock_code": "000210",
+    "stock_name": "DL",
+    "updated_at": "2025-06-10T02:34:08.718267+00:00Z",
+    "positive": 0.67,
+    "negative": 0.33,
+    "top_keywords": "화학주들, 떡상인디, 드디어, 흑자다"
+  },
+  {
+    "stock_code": "145720",
+    "stock_name": "덴티움",
+    "updated_at": "2025-06-10T02:34:10.583567+00:00Z",
+    "positive": 0.75,
+    "negative": 0.25,
+    "top_keywords": "만, 가자, 공매도, 잔고가"
+  },
+  {
+    "stock_code": "456040",
+    "stock_name": "OCI",
+    "updated_at": "2025-06-10T02:34:12.287962+00:00Z",
+    "positive": 0.71,
+    "negative": 0.29,
+    "top_keywords": "따불, 와씨, 최근, 두달도"
+  },
+  {
+    "stock_code": "001430",
+    "stock_name": "세아베스틸지주",
+    "updated_at": "2025-06-10T02:34:14.172847+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "사자마자, 처물리는, 나, 하락하면"
+  },
+  {
+    "stock_code": "069260",
+    "stock_name": "TKG휴켐스",
+    "updated_at": "2025-06-10T02:34:15.942216+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "휴켐스가, 미쳐날뛰고, 있어요, 올해"
+  },
+  {
+    "stock_code": "271940",
+    "stock_name": "일진하이솔루스",
+    "updated_at": "2025-06-10T02:34:17.556089+00:00Z",
+    "positive": 0.8,
+    "negative": 0.2,
+    "top_keywords": "그동안, 고생한, 주주들, 생각해서"
+  },
+  {
+    "stock_code": "002710",
+    "stock_name": "TCC스틸",
+    "updated_at": "2025-06-10T02:34:19.610901+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "매도하고, 실적주, 성우하이텍, 공매들"
+  },
+  {
+    "stock_code": "178920",
+    "stock_name": "PI첨단소재",
+    "updated_at": "2025-06-10T02:34:22.230767+00:00Z",
+    "positive": 0.47,
+    "negative": 0.53,
+    "top_keywords": "갑자기, 즐거워지네요, 드뎌, 수익이넹"
+  },
+  {
+    "stock_code": "005420",
+    "stock_name": "코스모화학",
+    "updated_at": "2025-06-10T02:34:24.206939+00:00Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "햐, 아, 코스모화학, 보다"
+  },
+  {
+    "stock_code": "005250",
+    "stock_name": "녹십자홀딩스",
+    "updated_at": "2025-06-10T02:34:26.628766+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "없다, 우째, 감흥이, 상법개정으로"
+  },
+  {
+    "stock_code": "006650",
+    "stock_name": "대한유화",
+    "updated_at": "2025-06-10T02:34:27.802261+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "여기는, 이재명정권의, 첫, 타깃"
+  },
+  {
+    "stock_code": "105630",
+    "stock_name": "한세실업",
+    "updated_at": "2025-06-10T02:34:29.048064+00:00Z",
+    "positive": 0.17,
+    "negative": 0.83,
+    "top_keywords": "튀어, 다시, 원, 학습효과"
+  },
+  {
+    "stock_code": "093370",
+    "stock_name": "후성",
+    "updated_at": "2025-06-10T02:34:32.548703+00:00Z",
+    "positive": 0.38,
+    "negative": 0.62,
+    "top_keywords": "후성, 개기금, 평단, 상승기원"
+  },
+  {
+    "stock_code": "006110",
+    "stock_name": "삼아알미늄",
+    "updated_at": "2025-06-10T02:34:33.576954+00:00Z",
+    "positive": 0,
+    "negative": 1.0,
+    "top_keywords": "선대인, 한탕, 종목, 장오를때"
+  }
+]

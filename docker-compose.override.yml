@@ -1,0 +1,30 @@
+# 개발 환경용 Docker Compose 오버라이드
+# 사용법: docker-compose up -d (자동으로 적용됨)
+
+# version: '3.8' # Docker Compose v2에서는 version 속성이 불필요
+
+services:
+  frontend:
+    # 프로덕션 빌드 대신 개발 모드로 실행
+    build:
+      context: ./stock-dashboard
+      dockerfile: Dockerfile.dev  # 개발용 Dockerfile (선택사항)
+    
+    # 볼륨 마운트로 실시간 반영
+    volumes:
+      - ./stock-dashboard:/app  # 전체 소스코드 마운트
+      - /app/node_modules       # node_modules는 컨테이너 것 사용
+      - /app/.next              # .next 빌드 폴더도 컨테이너 것 사용
+    
+    # 환경변수 개발 모드로 변경
+    environment:
+      - NODE_ENV=development     # 개발 모드
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001
+    
+    # 개발 서버 명령어
+    command: npm run dev
+    
+    # stdin_open과 tty 활성화 (개발 모드)
+    stdin_open: true
+    tty: true 

@@ -1,0 +1,119 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 -->
+  <rect width="32" height="32" rx="6" fill="url(#bgGradient)"/>
+  
+  <!-- 움직이는 상승 그래프 바들 -->
+  <rect x="3" y="26" width="3.5" height="4" fill="url(#barGradient1)">
+    <animate attributeName="height" values="4;8;6;4" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="26;22;24;26" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  
+  <rect x="7.5" y="23" width="3.5" height="7" fill="url(#barGradient2)">
+    <animate attributeName="height" values="7;12;9;7" dur="2.2s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="23;18;21;23" dur="2.2s" repeatCount="indefinite"/>
+  </rect>
+  
+  <rect x="12" y="19" width="3.5" height="11" fill="url(#barGradient3)">
+    <animate attributeName="height" values="11;16;13;11" dur="2.4s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="19;14;17;19" dur="2.4s" repeatCount="indefinite"/>
+  </rect>
+  
+  <rect x="16.5" y="15" width="3.5" height="15" fill="url(#barGradient4)">
+    <animate attributeName="height" values="15;20;17;15" dur="2.6s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="15;10;13;15" dur="2.6s" repeatCount="indefinite"/>
+  </rect>
+  
+  <rect x="21" y="10" width="3.5" height="20" fill="url(#barGradient5)">
+    <animate attributeName="height" values="20;25;22;20" dur="2.8s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="10;5;8;10" dur="2.8s" repeatCount="indefinite"/>
+  </rect>
+  
+  <rect x="25.5" y="5" width="3.5" height="25" fill="url(#barGradient6)">
+    <animate attributeName="height" values="25;28;26;25" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="5;2;4;5" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- 움직이는 트렌드 라인 -->
+  <path d="M4.75 28 L9.25 26.5 L13.75 25 L18.25 22.5 L22.75 17.5 L27.25 17.5" 
+        stroke="url(#lineGradient)" 
+        stroke-width="1.5" 
+        stroke-linecap="round" 
+        fill="none"
+        opacity="0.8">
+    <animate attributeName="stroke-dasharray" values="0,100;50,50;100,0;0,100" dur="4s" repeatCount="indefinite"/>
+  </path>
+  
+  <!-- 그라디언트 정의 -->
+  <defs>
+    <!-- 배경 그라디언트 -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f1f5f9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e2e8f0;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 움직이는 바 그라디언트들 -->
+    <linearGradient id="barGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8">
+        <animate attributeName="stop-color" values="#3b82f6;#6366f1;#8b5cf6;#3b82f6" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1">
+        <animate attributeName="stop-color" values="#1e40af;#4338ca;#7c3aed;#1e40af" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <linearGradient id="barGradient2" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8">
+        <animate attributeName="stop-color" values="#6366f1;#8b5cf6;#3b82f6;#6366f1" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1">
+        <animate attributeName="stop-color" values="#4338ca;#7c3aed;#1e40af;#4338ca" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <linearGradient id="barGradient3" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8">
+        <animate attributeName="stop-color" values="#8b5cf6;#3b82f6;#6366f1;#8b5cf6" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1">
+        <animate attributeName="stop-color" values="#7c3aed;#1e40af;#4338ca;#7c3aed" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <linearGradient id="barGradient4" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8">
+        <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#6366f1;#3b82f6" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1">
+        <animate attributeName="stop-color" values="#1e40af;#7c3aed;#4338ca;#1e40af" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <linearGradient id="barGradient5" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8">
+        <animate attributeName="stop-color" values="#6366f1;#3b82f6;#8b5cf6;#6366f1" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1">
+        <animate attributeName="stop-color" values="#4338ca;#1e40af;#7c3aed;#4338ca" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <linearGradient id="barGradient6" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8">
+        <animate attributeName="stop-color" values="#8b5cf6;#6366f1;#3b82f6;#8b5cf6" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1">
+        <animate attributeName="stop-color" values="#7c3aed;#4338ca;#1e40af;#7c3aed" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- 트렌드 라인 그라디언트 -->
+    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1">
+        <animate attributeName="stop-opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1">
+        <animate attributeName="stop-opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+  </defs>
+</svg> 

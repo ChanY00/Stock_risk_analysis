@@ -1,0 +1,299 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.75rem;
+    
+    /* 커스텀 그라데이션 차트 색상 */
+    --gray-350: 214.3 27.8% 85%;
+    --gray-450: 214.3 25.9% 65%;
+    --gray-550: 214.3 23.8% 45%;
+    --gray-650: 214.3 21.8% 35%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* 커스텀 애니메이션 - 더 부드럽고 미묘하게 */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* 스크롤바 스타일링 - 더 차분하게 */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(243, 244, 246, 0.3);
+    border-radius: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(243, 244, 246, 0.3);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.8);
+  }
+
+  /* 애니메이션 클래스 - 최소화 */
+  .animate-fadeIn {
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  .animate-slideIn {
+    animation: slideIn 0.5s ease-out;
+  }
+
+  /* 유틸리티 클래스 - 차분한 색상 */
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #374151 0%, #6b7280 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .shadow-subtle {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-soft {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 호버 효과 - 더 부드럽게 */
+  .hover-lift {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 카드 스타일 - 미니멀하게 */
+  .card-modern {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(229, 231, 235, 0.6);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  /* 버튼 - 차분한 그라데이션 */
+  .btn-modern {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    border: none;
+    color: white;
+    transition: all 0.2s ease;
+  }
+
+  .btn-modern:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.25);
+  }
+
+  /* 반응형 그리드 */
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .responsive-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  /* Scale 102 유틸리티 */
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
+  }
+
+  /* 모던한 밑줄 스타일 */
+  .modern-underline {
+    position: relative;
+  }
+
+  .modern-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #475569 0%, #3b82f6 50%, #475569 100%);
+    border-radius: 2px;
+    opacity: 0.8;
+  }
+
+  /* 커스텀 그라데이션 차트 색상 클래스 */
+  .bg-gray-350 {
+    background-color: hsl(var(--gray-350));
+  }
+  
+  .bg-gray-450 {
+    background-color: hsl(var(--gray-450));
+  }
+  
+  .bg-gray-550 {
+    background-color: hsl(var(--gray-550));
+  }
+  
+  .bg-gray-650 {
+    background-color: hsl(var(--gray-650));
+  }
+
+  /* 그라데이션 to 색상들 */
+  .from-gray-350 {
+    --tw-gradient-from: hsl(var(--gray-350));
+    --tw-gradient-to: transparent;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  
+  .to-gray-350 {
+    --tw-gradient-to: hsl(var(--gray-350));
+  }
+  
+  .from-gray-450 {
+    --tw-gradient-from: hsl(var(--gray-450));
+    --tw-gradient-to: transparent;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  
+  .to-gray-450 {
+    --tw-gradient-to: hsl(var(--gray-450));
+  }
+  
+  .from-gray-550 {
+    --tw-gradient-from: hsl(var(--gray-550));
+    --tw-gradient-to: transparent;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  
+  .to-gray-550 {
+    --tw-gradient-to: hsl(var(--gray-550));
+  }
+  
+  .from-gray-650 {
+    --tw-gradient-from: hsl(var(--gray-650));
+    --tw-gradient-to: transparent;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  }
+  
+  .to-gray-650 {
+    --tw-gradient-to: hsl(var(--gray-650));
+  }
+
+  /* Edu NSW ACT Hand Cursive 폰트 클래스 */
+  .font-edu-handwriting {
+    font-family: var(--font-edu-nsw-act), cursive, system-ui;
+  }
+
+  /* ForceGraph2D tooltip 단순 숨기기 (성능 최적화) */
+  .float-tooltip-kap {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  /* 네트워크 그래프 성능 최적화 */
+  .network-graph-container {
+    will-change: auto;
+    contain: layout style;
+  }
+
+  .network-graph-container canvas {
+    image-rendering: optimizeSpeed;
+  }
+}
