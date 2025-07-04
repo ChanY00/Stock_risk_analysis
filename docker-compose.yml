@@ -33,12 +33,12 @@ services:
     container_name: kospi-postgres
     restart: unless-stopped    # 컨테이너 자동 재시작 (실수로 종료되어도 안전)
     
-    # �� 환경변수 (데이터베이스 설정) - .env 파일에서 로드
+    # 🔧 환경변수 (데이터베이스 설정) - stock_backend/.env에서 로드
     env_file:
-      - .env
+      - ./stock_backend/.env
     environment:
-      POSTGRES_DB: ${DB_NAME:-kospi_db}
-      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
     
@@ -59,7 +59,7 @@ services:
     
     # 🏥 헬스체크 (데이터베이스 준비 상태 확인)
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-kospi_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,9 +73,9 @@ services:
     container_name: kospi-redis
     restart: unless-stopped
     
-    # 🔒 환경변수 (Redis 설정) - .env 파일에서 로드
+    # 🔧 환경변수 (Redis 설정) - stock_backend/.env에서 로드
     env_file:
-      - .env
+      - ./stock_backend/.env
     
     # 💾 볼륨 마운트
     volumes:
@@ -111,9 +111,8 @@ services:
     ports:
       - "5001:5001"
     
-    # 🔧 환경변수 (하이브리드 방식)
+    # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - .env                          # 공통 환경변수 (DB, Redis 등)
       - ./Stock_risk_analysis/.env    # 서비스별 API 키 및 설정 파일
     environment:
       - FLASK_ENV=production
@@ -146,26 +145,20 @@ services:
     ports:
       - "8000:8000"
     
-    # 🔧 환경변수 (하이브리드 방식 - 실무 베스트 프랙티스)
+    # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - .env                          # 공통 환경변수 (DB, Redis 등)
-      - ./stock_backend/.env          # 서비스별 API 키 및 Django 설정
+      - ./stock_backend/.env          # Django 설정 및 API 키
     environment:
       # Docker Compose 전용 설정 (인프라 관련)
       - DB_HOST=postgres              # 💡 서비스명으로 접근!
       - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-kospi_db}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis              # 💡 Docker 네트워크의 마법
       - REDIS_PORT=6379
       - REDIS_DB=0
       
       # 개발 환경 오버라이드  
-      - DEBUG=${DEBUG:-True}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,kospi-backend,backend}
       - USE_MOCK_DATA=True
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://frontend:3000}
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
       - STATIC_ROOT=/app/staticfiles
       - SKIP_COLLECTSTATIC=True
       - COLLECT_STATIC=False
@@ -207,14 +200,13 @@ services:
     ports:
       - "3000:3000"
     
-    # 🔧 환경변수 (하이브리드 방식)
+    # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - .env                          # 공통 환경변수
       - ./stock-dashboard/.env.local  # Next.js 로컬 환경변수
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}     # Django API 주소
-      - NEXT_PUBLIC_SENTIMENT_URL=${NEXT_PUBLIC_SENTIMENT_URL:-http://localhost:5001}  # Flask API 주소
+      - NEXT_PUBLIC_API_URL=http://localhost:8000     # Django API 주소
+      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001  # Flask API 주소
     
     # 🔗 의존성 설정
     depends_on:
