@@ -33,13 +33,10 @@ services:
     container_name: kospi-postgres
     restart: unless-stopped    # 컨테이너 자동 재시작 (실수로 종료되어도 안전)
     
-    # 🔧 환경변수 (데이터베이스 설정) - stock_backend/.env에서 로드
+    # 🔧 환경변수 (데이터베이스 설정) - stock_backend/.env에서 자동 로드
     env_file:
       - ./stock_backend/.env
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
     
     # 💾 볼륨 마운트 (데이터 영속성)
@@ -49,9 +46,9 @@ services:
       # 💡 컨테이너가 삭제되어도 데이터 보존!
       # 💡 초기화 SQL 파일 자동 실행
     
-    # 🌐 포트 매핑
+    # 🌐 포트 매핑 (환경변수 활용)
     ports:
-      - "5432:5432"  # 호스트:컨테이너
+      - "${DB_PORT:-5432}:5432"  # 호스트:컨테이너
     
     # 🌐 네트워크 연결
     networks:
@@ -59,7 +56,7 @@ services:
     
     # 🏥 헬스체크 (데이터베이스 준비 상태 확인)
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -81,9 +78,9 @@ services:
     volumes:
       - redis_data:/data
     
-    # 🌐 포트 매핑
+    # 🌐 포트 매핑 (환경변수 활용)
     ports:
-      - "6379:6379"  # 호스트:컨테이너
+      - "${REDIS_PORT:-6379}:6379"  # 호스트:컨테이너
     
     # 🌐 네트워크 연결
     networks:
@@ -151,10 +148,10 @@ services:
     environment:
       # Docker Compose 전용 설정 (인프라 관련)
       - DB_HOST=postgres              # 💡 서비스명으로 접근!
-      - DB_PORT=5432
+      - DB_PORT=${DB_PORT:-5432}
       - REDIS_HOST=redis              # 💡 Docker 네트워크의 마법
-      - REDIS_PORT=6379
-      - REDIS_DB=0
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
       
       # 개발 환경 오버라이드  
       - USE_MOCK_DATA=True
@@ -200,20 +197,21 @@ services:
     ports:
       - "3000:3000"
     
-    # 🔧 환경변수 (서비스별 설정)
-    env_file:
-      - ./stock-dashboard/.env.local  # Next.js 로컬 환경변수
+    # 🔧 환경변수 (서비스별 설정) - Docker Compose에서 직접 관리
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000     # Django API 주소
-      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001  # Flask API 주소
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api     # Django API 주소 (/api prefix 추가)
+      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001   # Flask API 주소
+    # env_file 일시 주석처리 (환경변수 충돌 방지)
+    # env_file:
+    #   - ./stock-dashboard/.env.local  # Next.js 로컬 환경변수
     
     # 🔗 의존성 설정
     depends_on:
       backend:
         condition: service_healthy  # Django가 준비될 때까지 대기
-      sentiment:
-        condition: service_healthy  # Flask가 준비될 때까지 대기
+      # sentiment:
+      #   condition: service_healthy  # Flask가 준비될 때까지 대기 (테스트 중 비활성화)
     
     # 🌐 네트워크 연결
     networks:

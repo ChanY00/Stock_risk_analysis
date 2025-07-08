@@ -86,6 +86,11 @@ setup_asgi() {
     # 데이터베이스 대기
     wait_for_db
     
+    # 마이그레이션 실행 (중요!)
+    echo -e "${YELLOW}📊 데이터베이스 마이그레이션 실행 중...${NC}"
+    python manage.py makemigrations --noinput
+    python manage.py migrate --noinput
+    
     # WebSocket 전용 ASGI 서버 실행
     echo -e "${GREEN}🌐 ASGI WebSocket 서버 시작${NC}"
     exec daphne -b 0.0.0.0 -p 8000 stock_backend.asgi:application
