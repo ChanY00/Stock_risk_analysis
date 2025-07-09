@@ -155,7 +155,7 @@ services:
       
       # 개발 환경 오버라이드  
       - USE_MOCK_DATA=True
-      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://host.docker.internal:3000,http://frontend:3000
       - STATIC_ROOT=/app/staticfiles
       - SKIP_COLLECTSTATIC=True
       - COLLECT_STATIC=False
@@ -200,8 +200,13 @@ services:
     # 🔧 환경변수 (서비스별 설정) - Docker Compose에서 직접 관리
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api     # Django API 주소 (/api prefix 추가)
-      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001   # Flask API 주소
+      # 🔥 해결책: Docker 환경에서 호스트 접근 방법 적용
+      - NEXT_PUBLIC_API_URL=http://host.docker.internal:8000/api    # Docker에서 호스트 접근
+      - NEXT_PUBLIC_SENTIMENT_URL=http://host.docker.internal:5001  # Flask API 주소
+      - NEXT_PUBLIC_WS_URL=ws://host.docker.internal:8000/ws       # WebSocket 주소
+      # 서버 사이드에서 사용할 내부 API URL (SSR, API Routes용)
+      - INTERNAL_API_URL=http://backend:8000/api          # 컨테이너 간 통신용
+      - INTERNAL_SENTIMENT_URL=http://sentiment:5001      # 컨테이너 간 통신용
     # env_file 일시 주석처리 (환경변수 충돌 방지)
     # env_file:
     #   - ./stock-dashboard/.env.local  # Next.js 로컬 환경변수
@@ -216,6 +221,10 @@ services:
     # 🌐 네트워크 연결
     networks:
       - kospi-network
+    
+    # 🔧 호스트 매핑 (Linux 환경에서 host.docker.internal 지원)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     
     # 🏥 헬스체크
     healthcheck:
