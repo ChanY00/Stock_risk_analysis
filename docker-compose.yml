@@ -33,33 +33,33 @@ services:
     container_name: kospi-postgres
     restart: unless-stopped    # 컨테이너 자동 재시작 (실수로 종료되어도 안전)
     
-    # �� 환경변수 (데이터베이스 설정) - .env 파일에서 로드
+    # 🔧 환경변수 (데이터베이스 설정) - stock_backend/.env에서 로드
     env_file:
-      - .env
+      - ./stock_backend/.env
     environment:
-      POSTGRES_DB: ${DB_NAME:-kospi_db}
-      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: trust
-    
+
     # 💾 볼륨 마운트 (데이터 영속성)
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db_init/kospi_db_dump.sql:/docker-entrypoint-initdb.d/01-kospi_db_dump.sql:ro
       # 💡 컨테이너가 삭제되어도 데이터 보존!
       # 💡 초기화 SQL 파일 자동 실행
-    
+
     # 🌐 포트 매핑
     ports:
       - "5432:5432"  # 호스트:컨테이너
-    
+
     # 🌐 네트워크 연결
     networks:
       - kospi-network
-    
+
     # 🏥 헬스체크 (데이터베이스 준비 상태 확인)
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-kospi_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -72,23 +72,23 @@ services:
     image: redis:7-alpine  # 공식 Redis 이미지 (경량 버전)
     container_name: kospi-redis
     restart: unless-stopped
-    
-    # 🔒 환경변수 (Redis 설정) - .env 파일에서 로드
+
+    # 🔧 환경변수 (Redis 설정) - stock_backend/.env에서 로드
     env_file:
-      - .env
-    
+      - ./stock_backend/.env
+
     # 💾 볼륨 마운트
     volumes:
       - redis_data:/data
-    
+
     # 🌐 포트 매핑
     ports:
       - "6379:6379"  # 호스트:컨테이너
-    
+
     # 🌐 네트워크 연결
     networks:
       - kospi-network
-    
+
     # 🏥 헬스체크
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -106,23 +106,22 @@ services:
       dockerfile: Dockerfile
     container_name: kospi-sentiment
     restart: unless-stopped
-    
+
     # 🌐 포트 매핑
     ports:
       - "5001:5001"
-    
-    # 🔧 환경변수 (하이브리드 방식)
+
+    # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - .env                          # 공통 환경변수 (DB, Redis 등)
       - ./Stock_risk_analysis/.env    # 서비스별 API 키 및 설정 파일
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
-    
+
     # 🌐 네트워크 연결
     networks:
       - kospi-network
-    
+
     # 🏥 헬스체크
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
@@ -141,50 +140,44 @@ services:
       target: development  # 멀티스테이지에서 development 스테이지 선택
     container_name: kospi-backend
     restart: unless-stopped
-    
+
     # 🌐 포트 매핑
     ports:
       - "8000:8000"
-    
-    # 🔧 환경변수 (하이브리드 방식 - 실무 베스트 프랙티스)
+
+    # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - .env                          # 공통 환경변수 (DB, Redis 등)
-      - ./stock_backend/.env          # 서비스별 API 키 및 Django 설정
+      - ./stock_backend/.env          # Django 설정 및 API 키
     environment:
       # Docker Compose 전용 설정 (인프라 관련)
       - DB_HOST=postgres              # 💡 서비스명으로 접근!
       - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-kospi_db}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis              # 💡 Docker 네트워크의 마법
       - REDIS_PORT=6379
       - REDIS_DB=0
-      
-      # 개발 환경 오버라이드  
-      - DEBUG=${DEBUG:-True}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,kospi-backend,backend}
+
+      # 개발 환경 오버라이드
       - USE_MOCK_DATA=True
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://frontend:3000}
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
       - STATIC_ROOT=/app/staticfiles
       - SKIP_COLLECTSTATIC=True
       - COLLECT_STATIC=False
       - DJANGO_MODE=development
-    
+
     # 🚀 명령어 오버라이드 (ASGI 서버로 WebSocket 지원)
     command: ["./docker-entrypoint.sh", "asgi"]
-    
+
     # 🔗 의존성 설정 (중요!)
     depends_on:
       postgres:
         condition: service_healthy  # PostgreSQL이 준비될 때까지 대기
       redis:
         condition: service_healthy  # Redis가 준비될 때까지 대기
-    
+
     # 🌐 네트워크 연결
     networks:
       - kospi-network
-    
+
     # 🏥 헬스체크
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/stocks/health/"]
@@ -202,19 +195,18 @@ services:
       dockerfile: Dockerfile
     container_name: kospi-frontend
     restart: unless-stopped
-    
+
     # 🌐 포트 매핑
     ports:
       - "3000:3000"
-    
-    # 🔧 환경변수 (하이브리드 방식)
+
+    # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - .env                          # 공통 환경변수
       - ./stock-dashboard/.env.local  # Next.js 로컬 환경변수
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}     # Django API 주소
-      - NEXT_PUBLIC_SENTIMENT_URL=${NEXT_PUBLIC_SENTIMENT_URL:-http://localhost:5001}  # Flask API 주소
+      - NEXT_PUBLIC_API_URL=http://localhost:8000     # Django API 주소
+      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001  # Flask API 주소
     
     # 🔗 의존성 설정
     depends_on:
