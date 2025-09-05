@@ -1,0 +1,17 @@
+# Production-like smoke override for local testing
+
+services:
+  backend:
+    environment:
+      - DJANGO_MODE=production
+      # Keep existing CORS_ALLOWED_ORIGINS from base compose
+      # Ensure Redis channels is used (prod.py uses Redis by default)
+      - USE_REDIS_CHANNELS=True
+
+  frontend:
+    # Use production build as in base compose
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001
+

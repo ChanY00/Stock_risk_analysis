@@ -1,0 +1,32 @@
+# Next.js 개발 환경용 Dockerfile
+FROM node:18-alpine
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 개발 도구 설치
+RUN apk add --no-cache dumb-init
+
+# package.json 복사
+COPY package.json pnpm-lock.yaml* package-lock.json* yarn.lock* ./
+
+# 의존성 설치
+RUN \
+  if [ -f pnpm-lock.yaml ]; then \
+    npm install -g pnpm && pnpm install; \
+  elif [ -f package-lock.json ]; then \
+    npm ci; \
+  elif [ -f yarn.lock ]; then \
+    yarn install; \
+  else \
+    npm install; \
+  fi
+
+# 소스코드 복사
+COPY . .
+
+# 포트 노출
+EXPOSE 3000
+
+# 개발 서버 시작
+CMD ["npm", "run", "dev"] 

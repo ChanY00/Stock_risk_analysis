@@ -18,7 +18,10 @@ dist/
 downloads/
 eggs/
 .eggs/
+# Note: this ignores any directory named 'lib' anywhere (Python build output)
+# It accidentally hides frontend source dir `stock-dashboard/lib`. We unignore it below.
 lib/
+!stock-dashboard/lib/
 lib64/
 parts/
 sdist/
