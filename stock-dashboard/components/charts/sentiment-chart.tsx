@@ -301,7 +301,7 @@ function SentimentChartContent({
   };
 
   // 감정 추이 데이터 가공: 0~100 점수(긍정 비율)로 변환
-  const trendData = (
+  let trendData = (
     sentimentTrend && sentimentTrend.length > 0 ? sentimentTrend : []
   ).map((item) => ({
     date: new Date(item.date).toLocaleDateString("ko-KR", {
@@ -310,6 +310,38 @@ function SentimentChartContent({
     }),
     score: Math.max(0, Math.min(100, (item.positive || 0) * 100)),
   }));
+
+  // 더미 데이터 토글: 쿼리스트링 dummySentiment=1 또는 환경변수로 활성화
+  const isDummyEnabled = (() => {
+    try {
+      if (typeof window !== "undefined") {
+        const sp = new URLSearchParams(window.location.search);
+        if (sp.get("dummySentiment") === "1") return true;
+      }
+      return process.env.NEXT_PUBLIC_SHOW_SENTIMENT_DUMMY === "1";
+    } catch {
+      return false;
+    }
+  })();
+
+  if (trendData.length === 0 || isDummyEnabled) {
+    const basePositive =
+      positiveValue && positiveValue > 0 ? positiveValue : 0.62;
+    const today = new Date();
+    const days = 14;
+    trendData = Array.from({ length: days }, (_, idx) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (days - 1 - idx));
+      // 가벼운 진동과 잡음으로 자연스러운 더미 데이터 생성
+      const wave = 0.04 * Math.sin((idx / days) * Math.PI * 2);
+      const noise = (Math.random() - 0.5) * 0.03;
+      const p = Math.max(0.1, Math.min(0.9, basePositive + wave + noise));
+      return {
+        date: d.toLocaleDateString("ko-KR", { month: "short", day: "numeric" }),
+        score: Math.round(p * 100),
+      };
+    });
+  }
 
   return (
     <div className="w-full space-y-6">
