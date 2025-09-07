@@ -19,7 +19,7 @@ services:
     # 환경변수 개발 모드로 변경
     environment:
       - NODE_ENV=development     # 개발 모드
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
       - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001
     
     # 개발 서버 명령어

@@ -23,6 +23,8 @@ eggs/
 lib/
 !stock-dashboard/lib/
 lib64/
+# Next.js lib 폴더는 예외 처리
+!stock-dashboard/lib/
 parts/
 sdist/
 var/

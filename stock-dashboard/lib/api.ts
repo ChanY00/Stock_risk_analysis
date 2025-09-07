@@ -1,42 +1,31 @@
 // API Configuration - 환경에 따른 동적 URL 설정
-const ensureApiSuffix = (base: string): string => {
-  try {
-    const url = new URL(base);
-    // If path already ends with /api or /api/, keep it
-    if (url.pathname === '/api' || url.pathname === '/api/') return base;
-    // If no path or root, append /api
-    if (url.pathname === '' || url.pathname === '/') {
-      url.pathname = '/api';
-      return url.toString().replace(/\/$/, '');
-    }
-    return base; // respect custom paths (advanced users)
-  } catch {
-    // Fallback for non-URL strings
-    return base.endsWith('/api') || base.endsWith('/api/') ? base : `${base.replace(/\/$/, '')}/api`;
-  }
-};
 
 const getApiBaseUrl = (): string => {
   // 브라우저 환경에서는 환경변수 또는 localhost 사용
-  if (typeof window !== 'undefined') {
-    return ensureApiSuffix(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api');
+  if (typeof window !== "undefined") {
+    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
   }
-  
+
   // 서버 환경(SSR, API Routes)에서는 내부 URL 사용
-  return ensureApiSuffix(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api');
+  return (
+    process.env.INTERNAL_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:8000/api"
+  );
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 // CSRF 토큰 관리
 const getCsrfToken = (): string | null => {
-  if (typeof document === 'undefined') return null;
-  
+
+  if (typeof document === "undefined") return null;
+
   const cookie = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('csrftoken='));
-  
-  return cookie ? cookie.split('=')[1] : null;
+    .split("; ")
+    .find((row) => row.startsWith("csrftoken="));
+
+  return cookie ? cookie.split("=")[1] : null;
 };
 
 // Authentication Types
@@ -90,10 +79,12 @@ export interface Stock {
 }
 
 export interface StockDetail extends Stock {
-  financial_data?: FinancialData;  // 단일 객체로 수정
+
+  financial_data?: FinancialData; // 단일 객체로 수정
   price_history?: PriceData[];
   technical_indicators?: TechnicalIndicators;
-  price_data?: {  // 추가 가격 데이터
+  price_data?: {
+    // 추가 가격 데이터
     date: string;
     open_price: number;
     high_price: number;
@@ -147,8 +138,19 @@ export interface SentimentAnalysis {
   top_keywords: string;
   neutral?: string | number;
   sentiment_score?: number;
-  dominant_sentiment?: 'positive' | 'negative' | 'neutral';
+
+  dominant_sentiment?: "positive" | "negative" | "neutral";
   keyword_array?: string[];
+}
+
+// 최근 N일 감정 추이 데이터 타입
+export interface SentimentTrendData {
+  date: string;
+  positive: number;
+  negative: number;
+  neutral?: number;
+  sentiment_score: number; // -1 ~ 1 범위
+  total_posts?: number;
 }
 
 export interface MarketOverview {
@@ -287,7 +289,7 @@ export interface Alert {
   id: number;
   stock: string;
   stock_name: string;
-  condition: 'above' | 'below';
+  condition: "above" | "below";
   target_price: number;
   is_active: boolean;
   message: string;
@@ -298,68 +300,69 @@ export interface Alert {
 
 export interface CreateAlertRequest {
   stock_code: string;
-  condition: 'above' | 'below';
+  condition: "above" | "below";
   target_price: number;
   message?: string;
 }
 
 // 클러스터링 관련 타입들
 export interface ClusterAnalysis {
-  cluster_type: 'spectral' | 'agglomerative'
-  cluster_id: number
-  cluster_name: string
-  description: string
-  dominant_sectors: string[]
-  stock_count: number
-  avg_market_cap: number | null
-  avg_per: number | null
-  avg_pbr: number | null
+
+  cluster_type: "spectral" | "agglomerative";
+  cluster_id: number;
+  cluster_name: string;
+  description: string;
+  dominant_sectors: string[];
+  stock_count: number;
+  avg_market_cap: number | null;
+  avg_per: number | null;
+  avg_pbr: number | null;
   characteristics: {
-    sector_distribution: Record<string, number>
+    sector_distribution: Record<string, number>;
     market_cap_range: {
-      min: number | null
-      max: number | null
-    }
-  }
+      min: number | null;
+      max: number | null;
+    };
+  };
 }
 
 export interface ClusterOverview {
-  cluster_type: 'spectral' | 'agglomerative'
-  total_clusters: number
-  clusters: ClusterAnalysis[]
+  cluster_type: "spectral" | "agglomerative";
+  total_clusters: number;
+  clusters: ClusterAnalysis[];
 }
 
 export interface ClusterStocks {
-  cluster_analysis: ClusterAnalysis
-  stocks: Stock[]
-  similar_clusters: ClusterAnalysis[]
+  cluster_analysis: ClusterAnalysis;
+  stocks: Stock[];
+  similar_clusters: ClusterAnalysis[];
 }
 
 export interface StockClusterInfo {
-  stock_code: string
-  stock_name: string
+  stock_code: string;
+  stock_name: string;
   clusters: {
     spectral: {
-      cluster_id: number
-      cluster_name: string
-      cluster_analysis: ClusterAnalysis
-    } | null
+      cluster_id: number;
+      cluster_name: string;
+      cluster_analysis: ClusterAnalysis;
+    } | null;
     agglomerative: {
-      cluster_id: number
-      cluster_name: string
-      cluster_analysis: ClusterAnalysis
-    } | null
-  }
+      cluster_id: number;
+      cluster_name: string;
+      cluster_analysis: ClusterAnalysis;
+    } | null;
+  };
 }
 
 export interface SimilarStocks {
   base_stock: {
-    stock_code: string
-    stock_name: string
-    sector: string
-  }
-  cluster_type: 'spectral' | 'agglomerative'
-  similar_stocks: Stock[]
+    stock_code: string;
+    stock_name: string;
+    sector: string;
+  };
+  cluster_type: "spectral" | "agglomerative";
+  similar_stocks: Stock[];
 }
 
 // API Utility Class
@@ -376,82 +379,97 @@ class ApiClient {
     requireAuth: boolean = false
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     // 디버그 로깅 추가
-    console.log(`🔗 API 요청: ${options.method || 'GET'} ${url}`);
-    
+    console.log(`🔗 API 요청: ${options.method || "GET"} ${url}`);
+
     // CSRF 토큰 처리
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...options.headers as Record<string, string>,
+      "Content-Type": "application/json",
+      ...(options.headers as Record<string, string>),
     };
-    
+
     // POST 요청에 CSRF 토큰 추가
-    if (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE') {
+    if (
+      options.method === "POST" ||
+      options.method === "PUT" ||
+      options.method === "DELETE"
+    ) {
       const csrfToken = getCsrfToken();
       if (csrfToken) {
-        headers['X-CSRFToken'] = csrfToken;
+        headers["X-CSRFToken"] = csrfToken;
         console.log(`🔐 CSRF 토큰 추가: ${csrfToken.substring(0, 8)}...`);
       }
     }
-    
+
     const config: RequestInit = {
       headers,
-      credentials: 'include',
+      credentials: "include",
       ...options,
     };
 
     try {
       const response = await fetch(url, config);
-      
       // 응답 상태 로깅
-      console.log(`📡 API 응답: ${response.status} ${response.statusText} - ${url}`);
-      
+      console.log(
+        `📡 API 응답: ${response.status} ${response.statusText} - ${url}`
+      );
+
       // 비회원 접근 시 인증 오류나 404 무시 (특정 엔드포인트)
       if (!response.ok && !requireAuth) {
         if (response.status === 401 || response.status === 404) {
           // 비회원도 접근 가능한 API의 경우 기본값 반환
-          if (endpoint.includes('/watchlist/')) {
+          if (endpoint.includes("/watchlist/")) {
             console.log(`⚠️ Watchlist API 404/401 오류 - 빈 배열 반환: ${url}`);
             return [] as T;
           }
-          if (endpoint.includes('/auth/status/')) {
-            console.log(`⚠️ Auth Status API 404/401 오류 - 기본값 반환: ${url}`);
+          if (endpoint.includes("/auth/status/")) {
+            console.log(
+              `⚠️ Auth Status API 404/401 오류 - 기본값 반환: ${url}`
+            );
             return { authenticated: false, user: null } as T;
           }
-          if (endpoint.includes('/market-overview/')) {
-            console.log(`⚠️ Market Overview API 404/401 오류 - 기본값 반환: ${url}`);
+          if (endpoint.includes("/market-overview/")) {
+            console.log(
+              `⚠️ Market Overview API 404/401 오류 - 기본값 반환: ${url}`
+            );
             return {
               market_summary: {},
-              sector_performance: []
+              sector_performance: [],
             } as T;
           }
         }
       }
-      
       if (!response.ok) {
-        console.error(`❌ API 오류: ${response.status} ${response.statusText} - ${url}`);
-        if (response.headers.get('content-type')?.includes('application/json')) {
+        console.error(
+          `❌ API 오류: ${response.status} ${response.statusText} - ${url}`
+        );
+        if (
+          response.headers.get("content-type")?.includes("application/json")
+        ) {
           const errorData = await response.json();
-          
+
           // Django REST Framework 에러 형식 처리
-          let errorMessage = '';
-          if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+          let errorMessage = "";
+          if (
+            errorData.non_field_errors &&
+            Array.isArray(errorData.non_field_errors)
+          ) {
             errorMessage = errorData.non_field_errors[0];
           } else if (errorData.detail) {
             errorMessage = errorData.detail;
           } else if (errorData.message) {
             errorMessage = errorData.message;
-          } else if (typeof errorData === 'string') {
+          } else if (typeof errorData === "string") {
             errorMessage = errorData;
           } else {
             // 필드별 에러 처리
             const fieldErrors = Object.values(errorData).flat();
-            errorMessage = Array.isArray(fieldErrors) && fieldErrors.length > 0 
-              ? fieldErrors[0] as string 
-              : `HTTP error! status: ${response.status}`;
+            errorMessage =
+              Array.isArray(fieldErrors) && fieldErrors.length > 0
+                ? (fieldErrors[0] as string)
+                : `HTTP error! status: ${response.status}`;
           }
-          
           throw new Error(errorMessage);
         } else {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -459,14 +477,15 @@ class ApiClient {
       }
 
       // DELETE 요청의 경우 빈 응답 처리
-      if (options.method === 'DELETE' && response.status === 204) {
+      if (options.method === "DELETE" && response.status === 204) {
         console.log(`✅ API 성공: ${url} (빈 응답)`);
         return undefined as T;
       }
 
       // 응답 내용이 있는 경우에만 JSON 파싱
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         console.log(`✅ API 성공: ${url}`, data);
         return data;
@@ -478,16 +497,16 @@ class ApiClient {
       console.error(`💥 API 요청 실패: ${url}`, error);
       // 비회원 접근이 허용된 API에서 네트워크 오류 시 기본값 반환
       if (!requireAuth) {
-        if (endpoint.includes('/watchlist/')) {
+        if (endpoint.includes("/watchlist/")) {
           return [] as T;
         }
-        if (endpoint.includes('/auth/status/')) {
+        if (endpoint.includes("/auth/status/")) {
           return { authenticated: false, user: null } as T;
         }
-        if (endpoint.includes('/market-overview/')) {
+        if (endpoint.includes("/market-overview/")) {
           return {
             market_summary: {},
-            sector_performance: []
+            sector_performance: [],
           } as T;
         }
       }
@@ -497,71 +516,113 @@ class ApiClient {
 
   // Authentication APIs (인증 필요)
   async register(userData: RegisterData): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/register/', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    }, true);
+
+    return this.request<AuthResponse>(
+      "/auth/register/",
+      {
+        method: "POST",
+        body: JSON.stringify(userData),
+      },
+      true
+    );
   }
 
   async login(credentials: LoginData): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/login/', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    }, true);
+    return this.request<AuthResponse>(
+      "/auth/login/",
+      {
+        method: "POST",
+        body: JSON.stringify(credentials),
+      },
+      true
+    );
   }
 
   async logout(): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/auth/logout/', {
-      method: 'POST',
-    }, true);
+    return this.request<{ message: string }>(
+      "/auth/logout/",
+      {
+        method: "POST",
+      },
+      true
+    );
   }
 
   async getAuthStatus(): Promise<AuthStatus> {
-    return this.request<AuthStatus>('/auth/status/', {}, false);
+    return this.request<AuthStatus>("/auth/status/", {}, false);
   }
 
-  async checkUsername(username: string): Promise<{ available: boolean; message: string }> {
-    return this.request<{ available: boolean; message: string }>('/auth/check-username/', {
-      method: 'POST',
-      body: JSON.stringify({ username }),
-    }, false);
+  async checkUsername(
+    username: string
+  ): Promise<{ available: boolean; message: string }> {
+    return this.request<{ available: boolean; message: string }>(
+      "/auth/check-username/",
+      {
+        method: "POST",
+        body: JSON.stringify({ username }),
+      },
+      false
+    );
   }
 
   async updateProfile(userData: Partial<User>): Promise<AuthResponse> {
-    return this.request<AuthResponse>('/auth/profile/', {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    }, true);
+    return this.request<AuthResponse>(
+      "/auth/profile/",
+      {
+        method: "PUT",
+        body: JSON.stringify(userData),
+      },
+      true
+    );
   }
 
   async getProfile(): Promise<User> {
-    return this.request<User>('/auth/profile/', {}, true);
+    return this.request<User>("/auth/profile/", {}, true);
   }
 
-  async requestPasswordReset(email: string): Promise<{ message: string; temp_password?: string }> {
-    return this.request<{ message: string; temp_password?: string }>('/auth/password-reset/request/', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    }, false);
+  async requestPasswordReset(
+    email: string
+  ): Promise<{ message: string; temp_password?: string }> {
+    return this.request<{ message: string; temp_password?: string }>(
+      "/auth/password-reset/request/",
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      },
+      false
+    );
   }
 
-  async resetPassword(email: string, newPassword: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/auth/password-reset/confirm/', {
-      method: 'POST',
-      body: JSON.stringify({ email, new_password: newPassword }),
-    }, false);
+  async resetPassword(
+    email: string,
+    newPassword: string
+  ): Promise<{ message: string }> {
+    return this.request<{ message: string }>(
+      "/auth/password-reset/confirm/",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, new_password: newPassword }),
+      },
+      false
+    );
   }
 
   // Stock APIs (비회원 접근 가능)
-  async getStocks(options: { page?: number; search?: string } = {}): Promise<{ count: number; results: Stock[] }> {
+  async getStocks(
+    options: { page?: number; search?: string } = {}
+  ): Promise<{ count: number; results: Stock[] }> {
     const params = new URLSearchParams();
-    if (options.page) params.append('page', options.page.toString());
-    if (options.search) params.append('search', options.search);
-    
+    if (options.page) params.append("page", options.page.toString());
+    if (options.search) params.append("search", options.search);
+
     const queryString = params.toString();
-    const endpoint = queryString ? `/stocks/?${queryString}` : '/stocks/';
-    
-    return this.request<{ count: number; results: Stock[] }>(endpoint, {}, false);
+    const endpoint = queryString ? `/stocks/?${queryString}` : "/stocks/";
+
+    return this.request<{ count: number; results: Stock[] }>(
+      endpoint,
+      {},
+      false
+    );
   }
 
   async getStock(code: string): Promise<StockDetail> {
@@ -572,15 +633,20 @@ class ApiClient {
     return this.request<StockAnalysis>(`/analysis/stocks/${code}/`, {}, false);
   }
 
-  async getPriceHistory(code: string, options: { days?: number; start_date?: string; end_date?: string } = {}): Promise<PriceData[]> {
+  async getPriceHistory(
+    code: string,
+    options: { days?: number; start_date?: string; end_date?: string } = {}
+  ): Promise<PriceData[]> {
     const params = new URLSearchParams();
-    if (options.days) params.append('days', options.days.toString());
-    if (options.start_date) params.append('start_date', options.start_date);
-    if (options.end_date) params.append('end_date', options.end_date);
-    
+    if (options.days) params.append("days", options.days.toString());
+    if (options.start_date) params.append("start_date", options.start_date);
+    if (options.end_date) params.append("end_date", options.end_date);
+
     const queryString = params.toString();
-    const endpoint = queryString ? `/stocks/${code}/price-history/?${queryString}` : `/stocks/${code}/price-history/`;
-    
+    const endpoint = queryString
+      ? `/stocks/${code}/price-history/?${queryString}`
+      : `/stocks/${code}/price-history/`;
+
     return this.request<PriceData[]>(endpoint, {}, false);
   }
 
@@ -588,12 +654,25 @@ class ApiClient {
     return this.request<SentimentAnalysis>(`/sentiment/${code}/`, {}, false);
   }
 
+  // 감정 추이 조회 (기본 14일)
+  async getSentimentTrend(
+    code: string,
+    days: number = 14
+  ): Promise<SentimentTrendData[]> {
+    return this.request<SentimentTrendData[]>(
+      `/sentiment/${code}/trend/?days=${days}`,
+      {},
+      false
+    );
+  }
+
   async getFinancialData(code: string): Promise<FinancialAnalysis> {
     return this.request<FinancialAnalysis>(`/financials/${code}/`, {}, false);
   }
 
   async getMarketOverview(): Promise<MarketOverview> {
-    return this.request<MarketOverview>('/market-overview/', {}, false);
+
+    return this.request<MarketOverview>("/market-overview/", {}, false);
   }
 
   async getClusterData(code: string): Promise<ClusterData[]> {
@@ -601,26 +680,32 @@ class ApiClient {
   }
 
   async getSimilarStocks(code: string): Promise<SimilarStock[]> {
-    return this.request<SimilarStock[]>(`/analysis/similar/${code}/`, {}, false);
+    return this.request<SimilarStock[]>(
+      `/analysis/similar/${code}/`,
+      {},
+      false
+    );
   }
 
   // Watchlist APIs (올바른 백엔드 엔드포인트 사용)
   async getWatchlist(): Promise<WatchlistItem[]> {
     try {
       // 백엔드에서 관심종목 리스트 배열을 반환함
-      const watchlistArray = await this.request<Array<{
-        id: number;
-        name: string;
-        stocks: WatchlistItem[];
-      }>>('/analysis/watchlist/', {}, false);
-      
+      const watchlistArray = await this.request<
+        Array<{
+          id: number;
+          name: string;
+          stocks: WatchlistItem[];
+        }>
+      >("/analysis/watchlist/", {}, false);
+
       // 첫 번째 관심종목 리스트의 종목들만 반환 (기존 프론트엔드 로직과 호환)
       if (watchlistArray && watchlistArray.length > 0) {
         return watchlistArray[0].stocks || [];
       }
       return [];
     } catch (error) {
-      console.warn('관심종목 로드 실패:', error);
+      console.warn("관심종목 로드 실패:", error);
       return [];
     }
   }
@@ -628,18 +713,22 @@ class ApiClient {
   async addToWatchlist(stockCode: string): Promise<WatchlistResponse> {
     try {
       // 첫 번째 관심종목 리스트(ID: 1)에 추가
-      const result = await this.request<{message: string}>(`/analysis/watchlist/1/stocks/${stockCode}/`, {
-        method: 'POST',
-      }, false);
-      
+      const result = await this.request<{ message: string }>(
+        `/analysis/watchlist/1/stocks/${stockCode}/`,
+        {
+          method: "POST",
+        },
+        false
+      );
+
       return {
         success: true,
-        message: result.message
+        message: result.message,
       };
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : '관심종목 추가 실패'
+        message: error instanceof Error ? error.message : "관심종목 추가 실패",
       };
     }
   }
@@ -647,25 +736,31 @@ class ApiClient {
   async removeFromWatchlist(stockCode: string): Promise<WatchlistResponse> {
     try {
       // 첫 번째 관심종목 리스트(ID: 1)에서 삭제
-      const result = await this.request<{message: string}>(`/analysis/watchlist/1/stocks/${stockCode}/`, {
-        method: 'DELETE',
-      }, false);
-      
+
+      const result = await this.request<{ message: string }>(
+        `/analysis/watchlist/1/stocks/${stockCode}/`,
+        {
+          method: "DELETE",
+        },
+        false
+      );
+
       return {
         success: true,
-        message: result.message
+        message: result.message,
       };
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : '관심종목 삭제 실패'
+
+        message: error instanceof Error ? error.message : "관심종목 삭제 실패",
       };
     }
   }
 
   // Portfolio APIs
   async getPortfolios(): Promise<Portfolio[]> {
-    return this.request<Portfolio[]>('/portfolios/', {}, false);
+    return this.request<Portfolio[]>("/portfolios/", {}, false);
   }
 
   async getPortfolio(portfolioId: number): Promise<Portfolio> {
@@ -673,95 +768,177 @@ class ApiClient {
   }
 
   async createPortfolio(data: CreatePortfolioRequest): Promise<Portfolio> {
-    return this.request<Portfolio>('/portfolios/', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, false);
+    return this.request<Portfolio>(
+      "/portfolios/",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      false
+    );
   }
 
-  async updatePortfolio(portfolioId: number, data: Partial<CreatePortfolioRequest>): Promise<Portfolio> {
-    return this.request<Portfolio>(`/portfolios/${portfolioId}/`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }, false);
+  async updatePortfolio(
+    portfolioId: number,
+    data: Partial<CreatePortfolioRequest>
+  ): Promise<Portfolio> {
+    return this.request<Portfolio>(
+      `/portfolios/${portfolioId}/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+      false
+    );
   }
 
   async deletePortfolio(portfolioId: number): Promise<void> {
-    await this.request<void>(`/portfolios/${portfolioId}/`, {
-      method: 'DELETE',
-    }, false);
+    await this.request<void>(
+      `/portfolios/${portfolioId}/`,
+      {
+        method: "DELETE",
+      },
+      false
+    );
   }
 
   async getHoldings(portfolioId: number): Promise<PortfolioHolding[]> {
-    return this.request<PortfolioHolding[]>(`/portfolios/${portfolioId}/holdings/`, {}, false);
+    return this.request<PortfolioHolding[]>(
+      `/portfolios/${portfolioId}/holdings/`,
+      {},
+      false
+    );
   }
 
-  async addHolding(portfolioId: number, data: CreateHoldingRequest): Promise<PortfolioHolding> {
-    return this.request<PortfolioHolding>(`/portfolios/${portfolioId}/holdings/`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, false);
+  async addHolding(
+    portfolioId: number,
+    data: CreateHoldingRequest
+  ): Promise<PortfolioHolding> {
+    return this.request<PortfolioHolding>(
+      `/portfolios/${portfolioId}/holdings/`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      false
+    );
   }
 
-  async updateHolding(portfolioId: number, holdingId: number, data: Partial<CreateHoldingRequest>): Promise<PortfolioHolding> {
-    return this.request<PortfolioHolding>(`/portfolios/${portfolioId}/holdings/${holdingId}/`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }, false);
+  async updateHolding(
+    portfolioId: number,
+    holdingId: number,
+    data: Partial<CreateHoldingRequest>
+  ): Promise<PortfolioHolding> {
+    return this.request<PortfolioHolding>(
+      `/portfolios/${portfolioId}/holdings/${holdingId}/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      },
+      false
+    );
   }
 
   async deleteHolding(portfolioId: number, holdingId: number): Promise<void> {
-    await this.request<void>(`/portfolios/${portfolioId}/holdings/${holdingId}/`, {
-      method: 'DELETE',
-    }, false);
+    await this.request<void>(
+      `/portfolios/${portfolioId}/holdings/${holdingId}/`,
+      {
+        method: "DELETE",
+      },
+      false
+    );
   }
 
   async updatePortfolioWeights(portfolioId: number): Promise<Portfolio> {
-    const result = await this.request<{ portfolio: Portfolio }>(`/portfolios/${portfolioId}/update-weights/`, {
-      method: 'POST',
-    }, false);
+    const result = await this.request<{ portfolio: Portfolio }>(
+      `/portfolios/${portfolioId}/update-weights/`,
+      {
+        method: "POST",
+      },
+      false
+    );
     return result.portfolio;
   }
 
   // Alert API methods
   async getAlerts(): Promise<Alert[]> {
-    return this.request<Alert[]>('/analysis/alerts/', {}, true)
+    return this.request<Alert[]>("/analysis/alerts/", {}, true);
   }
 
   async createAlert(data: CreateAlertRequest): Promise<Alert> {
-    return this.request<Alert>('/analysis/alerts/', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, true)
+    return this.request<Alert>(
+      "/analysis/alerts/",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      true
+    );
   }
 
   async deleteAlert(alertId: number): Promise<void> {
-    return this.request<void>(`/analysis/alerts/${alertId}/`, {
-      method: 'DELETE'
-    }, true)
+    return this.request<void>(
+      `/analysis/alerts/${alertId}/`,
+      {
+        method: "DELETE",
+      },
+      true
+    );
   }
 
-  async checkAlerts(): Promise<{ triggered_count: number; triggered_alerts: Alert[] }> {
-    return this.request<{ triggered_count: number; triggered_alerts: Alert[] }>('/analysis/alerts/check/', {
-      method: 'POST'
-    }, true)
+  async checkAlerts(): Promise<{
+    triggered_count: number;
+    triggered_alerts: Alert[];
+  }> {
+    return this.request<{ triggered_count: number; triggered_alerts: Alert[] }>(
+      "/analysis/alerts/check/",
+      {
+        method: "POST",
+      },
+      true
+    );
   }
 
   // 클러스터링 관련 API
-  async getClusterOverview(type: 'spectral' | 'agglomerative' = 'spectral'): Promise<ClusterOverview> {
-    return this.request<ClusterOverview>(`/analysis/clusters/?type=${type}`, {}, false)
+  async getClusterOverview(
+    type: "spectral" | "agglomerative" = "spectral"
+  ): Promise<ClusterOverview> {
+    return this.request<ClusterOverview>(
+      `/analysis/clusters/?type=${type}`,
+      {},
+      false
+    );
   }
 
-  async getClusterStocks(clusterType: 'spectral' | 'agglomerative', clusterId: number): Promise<ClusterStocks> {
-    return this.request<ClusterStocks>(`/analysis/clusters/${clusterType}/${clusterId}/`, {}, false)
+  async getClusterStocks(
+    clusterType: "spectral" | "agglomerative",
+    clusterId: number
+  ): Promise<ClusterStocks> {
+    return this.request<ClusterStocks>(
+      `/analysis/clusters/${clusterType}/${clusterId}/`,
+      {},
+      false
+    );
   }
 
   async getStockClusterInfo(stockCode: string): Promise<StockClusterInfo> {
-    return this.request<StockClusterInfo>(`/analysis/stocks/${stockCode}/cluster/`, {}, false)
+    return this.request<StockClusterInfo>(
+      `/analysis/stocks/${stockCode}/cluster/`,
+      {},
+      false
+    );
   }
 
-  async getSimilarStocksByCluster(stockCode: string, type: 'spectral' | 'agglomerative' = 'spectral', limit: number = 10): Promise<SimilarStocks> {
-    return this.request<SimilarStocks>(`/analysis/stocks/${stockCode}/similar/?type=${type}&limit=${limit}`, {}, false)
+  async getSimilarStocksByCluster(
+    stockCode: string,
+    type: "spectral" | "agglomerative" = "spectral",
+    limit: number = 10
+  ): Promise<SimilarStocks> {
+    return this.request<SimilarStocks>(
+      `/analysis/stocks/${stockCode}/similar/?type=${type}&limit=${limit}`,
+      {},
+      false
+    );
   }
 }
 
@@ -777,55 +954,77 @@ export const authApi = {
   checkUsername: (username: string) => apiClient.checkUsername(username),
   updateProfile: (userData: Partial<User>) => apiClient.updateProfile(userData),
   getProfile: () => apiClient.getProfile(),
-  requestPasswordReset: (email: string) => apiClient.requestPasswordReset(email),
-  resetPassword: (email: string, newPassword: string) => apiClient.resetPassword(email, newPassword),
+  requestPasswordReset: (email: string) =>
+    apiClient.requestPasswordReset(email),
+  resetPassword: (email: string, newPassword: string) =>
+    apiClient.resetPassword(email, newPassword),
 };
 
 // Stock API convenience functions (stocksApi - 기존 이름 유지)
 export const stocksApi = {
-  getStocks: (options?: { page?: number; search?: string }) => apiClient.getStocks(options),
+  getStocks: (options?: { page?: number; search?: string }) =>
+    apiClient.getStocks(options),
   getStock: (code: string) => apiClient.getStock(code),
   getStockAnalysis: (code: string) => apiClient.getStockAnalysis(code),
-  getPriceHistory: (code: string, options?: { days?: number; start_date?: string; end_date?: string }) => 
-    apiClient.getPriceHistory(code, options),
+  getPriceHistory: (
+    code: string,
+    options?: { days?: number; start_date?: string; end_date?: string }
+  ) => apiClient.getPriceHistory(code, options),
   getSentimentAnalysis: (code: string) => apiClient.getSentimentAnalysis(code),
+  getSentimentTrend: (code: string, days?: number) =>
+    apiClient.getSentimentTrend(code, days),
   getFinancialData: (code: string) => apiClient.getFinancialData(code),
   getMarketOverview: () => apiClient.getMarketOverview(),
   getClusterData: (code: string) => apiClient.getClusterData(code),
   getSimilarStocks: (code: string) => apiClient.getSimilarStocks(code),
-  
   // Watchlist methods
   getWatchlist: () => apiClient.getWatchlist(),
   addToWatchlist: (stockCode: string) => apiClient.addToWatchlist(stockCode),
-  removeFromWatchlist: (stockCode: string) => apiClient.removeFromWatchlist(stockCode),
-  
+  removeFromWatchlist: (stockCode: string) =>
+    apiClient.removeFromWatchlist(stockCode),
+
   // 클러스터링 관련 메서드
-  getClusterOverview: (type?: 'spectral' | 'agglomerative') => apiClient.getClusterOverview(type),
-  getClusterStocks: (clusterType: 'spectral' | 'agglomerative', clusterId: number) => 
-    apiClient.getClusterStocks(clusterType, clusterId),
-  getStockClusterInfo: (stockCode: string) => apiClient.getStockClusterInfo(stockCode),
-  getSimilarStocksByCluster: (stockCode: string, type?: 'spectral' | 'agglomerative', limit?: number) => 
-    apiClient.getSimilarStocksByCluster(stockCode, type, limit),
+  getClusterOverview: (type?: "spectral" | "agglomerative") =>
+    apiClient.getClusterOverview(type),
+  getClusterStocks: (
+    clusterType: "spectral" | "agglomerative",
+    clusterId: number
+  ) => apiClient.getClusterStocks(clusterType, clusterId),
+  getStockClusterInfo: (stockCode: string) =>
+    apiClient.getStockClusterInfo(stockCode),
+  getSimilarStocksByCluster: (
+    stockCode: string,
+    type?: "spectral" | "agglomerative",
+    limit?: number
+  ) => apiClient.getSimilarStocksByCluster(stockCode, type, limit),
 };
 
 // Portfolio API convenience functions
 export const portfolioApi = {
   getPortfolios: () => apiClient.getPortfolios(),
   getPortfolio: (portfolioId: number) => apiClient.getPortfolio(portfolioId),
-  createPortfolio: (data: CreatePortfolioRequest) => apiClient.createPortfolio(data),
-  updatePortfolio: (portfolioId: number, data: Partial<CreatePortfolioRequest>) => 
-    apiClient.updatePortfolio(portfolioId, data),
-  deletePortfolio: (portfolioId: number) => apiClient.deletePortfolio(portfolioId),
-  
+  createPortfolio: (data: CreatePortfolioRequest) =>
+    apiClient.createPortfolio(data),
+  updatePortfolio: (
+    portfolioId: number,
+    data: Partial<CreatePortfolioRequest>
+  ) => apiClient.updatePortfolio(portfolioId, data),
+  deletePortfolio: (portfolioId: number) =>
+    apiClient.deletePortfolio(portfolioId),
+
   // Holdings methods
   getHoldings: (portfolioId: number) => apiClient.getHoldings(portfolioId),
-  addHolding: (portfolioId: number, data: CreateHoldingRequest) => 
+  addHolding: (portfolioId: number, data: CreateHoldingRequest) =>
     apiClient.addHolding(portfolioId, data),
-  updateHolding: (portfolioId: number, holdingId: number, data: Partial<CreateHoldingRequest>) => 
-    apiClient.updateHolding(portfolioId, holdingId, data),
-  deleteHolding: (portfolioId: number, holdingId: number) => 
+  updateHolding: (
+    portfolioId: number,
+    holdingId: number,
+    data: Partial<CreateHoldingRequest>
+  ) => apiClient.updateHolding(portfolioId, holdingId, data),
+  deleteHolding: (portfolioId: number, holdingId: number) =>
     apiClient.deleteHolding(portfolioId, holdingId),
-  updateWeights: (portfolioId: number) => apiClient.updatePortfolioWeights(portfolioId),
+  updateWeights: (portfolioId: number) =>
+    apiClient.updatePortfolioWeights(portfolioId),
 };
 
 // Alert API convenience functions
@@ -844,5 +1043,5 @@ export const handleApiError = (error: any): string => {
   if (error.message) {
     return error.message;
   }
-  return '알 수 없는 오류가 발생했습니다.';
-}; 
+  return "알 수 없는 오류가 발생했습니다.";
+};

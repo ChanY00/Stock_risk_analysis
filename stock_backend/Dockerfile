@@ -31,16 +31,15 @@ COPY . .
 # 📁 정적 파일 및 미디어 디렉토리 생성
 RUN mkdir -p /app/staticfiles /app/media
 
+# 📜 엔트리포인트 스크립트 실행 권한 (USER 전환 전에 실행)
+RUN chmod +x /app/docker-entrypoint.sh
+
 # 🔐 권한 설정
 RUN chown -R django:django /app
 USER django
 
 # 🌐 포트 노출 (Django: 8000)
 EXPOSE 8000
-
-# 📜 엔트리포인트 스크립트 실행 권한
-COPY --chown=django:django docker-entrypoint.sh /app/
-RUN chmod +x /app/docker-entrypoint.sh
 
 # 🚀 개발 환경 (기본)
 FROM base as development
