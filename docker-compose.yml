@@ -155,6 +155,7 @@ services:
       - REDIS_HOST=redis              # 💡 Docker 네트워크의 마법
       - REDIS_PORT=6379
       - REDIS_DB=0
+      - USE_REDIS_CHANNELS=True       # 개발에서도 Redis Channels 사용
 
       # 개발 환경 오버라이드
       - USE_MOCK_DATA=True
@@ -193,6 +194,10 @@ services:
     build:
       context: ./stock-dashboard
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api
+        NEXT_PUBLIC_SENTIMENT_URL: http://localhost:5001
+        INTERNAL_API_URL: http://backend:8000/api
     container_name: kospi-frontend
     restart: unless-stopped
 
@@ -205,8 +210,9 @@ services:
       - ./stock-dashboard/.env.local  # Next.js 로컬 환경변수
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000     # Django API 주소
-      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001  # Flask API 주소
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api     # 브라우저용(클라이언트 번들에 노출)
+      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001   # 브라우저용
+      - INTERNAL_API_URL=http://backend:8000/api          # SSR용(컨테이너 내부 네트워킹)
     
     # 🔗 의존성 설정
     depends_on:

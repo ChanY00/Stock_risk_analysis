@@ -56,9 +56,15 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # 🔧 환경변수 설정 (빌드타임)
-# 💡 Next.js 특징: 환경변수가 빌드에 포함됨
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
+# 💡 Next.js 특징: NEXT_PUBLIC_* 는 빌드 시점에 번들에 인라인됨
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_SENTIMENT_URL
+ARG INTERNAL_API_URL
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NODE_ENV=production \
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_PUBLIC_SENTIMENT_URL=${NEXT_PUBLIC_SENTIMENT_URL} \
+    INTERNAL_API_URL=${INTERNAL_API_URL}
 
 # 🏗️ Next.js 빌드 실행
 RUN \
@@ -86,8 +92,12 @@ LABEL maintainer="kospi-project"
 WORKDIR /app
 
 # 🔧 프로덕션 환경변수 설정
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1
+
+# 런타임(SSR)에서 서버측 요청에 사용할 내부 API URL
+ARG INTERNAL_API_URL
+ENV INTERNAL_API_URL=${INTERNAL_API_URL}
 
 # 👤 보안: 비루트 사용자 생성
 RUN addgroup --system --gid 1001 nodejs
