@@ -15,7 +15,7 @@ import { TrendingUp, TrendingDown, Target, Users, BarChart3, Network, Info, Ligh
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import dynamic from 'next/dynamic'
 import { useCallback, useMemo, useRef } from 'react'
-import { scaleLinear } from 'd3-scale'
+import { scaleLinear, scaleSymlog } from 'd3-scale'
 import * as d3 from 'd3-force'
 
 // ForceGraph를 dynamic import로 로드 (SSR 문제 해결)
@@ -82,6 +82,8 @@ interface ClusterVisualizationData {
   pbr?: number | null
   roe?: number | null
   sectorColor: string
+  financialScore?: number
+  volatilityScore?: number
 }
 
 export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
@@ -171,6 +173,155 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
     const avgX = validData.reduce((sum, d) => sum + d.x, 0) / validData.length
     const avgY = validData.reduce((sum, d) => sum + d.y, 0) / validData.length
     return { avgX, avgY }
+  }
+
+  // 퍼센타일 유틸리티 (0~1)
+  const percentile = (sortedValues: number[], value: number) => {
+    if (sortedValues.length === 0) return 0
+    let idx = sortedValues.findIndex(v => v >= value)
+    if (idx === -1) idx = sortedValues.length - 1
+    return idx / (sortedValues.length - 1 || 1)
+  }
+
+  // 데이터에 재무제표 기반 점수(1~100)와 변동성 기반 점수(1~100) 부여
+  const addScores = (data: ClusterVisualizationData[], mode: 'financial' | 'volatility') => {
+    if (!data || data.length === 0) return data
+
+    const perVals = data.map(d => d.per ?? 0).filter(v => isFinite(v)).sort((a, b) => a - b)
+    const pbrVals = data.map(d => d.pbr ?? 0).filter(v => isFinite(v)).sort((a, b) => a - b)
+    const roeVals = data.map(d => d.roe ?? 0).filter(v => isFinite(v)).sort((a, b) => a - b)
+    const mcapVals = data.map(d => (d.market_cap ?? 0)).filter(v => isFinite(v)).sort((a, b) => a - b)
+
+    // 중앙값(변동성 점수에서 중심 거리 계산에 사용)
+    const median = (arr: number[]) => arr.length ? arr[Math.floor(arr.length / 2)] : 0
+    const xMedian = median(data.map(d => d.x).filter(v => isFinite(v)).sort((a, b) => a - b))
+    const yMedian = median(data.map(d => d.y).filter(v => isFinite(v)).sort((a, b) => a - b))
+
+    const distances = data.map(d => Math.hypot((d.x - xMedian), (d.y - yMedian)))
+    const distVals = distances.filter(v => isFinite(v)).slice().sort((a, b) => a - b)
+
+    return data.map((d, i) => {
+      let fin = d.financialScore
+      let vol = d.volatilityScore
+
+      // Financial score: 낮은 PER/PBR, 높은 ROE, 큰 시가총액을 선호
+      const perPct = isFinite(d.per ?? NaN) ? percentile(perVals, d.per as number) : 0.5
+      const pbrPct = isFinite(d.pbr ?? NaN) ? percentile(pbrVals, d.pbr as number) : 0.5
+      const roePct = isFinite(d.roe ?? NaN) ? percentile(roeVals, d.roe as number) : 0.5
+      const mcapPct = isFinite(d.market_cap ?? NaN) ? percentile(mcapVals, d.market_cap as number) : 0.5
+      // 가중치: PER 0.35, PBR 0.25, ROE 0.3, MCAP 0.1
+      const finRaw = (1 - perPct) * 0.35 + (1 - pbrPct) * 0.25 + (roePct) * 0.30 + (mcapPct) * 0.10
+      fin = Math.round(finRaw * 100)
+
+      // Volatility score: 클러스터 중심(중앙값)에서 가까울수록 높고, 너무 멀면 낮음
+      const dist = distances[i]
+      const distPct = percentile(distVals, dist)
+      // 중심에서 가까울수록 점수↑ (0에 가까울수록 100점)
+      vol = Math.round((1 - distPct) * 100)
+
+      return { ...d, financialScore: fin, volatilityScore: vol }
+    })
+  }
+
+  // 백분위수 기반 도메인 계산 함수 (극단치 제거 강화)
+  const calculateCenteredDomain = (data: ClusterVisualizationData[], axis: 'x' | 'y') => {
+    if (data.length === 0) return ['dataMin', 'dataMax']
+    
+    const values = data.map(item => axis === 'x' ? item.x : item.y).sort((a, b) => a - b)
+    
+    // 상위/하위 15% 제거하여 극단치 완전 제거
+    const removeOutliers = 0.15
+    const lowerIndex = Math.floor(values.length * removeOutliers)
+    const upperIndex = Math.floor(values.length * (1 - removeOutliers))
+    const filteredValues = values.slice(lowerIndex, upperIndex)
+    
+    if (filteredValues.length === 0) return ['dataMin', 'dataMax']
+    
+    // 필터링된 데이터의 5%와 95% 백분위수 사용
+    const p5 = filteredValues[Math.floor(filteredValues.length * 0.05)]
+    const p95 = filteredValues[Math.floor(filteredValues.length * 0.95)]
+    const median = filteredValues[Math.floor(filteredValues.length / 2)]
+    
+    // 중앙값을 중심으로 대칭적인 범위 설정
+    const range = Math.max(p95 - median, median - p5)
+    const centeredMin = Math.max(median - range * 1.3, p5)
+    const centeredMax = Math.min(median + range * 1.3, p95)
+    
+    // 디버깅을 위한 로그
+    console.log(`${axis}축 도메인 계산:`, {
+      originalRange: [values[0], values[values.length - 1]],
+      filteredRange: [filteredValues[0], filteredValues[filteredValues.length - 1]],
+      p5,
+      p95,
+      median,
+      centeredRange: [centeredMin, centeredMax]
+    })
+    
+    return [centeredMin, centeredMax]
+  }
+
+  // 선택한 기준점(현재 종목)을 정확히 차트 중앙에 두는 도메인 계산
+  const calculateDomainAroundCurrentStock = (data: ClusterVisualizationData[], axis: 'x' | 'y') => {
+    if (data.length === 0) return ['dataMin', 'dataMax'] as any
+
+    const current = data.find(d => d.isCurrentStock)
+    if (!current) {
+      // 현재 종목이 데이터에 없으면 기존 중앙값 기반 사용
+      return calculateCenteredDomain(data, axis)
+    }
+
+    const targetValue = axis === 'x' ? current.x : current.y
+
+    // 극단치 제거 후 범위 계산 (상/하위 15% 제거, 5~95 백분위수 사용)
+    const values = data.map(item => axis === 'x' ? item.x : item.y)
+      .filter(v => isFinite(v))
+      .sort((a, b) => a - b)
+
+    if (values.length === 0) return ['dataMin', 'dataMax'] as any
+
+    const lowerIndex = Math.floor(values.length * 0.15)
+    const upperIndex = Math.floor(values.length * 0.85)
+    const filtered = values.slice(lowerIndex, Math.max(lowerIndex + 1, upperIndex))
+    if (filtered.length === 0) return ['dataMin', 'dataMax'] as any
+
+    const p5 = filtered[Math.floor(filtered.length * 0.05)]
+    const p95 = filtered[Math.floor(filtered.length * 0.95)]
+
+    // 중심을 targetValue로 두고 좌우 최대 폭을 동일하게 설정
+    const leftSpan = Math.max(1e-9, targetValue - p5)
+    const rightSpan = Math.max(1e-9, p95 - targetValue)
+    const span = Math.max(leftSpan, rightSpan)
+
+    const min = targetValue - span * 1.1
+    const max = targetValue + span * 1.1
+
+    // min/max가 동일하지 않도록 보정
+    if (min === max) {
+      return [targetValue - 1, targetValue + 1] as any
+    }
+    return [min, max] as any
+  }
+
+  // 차트에서 표시할 데이터의 극단치 제거 (양 축 기준), 현재 종목은 항상 포함
+  const filterOutliersForChart = (data: ClusterVisualizationData[]) => {
+    if (!data || data.length < 5) return data
+
+    const xs = data.map(d => d.x).filter(v => isFinite(v)).sort((a, b) => a - b)
+    const ys = data.map(d => d.y).filter(v => isFinite(v)).sort((a, b) => a - b)
+
+    const trim = 0.15
+    const xTrimmed = xs.slice(Math.floor(xs.length * trim), Math.max(Math.floor(xs.length * (1 - trim)), Math.floor(xs.length * trim) + 1))
+    const yTrimmed = ys.slice(Math.floor(ys.length * trim), Math.max(Math.floor(ys.length * (1 - trim)), Math.floor(ys.length * trim) + 1))
+
+    const xp5 = xTrimmed[Math.floor(xTrimmed.length * 0.05)] ?? xs[0]
+    const xp95 = xTrimmed[Math.floor(xTrimmed.length * 0.95)] ?? xs[xs.length - 1]
+    const yp5 = yTrimmed[Math.floor(yTrimmed.length * 0.05)] ?? ys[0]
+    const yp95 = yTrimmed[Math.floor(yTrimmed.length * 0.95)] ?? ys[ys.length - 1]
+
+    return data.filter(d => {
+      if (d.isCurrentStock) return true
+      return d.x >= xp5 && d.x <= xp95 && d.y >= yp5 && d.y <= yp95
+    })
   }
 
   // 섹터 필터링
@@ -1048,7 +1199,7 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                       >
                         <ResponsiveContainer width="100%" height="100%">
                           <ScatterChart 
-                            data={filterBySector(transformToVisualizationData(spectralClusterData.stocks, stockClusterInfo.clusters.spectral!.cluster_id, stockCode))} 
+                            data={addScores(filterBySector(transformToVisualizationData(spectralClusterData.stocks, stockClusterInfo.clusters.spectral!.cluster_id, stockCode)), 'financial')} 
                             margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -1057,19 +1208,39 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                               dataKey="x" 
                               name={axisOptions[visualizationAxis].x}
                               label={{ value: axisOptions[visualizationAxis].x, position: 'insideBottom', offset: -5 }}
-                              domain={['dataMin', 'dataMax']}
+                              domain={(() => {
+                                const data = filterBySector(transformToVisualizationData(spectralClusterData.stocks, stockClusterInfo.clusters.spectral!.cluster_id, stockCode))
+                                return calculateDomainAroundCurrentStock(data, 'x')
+                              })()}
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) => Math.round(Number(value)).toString()}
+                              scale={scaleSymlog() as any}
                             />
                             <YAxis 
                               type="number" 
                               dataKey="y" 
                               name={axisOptions[visualizationAxis].y}
                               label={{ value: axisOptions[visualizationAxis].y, angle: -90, position: 'insideLeft' }}
-                              domain={['dataMin', 'dataMax']}
+                              domain={(() => {
+                                const data = filterBySector(transformToVisualizationData(spectralClusterData.stocks, stockClusterInfo.clusters.spectral!.cluster_id, stockCode))
+                                return calculateDomainAroundCurrentStock(data, 'y')
+                              })()}
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) => Math.round(Number(value)).toString()}
+                              scale={scaleSymlog() as any}
                             />
                             
                             {/* 평균값 가이드라인 */}
                             {(() => {
-                              const data = filterBySector(transformToVisualizationData(spectralClusterData.stocks, stockClusterInfo.clusters.spectral!.cluster_id, stockCode))
+                              const data = filterOutliersForChart(
+                                filterBySector(
+                                  transformToVisualizationData(
+                                    spectralClusterData.stocks,
+                                    stockClusterInfo.clusters.spectral!.cluster_id,
+                                    stockCode
+                                  )
+                                )
+                              )
                               const { avgX, avgY } = calculateAverages(data)
                               return (
                                 <>
@@ -1098,12 +1269,15 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                                         <p className="text-xs">현재가: {data.current_price.toLocaleString()}원</p>
                                       )}
                                       {data.market_cap && (
-                                        <p className="text-xs">시가총액: {(data.market_cap / 1000000000000).toFixed(1)}조원</p>
+                                        <p className="text-xs">시가총액: {Math.round(data.market_cap / 1000000000000)}조원</p>
                                       )}
                                       <div className="grid grid-cols-2 gap-1 mt-1 text-xs">
-                                        {data.per && <p>PER: {data.per.toFixed(1)}</p>}
-                                        {data.pbr && <p>PBR: {data.pbr.toFixed(1)}</p>}
-                                        {data.roe && <p>ROE: {data.roe.toFixed(1)}%</p>}
+                                        {data.per && <p>PER: {Math.round(data.per)}</p>}
+                                        {data.pbr && <p>PBR: {Math.round(data.pbr)}</p>}
+                                        {data.roe && <p>ROE: {Math.round(data.roe)}%</p>}
+                                        {typeof data.financialScore === 'number' && (
+                                          <p className="col-span-2">재무제표 기반 점수: <strong>{data.financialScore}</strong>/100</p>
+                                        )}
                                       </div>
                                     </div>
                                   )
@@ -1129,7 +1303,15 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                             {/* 섹터별 범례 */}
                             <Legend 
                               content={() => {
-                                const data = filterBySector(transformToVisualizationData(spectralClusterData.stocks, stockClusterInfo.clusters.spectral!.cluster_id, stockCode))
+                                const data = filterOutliersForChart(
+                                  filterBySector(
+                                    transformToVisualizationData(
+                                      spectralClusterData.stocks,
+                                      stockClusterInfo.clusters.spectral!.cluster_id,
+                                      stockCode
+                                    )
+                                  )
+                                )
                                 const sectors = Array.from(new Set(data.map(d => d.sector)))
                                 return (
                                   <div className="flex flex-wrap gap-3 justify-center mt-4">
@@ -1334,7 +1516,7 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                       >
                         <ResponsiveContainer width="100%" height="100%">
                           <ScatterChart 
-                            data={filterBySector(transformToVisualizationData(agglomerativeClusterData.stocks, stockClusterInfo.clusters.agglomerative!.cluster_id, stockCode))} 
+                            data={addScores(filterBySector(transformToVisualizationData(agglomerativeClusterData.stocks, stockClusterInfo.clusters.agglomerative!.cluster_id, stockCode)), 'volatility')} 
                             margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
@@ -1343,19 +1525,39 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                               dataKey="x" 
                               name={axisOptions[visualizationAxis].x}
                               label={{ value: axisOptions[visualizationAxis].x, position: 'insideBottom', offset: -5 }}
-                              domain={['dataMin', 'dataMax']}
+                              domain={(() => {
+                                const data = filterBySector(transformToVisualizationData(agglomerativeClusterData.stocks, stockClusterInfo.clusters.agglomerative!.cluster_id, stockCode))
+                                return calculateDomainAroundCurrentStock(data, 'x')
+                              })()}
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) => Math.round(Number(value)).toString()}
+                              scale={scaleSymlog() as any}
                             />
                             <YAxis 
                               type="number" 
                               dataKey="y" 
                               name={axisOptions[visualizationAxis].y}
                               label={{ value: axisOptions[visualizationAxis].y, angle: -90, position: 'insideLeft' }}
-                              domain={['dataMin', 'dataMax']}
+                              domain={(() => {
+                                const data = filterBySector(transformToVisualizationData(agglomerativeClusterData.stocks, stockClusterInfo.clusters.agglomerative!.cluster_id, stockCode))
+                                return calculateDomainAroundCurrentStock(data, 'y')
+                              })()}
+                              tick={{ fontSize: 12 }}
+                              tickFormatter={(value) => Math.round(Number(value)).toString()}
+                              scale={scaleSymlog() as any}
                             />
                             
                             {/* 평균값 가이드라인 */}
                             {(() => {
-                              const data = filterBySector(transformToVisualizationData(agglomerativeClusterData.stocks, stockClusterInfo.clusters.agglomerative!.cluster_id, stockCode))
+                              const data = filterOutliersForChart(
+                                filterBySector(
+                                  transformToVisualizationData(
+                                    agglomerativeClusterData.stocks,
+                                    stockClusterInfo.clusters.agglomerative!.cluster_id,
+                                    stockCode
+                                  )
+                                )
+                              )
                               const { avgX, avgY } = calculateAverages(data)
                               return (
                                 <>
@@ -1384,12 +1586,15 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                                         <p className="text-xs">현재가: {data.current_price.toLocaleString()}원</p>
                                       )}
                                       {data.market_cap && (
-                                        <p className="text-xs">시가총액: {(data.market_cap / 1000000000000).toFixed(1)}조원</p>
+                                        <p className="text-xs">시가총액: {Math.round(data.market_cap / 1000000000000)}조원</p>
                                       )}
                                       <div className="grid grid-cols-2 gap-1 mt-1 text-xs">
-                                        {data.per && <p>PER: {data.per.toFixed(1)}</p>}
-                                        {data.pbr && <p>PBR: {data.pbr.toFixed(1)}</p>}
-                                        {data.roe && <p>ROE: {data.roe.toFixed(1)}%</p>}
+                                        {data.per && <p>PER: {Math.round(data.per)}</p>}
+                                        {data.pbr && <p>PBR: {Math.round(data.pbr)}</p>}
+                                        {data.roe && <p>ROE: {Math.round(data.roe)}%</p>}
+                                        {typeof data.volatilityScore === 'number' && (
+                                          <p className="col-span-2">수익 변동성 기반 점수: <strong>{data.volatilityScore}</strong>/100</p>
+                                        )}
                                       </div>
                                     </div>
                                   )
@@ -1415,7 +1620,15 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                             {/* 섹터별 범례 */}
                             <Legend 
                               content={() => {
-                                const data = filterBySector(transformToVisualizationData(agglomerativeClusterData.stocks, stockClusterInfo.clusters.agglomerative!.cluster_id, stockCode))
+                                const data = filterOutliersForChart(
+                                  filterBySector(
+                                    transformToVisualizationData(
+                                      agglomerativeClusterData.stocks,
+                                      stockClusterInfo.clusters.agglomerative!.cluster_id,
+                                      stockCode
+                                    )
+                                  )
+                                )
                                 const sectors = Array.from(new Set(data.map(d => d.sector)))
                                 return (
                                   <div className="flex flex-wrap gap-3 justify-center mt-4">

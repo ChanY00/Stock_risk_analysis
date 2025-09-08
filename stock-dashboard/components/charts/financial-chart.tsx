@@ -427,6 +427,28 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="year" />
                   <YAxis 
+                    domain={(() => {
+                      const values = financialData.map(d => Math.max(d.revenue, d.operating_income, d.net_income)).filter(v => v > 0)
+                      if (values.length === 0) return ['dataMin', 'dataMax']
+                      
+                      const sortedValues = values.sort((a, b) => a - b)
+                      const removeOutliers = 0.1
+                      const lowerIndex = Math.floor(sortedValues.length * removeOutliers)
+                      const upperIndex = Math.floor(sortedValues.length * (1 - removeOutliers))
+                      const filteredValues = sortedValues.slice(lowerIndex, upperIndex)
+                      
+                      if (filteredValues.length === 0) return ['dataMin', 'dataMax']
+                      
+                      const median = filteredValues[Math.floor(filteredValues.length / 2)]
+                      const p5 = filteredValues[Math.floor(filteredValues.length * 0.05)]
+                      const p95 = filteredValues[Math.floor(filteredValues.length * 0.95)]
+                      
+                      const range = Math.max(p95 - median, median - p5)
+                      const centeredMin = Math.max(median - range * 1.3, p5)
+                      const centeredMax = Math.min(median + range * 1.3, p95)
+                      
+                      return [centeredMin, centeredMax]
+                    })()}
                     tickFormatter={(value) => value >= 100000 ? `${(value / 100000).toFixed(0)}억` : `${value.toLocaleString()}백만`}
                     tick={{ fontSize: 12, fill: '#6b7280' }}
                   />

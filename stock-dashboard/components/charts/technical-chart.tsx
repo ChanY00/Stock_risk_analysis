@@ -190,7 +190,28 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           stroke="#666"
         />
         <YAxis 
-          domain={['dataMin - 1%', 'dataMax + 1%']}
+          domain={(() => {
+            const values = data.map(d => d.close).filter(v => v > 0)
+            if (values.length === 0) return ['dataMin - 1%', 'dataMax + 1%']
+            
+            const sortedValues = values.sort((a, b) => a - b)
+            const removeOutliers = 0.1
+            const lowerIndex = Math.floor(sortedValues.length * removeOutliers)
+            const upperIndex = Math.floor(sortedValues.length * (1 - removeOutliers))
+            const filteredValues = sortedValues.slice(lowerIndex, upperIndex)
+            
+            if (filteredValues.length === 0) return ['dataMin - 1%', 'dataMax + 1%']
+            
+            const median = filteredValues[Math.floor(filteredValues.length / 2)]
+            const p5 = filteredValues[Math.floor(filteredValues.length * 0.05)]
+            const p95 = filteredValues[Math.floor(filteredValues.length * 0.95)]
+            
+            const range = Math.max(p95 - median, median - p5)
+            const centeredMin = Math.max(median - range * 1.3, p5)
+            const centeredMax = Math.min(median + range * 1.3, p95)
+            
+            return [centeredMin, centeredMax]
+          })()}
           tick={{ fontSize: 12 }}
           stroke="#666"
         />
@@ -405,7 +426,28 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                     stroke="#666"
                   />
                   <YAxis 
-                    domain={['dataMin - 2%', 'dataMax + 2%']}
+                    domain={(() => {
+                      const values = candlestickData.map(d => d.close).filter(v => v > 0)
+                      if (values.length === 0) return ['dataMin - 2%', 'dataMax + 2%']
+                      
+                      const sortedValues = values.sort((a, b) => a - b)
+                      const removeOutliers = 0.1
+                      const lowerIndex = Math.floor(sortedValues.length * removeOutliers)
+                      const upperIndex = Math.floor(sortedValues.length * (1 - removeOutliers))
+                      const filteredValues = sortedValues.slice(lowerIndex, upperIndex)
+                      
+                      if (filteredValues.length === 0) return ['dataMin - 2%', 'dataMax + 2%']
+                      
+                      const median = filteredValues[Math.floor(filteredValues.length / 2)]
+                      const p5 = filteredValues[Math.floor(filteredValues.length * 0.05)]
+                      const p95 = filteredValues[Math.floor(filteredValues.length * 0.95)]
+                      
+                      const range = Math.max(p95 - median, median - p5)
+                      const centeredMin = Math.max(median - range * 1.3, p5)
+                      const centeredMax = Math.min(median + range * 1.3, p95)
+                      
+                      return [centeredMin, centeredMax]
+                    })()}
                     tick={{ fontSize: 12 }}
                     stroke="#666"
                   />
@@ -684,7 +726,28 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                     stroke="#666"
                   />
                   <YAxis 
-                    domain={['dataMin - 2%', 'dataMax + 2%']}
+                    domain={(() => {
+                      const values = candlestickData.map(d => d.close).filter(v => v > 0)
+                      if (values.length === 0) return ['dataMin - 2%', 'dataMax + 2%']
+                      
+                      const sortedValues = values.sort((a, b) => a - b)
+                      const removeOutliers = 0.1
+                      const lowerIndex = Math.floor(sortedValues.length * removeOutliers)
+                      const upperIndex = Math.floor(sortedValues.length * (1 - removeOutliers))
+                      const filteredValues = sortedValues.slice(lowerIndex, upperIndex)
+                      
+                      if (filteredValues.length === 0) return ['dataMin - 2%', 'dataMax + 2%']
+                      
+                      const median = filteredValues[Math.floor(filteredValues.length / 2)]
+                      const p5 = filteredValues[Math.floor(filteredValues.length * 0.05)]
+                      const p95 = filteredValues[Math.floor(filteredValues.length * 0.95)]
+                      
+                      const range = Math.max(p95 - median, median - p5)
+                      const centeredMin = Math.max(median - range * 1.3, p5)
+                      const centeredMax = Math.min(median + range * 1.3, p95)
+                      
+                      return [centeredMin, centeredMax]
+                    })()}
                     tick={{ fontSize: 12 }}
                     stroke="#666"
                   />

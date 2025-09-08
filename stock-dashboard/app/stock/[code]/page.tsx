@@ -80,24 +80,32 @@ import {
 // 인증 Hook 추가
 import { useAuth } from "@/contexts/AuthContext";
 
+// AI 점수 계산 유틸리티
+import { computeAiScore } from "@/lib/ai-score-utils"
+
+// 전역 감정 데이터 스토어
+import { sentimentStore, calculateSentimentScore } from "@/lib/sentiment-store"
+
 // 백엔드 API 타입을 프론트엔드 인터페이스에 맞게 변환
 interface StockDetail {
-  code: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  marketCap: number | null;
-  per: number | null;
-  pbr: number | null;
-  roe: number | null;
-  eps: number | null;
-  bps: number | null;
-  sentiment: number;
-  sector: string;
-  market: string;
-  dividend_yield: number | null;
+  code: string
+  name: string
+  price: number
+  change: number
+  changePercent: number
+  volume: number
+  marketCap: number | null
+  per: number | null
+  pbr: number | null
+  roe: number | null
+  eps: number | null
+  bps: number | null
+  sentiment: number
+  aiScore?: number   // AI 종합 점수 (0-100)
+  sector: string
+  market: string
+  dividend_yield: number | null
+
 }
 
 interface FinancialData {
@@ -119,14 +127,42 @@ interface SentimentData {
   negativeRatio: number;
 }
 
-// API 데이터를 로컬 인터페이스로 변환하는 함수 (실시간 데이터 통합)
-const convertApiStockToDetail = (
-  apiStock: ApiStockDetail,
-  realTimeData?: any
-): StockDetail => {
-  const realTime = realTimeData?.[apiStock.stock_code];
+// AI 점수 계산 함수 (공통 유틸리티 사용)
+const computeAiScoreForStock = (stock: StockDetail, technicalIndicators?: any): number => {
+  return computeAiScore({ 
+    sentiment: stock.sentiment, 
+    changePercent: stock.changePercent,
+    technicalIndicators: technicalIndicators
+  })
+}
 
-  return {
+// 전역 감정 스토어 사용
+
+// API 데이터를 로컬 인터페이스로 변환하는 함수 (실시간 데이터 통합)
+const convertApiStockToDetail = (apiStock: ApiStockDetail, realTimeData?: any, sentimentOverride?: { positive: number; negative: number; neutral?: number }): StockDetail => {
+  const realTime = realTimeData?.[apiStock.stock_code]
+  
+  let sentiment: number;
+  
+  // 1. 직접 제공된 감정 데이터 사용 (우선순위 1)
+  // 2. 전역 스토어에서 데이터 사용 (우선순위 2)
+  // 3. 랜덤 값 사용 (fallback)
+  const sentimentAnalysis = sentimentOverride || sentimentStore.getSentiment(apiStock.stock_code);
+  
+  if (sentimentAnalysis) {
+    // 실제 감정 분석 데이터가 있으면 사용
+    sentiment = calculateSentimentScore(
+      sentimentAnalysis.positive, 
+      sentimentAnalysis.negative, 
+      sentimentAnalysis.neutral || 0
+    );
+  } else {
+    // 데이터가 없으면 임시 랜덤 값 사용 (메인 페이지와 동일)
+    sentiment = Math.random() * 0.4 + 0.3; // 0.3-0.7
+  }
+  
+  const stockDetail: StockDetail = {
+
     code: apiStock.stock_code,
     name: apiStock.stock_name,
     price: realTime?.current_price || apiStock.current_price,
@@ -139,12 +175,18 @@ const convertApiStockToDetail = (
     roe: apiStock.roe,
     eps: null, // API에서 제공되지 않음
     bps: null, // API에서 제공되지 않음
-    sentiment: Math.random() * 0.4 + 0.3, // 임시 감정 점수 (0.3-0.7)
+    sentiment,
     sector: apiStock.sector,
     market: apiStock.market,
-    dividend_yield: apiStock.dividend_yield,
-  };
-};
+    dividend_yield: apiStock.dividend_yield
+  }
+  
+  // AI 점수 계산
+  stockDetail.aiScore = computeAiScoreForStock(stockDetail)
+  
+  return stockDetail
+}
+
 
 export default function StockDetailPage() {
   const params = useParams();
@@ -216,7 +258,8 @@ export default function StockDetailPage() {
         lastRealTimePriceRef.current = realTimeData;
 
         // React 18 배치 업데이트를 이용한 최적화
-        setStockDetail((prevDetail) => {
+        setStockDetail((prevDetail: StockDetail | null) => {
+
           if (!prevDetail) return prevDetail;
 
           // 객체 참조 비교 최적화 - 동일한 값이면 기존 객체 반환
@@ -237,6 +280,10 @@ export default function StockDetailPage() {
             changePercent: realTimeData.change_percent,
             volume: realTimeData.volume,
           };
+          
+          // AI 점수 재계산 (변동률이 변경되었으므로)
+          updatedDetail.aiScore = computeAiScoreForStock(updatedDetail);
+          
 
           stockDetailRef.current = updatedDetail;
           return updatedDetail;
@@ -342,13 +389,34 @@ export default function StockDetailPage() {
 
       try {
         // 주식 기본 정보 먼저 로드
-        const stockData = await stocksApi.getStock(code);
-        console.log("📊 주식 데이터 로드 결과:", stockData);
-
-        // API 데이터만으로 초기 상태 설정
-        const convertedStock = convertApiStockToDetail(stockData);
-        setStockDetail(convertedStock);
-        stockDetailRef.current = convertedStock;
+        const stockData = await stocksApi.getStock(code)
+        console.log('📊 주식 데이터 로드 결과:', stockData)
+        
+        // 감정 분석 데이터를 먼저 로드한 후 주식 데이터 변환
+        let sentimentData = null;
+        try {
+          const sentimentApiData = await stocksApi.getSentimentAnalysis(code)
+          if (sentimentApiData) {
+            const positive = sentimentApiData.positive ? parseFloat(String(sentimentApiData.positive)) : 0;
+            const negative = sentimentApiData.negative ? parseFloat(String(sentimentApiData.negative)) : 0;
+            const neutral = sentimentApiData.neutral 
+              ? (typeof sentimentApiData.neutral === 'string' ? parseFloat(sentimentApiData.neutral) : sentimentApiData.neutral)
+              : 0;
+            
+            sentimentData = { positive, negative, neutral };
+            
+            // 전역 스토어에 저장
+            sentimentStore.setSentiment(code, positive, negative, neutral);
+          }
+        } catch (err) {
+          console.log('감정 분석 데이터 로드 실패:', err);
+        }
+        
+        // API 데이터만으로 초기 상태 설정 (감정 데이터 포함)
+        const convertedStock = convertApiStockToDetail(stockData, undefined, sentimentData)
+        setStockDetail(convertedStock)
+        stockDetailRef.current = convertedStock
+        
 
         // 주가 히스토리 설정 - stockData에서 직접 가져오기
         const apiStockData = stockData as any;
@@ -402,52 +470,35 @@ export default function StockDetailPage() {
           techIndicators = apiStockData.technical_indicators;
           setTechnicalIndicators(apiStockData.technical_indicators);
         }
-
-        // 감정 분석 데이터 로드
-        try {
-          const sentimentApiData = await stocksApi.getSentimentAnalysis(code);
-          console.log("💭 감정 분석 결과:", sentimentApiData);
-
-          if (sentimentApiData) {
-            setSentimentAnalysis(sentimentApiData);
-
-            // 안전한 값 추출
-            const positive = sentimentApiData.positive
-              ? parseFloat(String(sentimentApiData.positive))
-              : 0;
-            const negative = sentimentApiData.negative
-              ? parseFloat(String(sentimentApiData.negative))
-              : 0;
-
-            // top_keywords를 배열로 변환
-            const keywords = sentimentApiData.top_keywords
-              ? String(sentimentApiData.top_keywords)
-                  .split(",")
-                  .map((k) => k.trim())
-                  .filter((k) => k.length > 0)
-              : ["기업분석", "투자", "주식"];
-
-            console.log("🔑 키워드 처리 결과:", keywords);
-
-            setSentimentData({
-              score: positive - negative,
-              keywords: keywords,
-              newsCount: Math.floor(Math.random() * 200) + 50,
-              positiveRatio: Math.floor(positive * 100),
-              negativeRatio: Math.floor(negative * 100),
-            });
-          } else {
-            console.log("⚠️ 감정 분석 데이터가 없어 기본값 설정");
-            setSentimentData({
-              score: 0.6,
-              keywords: ["기업분석", "투자", "주식", "수익"],
-              newsCount: Math.floor(Math.random() * 200) + 50,
-              positiveRatio: 60,
-              negativeRatio: 40,
-            });
+        
+        // 감정 분석 데이터 UI 설정 (이미 위에서 로드됨)
+        if (sentimentData) {
+          try {
+            const sentimentApiData = await stocksApi.getSentimentAnalysis(code)
+            if (sentimentApiData) {
+              setSentimentAnalysis(sentimentApiData)
+              
+              // top_keywords를 배열로 변환
+              const keywords = sentimentApiData.top_keywords 
+                ? String(sentimentApiData.top_keywords).split(',').map(k => k.trim()).filter(k => k.length > 0)
+                : ["기업분석", "투자", "주식"];
+              
+              console.log('🔑 키워드 처리 결과:', keywords)
+              
+              setSentimentData({
+                score: sentimentData.positive - sentimentData.negative,
+                keywords: keywords,
+                newsCount: Math.floor(Math.random() * 200) + 50,
+                positiveRatio: Math.floor(sentimentData.positive * 100),
+                negativeRatio: Math.floor(sentimentData.negative * 100)
+              })
+            }
+          } catch (err) {
+            console.log('감정 분석 UI 데이터 설정 실패:', err);
           }
-        } catch (sentimentErr) {
-          console.log("⚠️ 감정 분석 API 호출 실패, 기본값 설정:", sentimentErr);
+        } else {
+          // 감정 데이터가 없으면 기본값 설정
+
           setSentimentData({
             score: 0.6,
             keywords: ["기업분석", "투자", "주식", "수익"],
@@ -766,7 +817,7 @@ export default function StockDetailPage() {
 
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600">
@@ -829,6 +880,32 @@ export default function StockDetailPage() {
                         ? "중립"
                         : "부정"}
                     </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">AI 종합 점수</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl font-bold text-blue-600">
+                      {typeof stockDetail.aiScore === 'number' ? stockDetail.aiScore : '-'}
+                    </span>
+                    <Badge
+                      variant={
+                        (stockDetail.aiScore || 0) >= 70
+                          ? "default"
+                          : (stockDetail.aiScore || 0) >= 50
+                            ? "secondary"
+                            : "destructive"
+                      }
+                    >
+                      {(stockDetail.aiScore || 0) >= 70 ? "긍정" : (stockDetail.aiScore || 0) >= 50 ? "중립" : "부정"}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    기술분석(70%) + 감정분석(30%)
                   </div>
                 </CardContent>
               </Card>
