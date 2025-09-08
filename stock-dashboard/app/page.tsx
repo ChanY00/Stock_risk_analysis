@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Search, Star, Clock, TrendingUp, Filter, RefreshCw, BarChart3, User, LogOut, LogIn } from "lucide-react"
 import Link from "next/link"
 
@@ -37,6 +37,12 @@ import { StockPriceCell, StockPriceData } from "@/components/ui/stock-price-cell
 // 섹터 매핑 유틸리티
 import { translateSectorToKorean, translateSectorToKoreanShort, getSectorColor } from "@/lib/sector-mapping"
 
+// AI 점수 계산 유틸리티
+import { computeAiScore } from "@/lib/ai-score-utils"
+
+// 전역 감정 데이터 스토어
+import { sentimentStore, calculateSentimentScore } from "@/lib/sentiment-store"
+
 // 실시간 주가 Hook - WebSocket 기반으로 변경
 import { useGlobalWebSocket } from "@/hooks/use-global-websocket"
 
@@ -56,6 +62,7 @@ interface Stock {
   per: number | null
   pbr: number | null
   sentiment: number  // 계산된 감정 점수 (0-1)
+  aiScore?: number   // AI 종합 점수 (0-100)
   sentimentData?: {  // 상세 감정 데이터 (선택적)
     positive: number
     negative: number
@@ -73,25 +80,7 @@ interface RecentSearch {
   timestamp: Date
 }
 
-// 감정 점수 계산 유틸리티 함수들
-const calculateSentimentScore = (positive: number, negative: number, neutral: number = 0): number => {
-  const total = positive + negative + neutral;
-  if (total === 0) return 0.5; // 데이터가 없으면 중립
-  
-  // 긍정 비율을 0-1로 정규화
-  return positive / total;
-}
-
-// 캐시된 감정 분석 데이터를 위한 전역 스토어
-const sentimentCache = new Map<string, { positive: number; negative: number; neutral?: number; timestamp: number }>();
-
-const getSentimentFromCache = (stockCode: string): { positive: number; negative: number; neutral?: number } | null => {
-  const cached = sentimentCache.get(stockCode);
-  if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) { // 5분 캐시
-    return { positive: cached.positive, negative: cached.negative, neutral: cached.neutral };
-  }
-  return null;
-}
+// 전역 감정 스토어 사용
 
 // 배치로 감정 분석 데이터를 로드하는 함수
 const loadSentimentDataBatch = async (stockCodes: string[]) => {
@@ -109,13 +98,8 @@ const loadSentimentDataBatch = async (stockCodes: string[]) => {
           ? (typeof sentimentData.neutral === 'string' ? parseFloat(sentimentData.neutral) : sentimentData.neutral)
           : 0;
         
-        // 캐시에 저장
-        sentimentCache.set(code, {
-          positive,
-          negative,
-          neutral,
-          timestamp: Date.now()
-        });
+        // 전역 스토어에 저장
+        sentimentStore.setSentiment(code, positive, negative, neutral);
         
         return { code, positive, negative, neutral };
       }
@@ -138,9 +122,9 @@ const convertApiStockToStock = (apiStock: ApiStock, realTimeData?: any, sentimen
   let sentimentData: Stock['sentimentData'];
   
   // 1. 직접 제공된 감정 데이터 사용 (우선순위 1)
-  // 2. 캐시된 데이터 사용 (우선순위 2)
+  // 2. 전역 스토어에서 데이터 사용 (우선순위 2)
   // 3. 랜덤 값 사용 (fallback)
-  const sentimentAnalysis = sentimentOverride || getSentimentFromCache(apiStock.stock_code);
+  const sentimentAnalysis = sentimentOverride || sentimentStore.getSentiment(apiStock.stock_code);
   
   if (sentimentAnalysis) {
     // 실제 감정 분석 데이터가 있으면 사용
@@ -173,6 +157,7 @@ const convertApiStockToStock = (apiStock: ApiStock, realTimeData?: any, sentimen
     per: apiStock.per,
     pbr: apiStock.pbr,
     sentiment,
+    aiScore: undefined,
     sentimentData,
     market: apiStock.market,
     sector: apiStock.sector
@@ -454,7 +439,16 @@ export default function Dashboard() {
           .then(() => {
             // 감정 분석 데이터 로드 완료 후 주식 데이터 다시 변환
             console.log('🎭 감정 분석 데이터 로드 완료, 주식 데이터 업데이트');
-            const updatedStocks = stocksData.results.map(item => convertApiStockToStock(item));
+            const updatedStocks = stocksData.results
+              .map(item => convertApiStockToStock(item))
+              .map(s => ({ 
+                ...s, 
+                aiScore: computeAiScore({
+                  sentiment: s.sentiment,
+                  changePercent: s.changePercent,
+                  technicalIndicators: undefined // TODO: 기술지표 데이터 추가
+                })
+              }));
             setStocks(updatedStocks);
             setFilteredStocks(updatedStocks);
           })
@@ -462,7 +456,17 @@ export default function Dashboard() {
             console.warn('감정 분석 데이터 배치 로드 실패:', error);
           });
         
+        // AI 점수 계산 (공통 유틸리티 사용)
+
         const convertedStocks = stocksData.results.map(item => convertApiStockToStock(item))
+          .map(s => ({ 
+            ...s, 
+            aiScore: computeAiScore({
+              sentiment: s.sentiment,
+              changePercent: s.changePercent,
+              technicalIndicators: undefined // TODO: 기술지표 데이터 추가
+            })
+          }))
         setStocks(convertedStocks)
         setFilteredStocks(convertedStocks)
         
@@ -481,7 +485,8 @@ export default function Dashboard() {
               return {
                 ...baseStock,
                 price: item.current_price,
-                changePercent: item.change_percent || 0
+                changePercent: item.change_percent || 0,
+                aiScore: baseStock.aiScore
               }
             }
             // 기본 주식 정보가 없는 경우 최소한의 정보로 생성
@@ -497,6 +502,11 @@ export default function Dashboard() {
               per: null,
               pbr: null,
               sentiment: 0.5,
+              aiScore: computeAiScore({ 
+                sentiment: 0.5, 
+                changePercent: item.change_percent || 0,
+                technicalIndicators: undefined
+              }),
               market: item.market || 'KOSPI',
               sector: item.sector || '기타'
             }
@@ -560,6 +570,11 @@ export default function Dashboard() {
       filtered = filtered.filter((stock) => stock.change < 0)
     } else if (filterBy === "high-sentiment") {
       filtered = filtered.filter((stock) => stock.sentiment > 0.6)
+    } else if (filterBy === "top-ai") {
+      filtered = filtered
+        .slice()
+        .sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0))
+        .slice(0, 50)
     }
 
     // 고급 필터 적용
@@ -609,8 +624,13 @@ export default function Dashboard() {
     }
 
     // 정렬 적용
-    const currentSortBy = filterCriteria.sortBy || sortBy
-    const currentSortOrder = filterCriteria.sortOrder || 'desc'
+    let currentSortBy = filterCriteria.sortBy || sortBy
+    let currentSortOrder = filterCriteria.sortOrder || 'desc'
+    // AI 상위 필터가 선택된 경우, 정렬을 강제로 AI 점수 내림차순으로 고정
+    if (filterBy === 'top-ai') {
+      currentSortBy = 'ai'
+      currentSortOrder = 'desc'
+    }
     
     filtered.sort((a, b) => {
       let aValue: number, bValue: number
@@ -643,6 +663,10 @@ export default function Dashboard() {
         case "pbr":
           aValue = a.pbr || 0
           bValue = b.pbr || 0
+          break
+        case "ai":
+          aValue = (a.aiScore ?? 0)
+          bValue = (b.aiScore ?? 0)
           break
         default:
           return currentSortOrder === 'asc' 
@@ -790,6 +814,8 @@ export default function Dashboard() {
             🚀 KOSPI 200 Real-Time Dashboard
           </h1>
           <p className="text-lg text-gray-600 font-medium">KOSPI 200 종목의 실시간 정보와 시장 동향을 확인하세요</p>
+          {/* 상승률 상위 10개 마퀴 배너 */}
+          <RisingTicker stocks={filteredStocks} key={`ticker-${Math.floor(Date.now()/(10*60*1000))}`} />
         </div>
 
         {/* 인터렙티브 통계 카드 */}
@@ -946,6 +972,7 @@ export default function Dashboard() {
                           <SelectItem value="positive">상승</SelectItem>
                           <SelectItem value="negative">하락</SelectItem>
                           <SelectItem value="high-sentiment">긍정 심리</SelectItem>
+                          <SelectItem value="top-ai">AI 종합 점수 상위</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -968,10 +995,10 @@ export default function Dashboard() {
                               <TableHead className="font-bold text-gray-700 w-36 text-right">현재가</TableHead>
                               <TableHead className="font-bold text-gray-700 w-28 text-right">변동률</TableHead>
                               <TableHead className="font-bold text-gray-700 w-24 text-right">거래량</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-20 text-right">PER</TableHead>
+                              <TableHead className="font-bold text-gray-700 w-20 text-right">AI 종합 점수</TableHead>
                               <TableHead className="font-bold text-gray-700 w-24 text-center">감정</TableHead>
                               <TableHead className="font-bold text-gray-700 w-16 text-center">관심</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-20 text-center">상세</TableHead>
+                              
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -1065,8 +1092,8 @@ export default function Dashboard() {
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    <span className="font-mono font-medium text-gray-700">
-                                      {stock.per ? stock.per.toFixed(1) : '-'}
+                                    <span className="font-mono font-bold text-gray-900">
+                                      {typeof stock.aiScore === 'number' ? stock.aiScore : '-'}
                                     </span>
                                   </TableCell>
                                   <TableCell className="text-center">
@@ -1103,19 +1130,7 @@ export default function Dashboard() {
                                       <Star className={`h-5 w-5 ${isFavorite(stock.code) ? 'fill-current' : ''}`} />
                                     </Button>
                                   </TableCell>
-                                  <TableCell className="text-center">
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      onClick={() => {
-                                        addToRecentSearches(stock)
-                                        window.open(`/stock/${stock.code}`, '_blank')
-                                      }}
-                                      className="group-hover:bg-slate-100 group-hover:text-slate-700 transition-all duration-200 rounded-lg font-medium hover:shadow-sm text-xs"
-                                    >
-                                      상세보기
-                                    </Button>
-                                  </TableCell>
+                                  
                                 </TableRow>
                               );
                             })}
@@ -1428,6 +1443,109 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// 상승률 상위 10개를 카드 형태로 오른쪽에서 왼쪽으로 흘러가게 표시하는 컴포넌트
+function RisingTicker({ stocks }: { stocks: Stock[] }) {
+  const marqueeRef = useRef<HTMLDivElement>(null)
+  
+  // 10분마다 리셋: key로 강제 재마운트 (상위에서 전달)
+  const top = useMemo(() => {
+    return stocks
+      .slice()
+      .sort((a, b) => (b.changePercent || 0) - (a.changePercent || 0))
+      .slice(0, 10)
+  }, [stocks])
+
+  // JavaScript 기반 애니메이션 (CSS 애니메이션이 작동하지 않을 경우 대비)
+  useEffect(() => {
+    const marquee = marqueeRef.current
+    if (!marquee) return
+
+    let animationId: number
+    let position = 0
+    const speed = 0.8 // 픽셀 단위 이동 속도
+
+    const animate = () => {
+      position -= speed
+      marquee.style.transform = `translateX(${position}px)`
+      
+      // 애니메이션이 끝나면 처음부터 다시 시작
+      if (Math.abs(position) >= marquee.scrollWidth / 2) {
+        position = 0
+      }
+      
+      animationId = requestAnimationFrame(animate)
+    }
+
+    // CSS 애니메이션이 작동하지 않는 경우에만 JavaScript 애니메이션 시작
+    const checkCSSAnimation = () => {
+      const computedStyle = window.getComputedStyle(marquee)
+      const animationName = computedStyle.animationName
+      
+      if (animationName === 'none' || !animationName.includes('marquee')) {
+        console.log('CSS 애니메이션이 작동하지 않음, JavaScript 애니메이션 시작')
+        animate()
+      }
+    }
+
+    // 약간의 지연 후 CSS 애니메이션 상태 확인
+    const timeoutId = setTimeout(checkCSSAnimation, 1000)
+
+    return () => {
+      clearTimeout(timeoutId)
+      if (animationId) {
+        cancelAnimationFrame(animationId)
+      }
+    }
+  }, [top])
+
+  if (top.length === 0) return null
+
+  // 종목 데이터를 두 번 복사하여 연속적인 스크롤 효과 생성
+  const duplicatedStocks = [...top, ...top]
+
+  return (
+    <div className="marquee-container w-full h-16 mt-3">
+      <div ref={marqueeRef} className="marquee h-full flex items-center">
+        {duplicatedStocks.map((s, idx) => {
+          const sign = (s.changePercent || 0) >= 0 ? '+' : ''
+          const isPositive = (s.changePercent || 0) >= 0
+          
+          return (
+            <div 
+              key={`${s.code}-${idx}`} 
+              className="flex-shrink-0 mx-4 bg-gray-800 rounded-lg p-3 min-w-[200px] border border-gray-700 hover:border-gray-600 transition-colors duration-200"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="text-white font-semibold text-sm truncate">
+                    {s.name}
+                  </div>
+                  <div className="text-gray-400 text-xs">
+                    {s.code}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="text-right">
+                    <div className={`font-bold text-lg ${isPositive ? 'text-red-400' : 'text-blue-400'}`}>
+                      {sign}{(s.changePercent || 0).toFixed(2)}%
+                    </div>
+                    <div className="text-gray-500 text-xs">
+                      AI: {s.aiScore || '-'}
+                    </div>
+                  </div>
+                  <div className="w-8 h-8 bg-gray-700 rounded flex items-center justify-center">
+                    <TrendingUp className={`w-4 h-4 ${isPositive ? 'text-red-400' : 'text-blue-400'}`} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

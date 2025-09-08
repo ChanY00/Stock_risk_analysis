@@ -246,3 +246,4 @@ class StockSimilarity(models.Model):
         ).select_related('source_stock', 'target_stock')
         
         return similarities
+    
