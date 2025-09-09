@@ -1,48 +1,84 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react"
-import { useParams } from "next/navigation"
-import { ArrowLeft, Star, TrendingUp, TrendingDown, MessageSquare, DollarSign, User, LogOut, LogIn } from "lucide-react"
-import Link from "next/link"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useParams } from "next/navigation";
+import {
+  ArrowLeft,
+  Star,
+  TrendingUp,
+  TrendingDown,
+  MessageSquare,
+  DollarSign,
+  User,
+  LogOut,
+  LogIn,
+} from "lucide-react";
+import Link from "next/link";
 
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
-import { stocksApi, StockDetail as ApiStockDetail, TechnicalIndicators, PriceData, handleApiError, type FinancialData as ApiFinancialData, type SentimentAnalysis, type FinancialAnalysis } from "@/lib/api"
+import {
+  stocksApi,
+  StockDetail as ApiStockDetail,
+  TechnicalIndicators,
+  PriceData,
+  handleApiError,
+  type FinancialData as ApiFinancialData,
+  type SentimentAnalysis,
+  type SentimentTrendData,
+  type FinancialAnalysis,
+} from "@/lib/api";
 
-import { PriceChart } from "@/components/charts/price-chart"
-import { TechnicalChart } from "@/components/charts/technical-chart"
-import { SentimentChart } from "@/components/charts/sentiment-chart"
-import { FinancialChart } from "@/components/charts/financial-chart"
-import { ClusterVisualization } from "@/components/charts/cluster-visualization"
+import { PriceChart } from "@/components/charts/price-chart";
+import { TechnicalChart } from "@/components/charts/technical-chart";
+import { SentimentChart } from "@/components/charts/sentiment-chart";
+import { FinancialChart } from "@/components/charts/financial-chart";
+import { ClusterVisualization } from "@/components/charts/cluster-visualization";
 
 // 섹터 매핑 유틸리티
-import { translateSectorToKorean, getSectorColor } from "@/lib/sector-mapping"
+import { translateSectorToKorean, getSectorColor } from "@/lib/sector-mapping";
 
 // 실시간 주가 Hook 추가
-import { useGlobalWebSocket } from "@/hooks/use-global-websocket"
+import { useGlobalWebSocket } from "@/hooks/use-global-websocket";
 
 // 휴장 상태 표시 컴포넌트 추가
-import { MarketStatusIndicator } from "@/components/ui/market-status-indicator"
-import { StockPriceCell, StockPriceData } from "@/components/ui/stock-price-cell"
+import { MarketStatusIndicator } from "@/components/ui/market-status-indicator";
+import {
+  StockPriceCell,
+  StockPriceData,
+} from "@/components/ui/stock-price-cell";
 
 // 인증 Hook 추가
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/contexts/AuthContext";
 
 // AI 점수 계산 유틸리티
 import { computeAiScore } from "@/lib/ai-score-utils"
@@ -69,25 +105,26 @@ interface StockDetail {
   sector: string
   market: string
   dividend_yield: number | null
+
 }
 
 interface FinancialData {
-  year: number
-  revenue: number
-  operating_income: number
-  net_income: number
-  eps: number
-  total_assets?: number
-  total_liabilities?: number
-  total_equity?: number
+  year: number;
+  revenue: number;
+  operating_income: number;
+  net_income: number;
+  eps: number;
+  total_assets?: number;
+  total_liabilities?: number;
+  total_equity?: number;
 }
 
 interface SentimentData {
-  score: number
-  keywords: string[]
-  newsCount: number
-  positiveRatio: number
-  negativeRatio: number
+  score: number;
+  keywords: string[];
+  newsCount: number;
+  positiveRatio: number;
+  negativeRatio: number;
 }
 
 // AI 점수 계산 함수 (공통 유틸리티 사용)
@@ -125,6 +162,7 @@ const convertApiStockToDetail = (apiStock: ApiStockDetail, realTimeData?: any, s
   }
   
   const stockDetail: StockDetail = {
+
     code: apiStock.stock_code,
     name: apiStock.stock_name,
     price: realTime?.current_price || apiStock.current_price,
@@ -149,28 +187,37 @@ const convertApiStockToDetail = (apiStock: ApiStockDetail, realTimeData?: any, s
   return stockDetail
 }
 
-export default function StockDetailPage() {
-  const params = useParams()
-  const code = params.code as string
-  
-  // 인증 상태 추가
-  const { user, isAuthenticated, logout } = useAuth()
 
-  const [stockDetail, setStockDetail] = useState<StockDetail | null>(null)
-  const [financialData, setFinancialData] = useState<FinancialData[]>([])
-  const [technicalIndicators, setTechnicalIndicators] = useState<TechnicalIndicators | null>(null)
-  const [priceHistory, setPriceHistory] = useState<PriceData[]>([])
-  const [sentimentData, setSentimentData] = useState<SentimentData | null>(null)
-  const [sentimentAnalysis, setSentimentAnalysis] = useState<SentimentAnalysis | null>(null)
-  const [financialAnalysis, setFinancialAnalysis] = useState<FinancialAnalysis | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string>("")
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [favoriteLoading, setFavoriteLoading] = useState(false)
+export default function StockDetailPage() {
+  const params = useParams();
+  const code = params.code as string;
+
+  // 인증 상태 추가
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const [stockDetail, setStockDetail] = useState<StockDetail | null>(null);
+  const [financialData, setFinancialData] = useState<FinancialData[]>([]);
+  const [technicalIndicators, setTechnicalIndicators] =
+    useState<TechnicalIndicators | null>(null);
+  const [priceHistory, setPriceHistory] = useState<PriceData[]>([]);
+  const [sentimentData, setSentimentData] = useState<SentimentData | null>(
+    null
+  );
+  const [sentimentAnalysis, setSentimentAnalysis] =
+    useState<SentimentAnalysis | null>(null);
+  const [financialAnalysis, setFinancialAnalysis] =
+    useState<FinancialAnalysis | null>(null);
+  const [sentimentTrend, setSentimentTrend] = useState<SentimentTrendData[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   // 실시간 데이터 업데이트 추적을 위한 ref
-  const lastRealTimePriceRef = useRef<any>(null)
-  const stockDetailRef = useRef<StockDetail | null>(null)
+  const lastRealTimePriceRef = useRef<any>(null);
+  const stockDetailRef = useRef<StockDetail | null>(null);
 
   // WebSocket 구독을 위한 종목 코드 메모이제이션
   const subscriptionCodes = useMemo(() => {
@@ -184,35 +231,37 @@ export default function StockDetailPage() {
     error: realTimeError = null,
     connected: realTimeConnected = false,
     lastUpdated: realTimeLastUpdated,
-    refetch: refetchRealTime
+    refetch: refetchRealTime,
   } = useGlobalWebSocket({
     stockCodes: subscriptionCodes,
-    autoSubscribe: true
-  })
+    autoSubscribe: true,
+  });
 
   // 실시간 데이터가 있으면 stockDetail 업데이트 - 최적화된 버전
   useEffect(() => {
     if (stockDetail && realTimePrices[code]) {
-      const realTimeData = realTimePrices[code]
-      const currentPrice = lastRealTimePriceRef.current
-      
+      const realTimeData = realTimePrices[code];
+      const currentPrice = lastRealTimePriceRef.current;
+
       // 실제 변경이 있는지 정확히 체크
-      const hasActualChange = !currentPrice ||
+      const hasActualChange =
+        !currentPrice ||
         currentPrice.current_price !== realTimeData.current_price ||
         currentPrice.change_amount !== realTimeData.change_amount ||
         currentPrice.change_percent !== realTimeData.change_percent ||
-        currentPrice.volume !== realTimeData.volume
+        currentPrice.volume !== realTimeData.volume;
 
       if (hasActualChange) {
-        console.log('🔄 상세 페이지 실시간 데이터 업데이트:', realTimeData)
-        
+        console.log("🔄 상세 페이지 실시간 데이터 업데이트:", realTimeData);
+
         // ref 업데이트 (다음 비교용)
-        lastRealTimePriceRef.current = realTimeData
-        
+        lastRealTimePriceRef.current = realTimeData;
+
         // React 18 배치 업데이트를 이용한 최적화
         setStockDetail((prevDetail: StockDetail | null) => {
+
           if (!prevDetail) return prevDetail;
-          
+
           // 객체 참조 비교 최적화 - 동일한 값이면 기존 객체 반환
           if (
             prevDetail.price === realTimeData.current_price &&
@@ -222,117 +271,122 @@ export default function StockDetailPage() {
           ) {
             return prevDetail; // 같은 참조 반환으로 리렌더링 방지
           }
-          
+
           // 실제 변경된 필드만 업데이트
           const updatedDetail = {
             ...prevDetail,
             price: realTimeData.current_price,
             change: realTimeData.change_amount,
             changePercent: realTimeData.change_percent,
-            volume: realTimeData.volume
+            volume: realTimeData.volume,
           };
           
           // AI 점수 재계산 (변동률이 변경되었으므로)
           updatedDetail.aiScore = computeAiScoreForStock(updatedDetail);
           
+
           stockDetailRef.current = updatedDetail;
           return updatedDetail;
-        })
+        });
       }
     }
-  }, [realTimePrices, code]) // stockDetail 의존성 제거로 무한 루프 방지
+  }, [realTimePrices, code]); // stockDetail 의존성 제거로 무한 루프 방지
 
   // 관심종목 상태 확인 - 메모이제이션 추가
   const checkFavoriteStatus = useCallback(async () => {
     if (!code) {
-      console.warn('종목 코드가 없습니다.')
-      return
+      console.warn("종목 코드가 없습니다.");
+      return;
     }
-    
-    console.log('관심종목 상태 확인 시작:', code)
+
+    console.log("관심종목 상태 확인 시작:", code);
     try {
-      const watchlist = await stocksApi.getWatchlist()
-      console.log('전체 관심종목 목록:', watchlist)
-      
-      const isInWatchlist = watchlist.some(item => item.stock_code === code)
-      console.log(`종목 ${code}가 관심종목에 있는지:`, isInWatchlist)
-      
-      setIsFavorite(isInWatchlist)
+      const watchlist = await stocksApi.getWatchlist();
+      console.log("전체 관심종목 목록:", watchlist);
+
+      const isInWatchlist = watchlist.some((item) => item.stock_code === code);
+      console.log(`종목 ${code}가 관심종목에 있는지:`, isInWatchlist);
+
+      setIsFavorite(isInWatchlist);
     } catch (error) {
-      console.warn('관심종목 상태 확인 실패:', error)
-      console.warn('에러 상세:', {
-        message: error instanceof Error ? error.message : '알 수 없는 에러',
-        code: code
-      })
+      console.warn("관심종목 상태 확인 실패:", error);
+      console.warn("에러 상세:", {
+        message: error instanceof Error ? error.message : "알 수 없는 에러",
+        code: code,
+      });
     }
-  }, [code])
+  }, [code]);
 
   useEffect(() => {
     if (code) {
-      checkFavoriteStatus()
+      checkFavoriteStatus();
     }
-  }, [code, checkFavoriteStatus])
+  }, [code, checkFavoriteStatus]);
 
   // 관심종목 추가/삭제 핸들러
   const handleFavoriteToggle = useCallback(async () => {
     if (!stockDetail) {
-      console.error('주식 정보가 없습니다.')
-      return
+      console.error("주식 정보가 없습니다.");
+      return;
     }
-    
-    console.log(`관심종목 ${isFavorite ? '삭제' : '추가'} 시작:`, code)
-    setFavoriteLoading(true)
-    
+
+    console.log(`관심종목 ${isFavorite ? "삭제" : "추가"} 시작:`, code);
+    setFavoriteLoading(true);
+
     try {
       if (isFavorite) {
-        console.log('관심종목 삭제 API 호출...')
-        const result = await stocksApi.removeFromWatchlist(code)
-        console.log('삭제 결과:', result)
-        
+        console.log("관심종목 삭제 API 호출...");
+        const result = await stocksApi.removeFromWatchlist(code);
+        console.log("삭제 결과:", result);
+
         if (result.success) {
-          setIsFavorite(false)
-          console.log('✅ 관심종목 삭제 성공:', result.message)
+          setIsFavorite(false);
+          console.log("✅ 관심종목 삭제 성공:", result.message);
           // TODO: 성공 알림 표시
         } else {
-          console.error('❌ 관심종목 삭제 실패 - API에서 실패 응답:', result)
+          console.error("❌ 관심종목 삭제 실패 - API에서 실패 응답:", result);
         }
       } else {
-        console.log('관심종목 추가 API 호출...')
-        const result = await stocksApi.addToWatchlist(code)
-        console.log('추가 결과:', result)
-        
+        console.log("관심종목 추가 API 호출...");
+        const result = await stocksApi.addToWatchlist(code);
+        console.log("추가 결과:", result);
+
         if (result.success) {
-          setIsFavorite(true)
-          console.log('✅ 관심종목 추가 성공:', result.message)
+          setIsFavorite(true);
+          console.log("✅ 관심종목 추가 성공:", result.message);
           // TODO: 성공 알림 표시
         } else {
-          console.error('❌ 관심종목 추가 실패 - API에서 실패 응답:', result)
+          console.error("❌ 관심종목 추가 실패 - API에서 실패 응답:", result);
         }
       }
     } catch (error) {
-      console.error('❌ 관심종목 처리 중 에러 발생:', error)
-      console.error('에러 상세:', {
-        message: error instanceof Error ? error.message : '알 수 없는 에러',
+      console.error("❌ 관심종목 처리 중 에러 발생:", error);
+      console.error("에러 상세:", {
+        message: error instanceof Error ? error.message : "알 수 없는 에러",
         stack: error instanceof Error ? error.stack : null,
         code: code,
-        isFavorite: isFavorite
-      })
+        isFavorite: isFavorite,
+      });
       // TODO: 에러 알림 표시
-      alert(`관심종목 ${isFavorite ? '삭제' : '추가'} 중 오류가 발생했습니다. 다시 시도해 주세요.`)
+      alert(
+        `관심종목 ${
+          isFavorite ? "삭제" : "추가"
+        } 중 오류가 발생했습니다. 다시 시도해 주세요.`
+      );
     } finally {
-      setFavoriteLoading(false)
-      console.log('관심종목 처리 완료')
+      setFavoriteLoading(false);
+      console.log("관심종목 처리 완료");
     }
-  }, [stockDetail, isFavorite, code])
+  }, [stockDetail, isFavorite, code]);
 
   // 데이터 로딩 로직 - 한 번만 실행되도록 최적화
   useEffect(() => {
-    if (!code) return
+    if (!code) return;
 
     const loadStockData = async () => {
-      setLoading(true)
-      setError("")
-      
+      setLoading(true);
+      setError("");
+
       try {
         // 주식 기본 정보 먼저 로드
         const stockData = await stocksApi.getStock(code)
@@ -363,37 +417,58 @@ export default function StockDetailPage() {
         setStockDetail(convertedStock)
         stockDetailRef.current = convertedStock
         
+
         // 주가 히스토리 설정 - stockData에서 직접 가져오기
         const apiStockData = stockData as any;
-        if (apiStockData.price_history && Array.isArray(apiStockData.price_history) && apiStockData.price_history.length > 0) {
-          console.log('📈 주가 히스토리 설정:', apiStockData.price_history.length, '개 데이터')
-          setPriceHistory(apiStockData.price_history)
+        if (
+          apiStockData.price_history &&
+          Array.isArray(apiStockData.price_history) &&
+          apiStockData.price_history.length > 0
+        ) {
+          console.log(
+            "📈 주가 히스토리 설정:",
+            apiStockData.price_history.length,
+            "개 데이터"
+          );
+          setPriceHistory(apiStockData.price_history);
         } else {
-          console.log('⚠️ 주가 히스토리 데이터가 없어 별도 API 호출')
+          console.log("⚠️ 주가 히스토리 데이터가 없어 별도 API 호출");
           // 별도 API로 주가 히스토리 가져오기
           try {
-            const priceHistoryData = await stocksApi.getPriceHistory(code, { days: 365 })
-            if (Array.isArray(priceHistoryData) && priceHistoryData.length > 0) {
-              console.log('📈 주가 히스토리 설정 (별도 API):', priceHistoryData.length, '개 데이터')
-              setPriceHistory(priceHistoryData)
+            const priceHistoryData = await stocksApi.getPriceHistory(code, {
+              days: 365,
+            });
+            if (
+              Array.isArray(priceHistoryData) &&
+              priceHistoryData.length > 0
+            ) {
+              console.log(
+                "📈 주가 히스토리 설정 (별도 API):",
+                priceHistoryData.length,
+                "개 데이터"
+              );
+              setPriceHistory(priceHistoryData);
             }
           } catch (err) {
-            console.log('⚠️ 주가 히스토리 별도 API 호출 실패:', err)
+            console.log("⚠️ 주가 히스토리 별도 API 호출 실패:", err);
           }
         }
-        
+
         // 재무 데이터 설정
         if (apiStockData.financial_data) {
-          console.log('💰 재무 데이터 설정:', apiStockData.financial_data)
-          setFinancialData([apiStockData.financial_data])
+          console.log("💰 재무 데이터 설정:", apiStockData.financial_data);
+          setFinancialData([apiStockData.financial_data]);
         }
-        
+
         // 기술적 지표 설정 - 우선순위: StockDetail API > StockAnalysis API
-        let techIndicators = null
+        let techIndicators = null;
         if (apiStockData.technical_indicators) {
-          console.log('📊 StockDetail API에서 기술지표 로드:', apiStockData.technical_indicators)
-          techIndicators = apiStockData.technical_indicators
-          setTechnicalIndicators(apiStockData.technical_indicators)
+          console.log(
+            "📊 StockDetail API에서 기술지표 로드:",
+            apiStockData.technical_indicators
+          );
+          techIndicators = apiStockData.technical_indicators;
+          setTechnicalIndicators(apiStockData.technical_indicators);
         }
         
         // 감정 분석 데이터 UI 설정 (이미 위에서 로드됨)
@@ -423,114 +498,127 @@ export default function StockDetailPage() {
           }
         } else {
           // 감정 데이터가 없으면 기본값 설정
+
           setSentimentData({
             score: 0.6,
             keywords: ["기업분석", "투자", "주식", "수익"],
             newsCount: Math.floor(Math.random() * 200) + 50,
             positiveRatio: 60,
-            negativeRatio: 40
-          })
+            negativeRatio: 40,
+          });
         }
-        
+
+        // 감정 추이 데이터 로드 (14일)
+        try {
+          const trend = await stocksApi.getSentimentTrend(code, 14);
+          console.log("📈 감정 추이 데이터:", trend);
+          setSentimentTrend(trend);
+        } catch (trendErr) {
+          console.log("⚠️ 감정 추이 API 호출 실패:", trendErr);
+          setSentimentTrend([]);
+        }
+
         // 추가 데이터 로드 (선택적) - 기존 기술지표가 없을 때만
         if (!techIndicators) {
           try {
-            const analysisData = await stocksApi.getStockAnalysis(code)
+            const analysisData = await stocksApi.getStockAnalysis(code);
             if (analysisData?.technical_indicators) {
-              console.log('📊 StockAnalysis API에서 기술지표 로드:', analysisData.technical_indicators)
-              setTechnicalIndicators(analysisData.technical_indicators)
+              console.log(
+                "📊 StockAnalysis API에서 기술지표 로드:",
+                analysisData.technical_indicators
+              );
+              setTechnicalIndicators(analysisData.technical_indicators);
             }
           } catch (err) {
-            console.log('⚠️ 기술 분석 데이터 로드 실패:', err)
+            console.log("⚠️ 기술 분석 데이터 로드 실패:", err);
           }
         }
-        
+
         try {
-          const financialApiData = await stocksApi.getFinancialData(code)
+          const financialApiData = await stocksApi.getFinancialData(code);
           if (financialApiData) {
-            setFinancialAnalysis(financialApiData)
+            setFinancialAnalysis(financialApiData);
           }
         } catch (err) {
-          console.log('⚠️ 재무 분석 데이터 로드 실패:', err)
+          console.log("⚠️ 재무 분석 데이터 로드 실패:", err);
         }
-        
       } catch (err: any) {
-        const errorMessage = handleApiError(err)
-        setError(errorMessage)
-        console.error('Failed to load stock data:', err)
+        const errorMessage = handleApiError(err);
+        setError(errorMessage);
+        console.error("Failed to load stock data:", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadStockData()
-  }, [code]) // code 변경 시에만 실행
+    loadStockData();
+  }, [code]); // code 변경 시에만 실행
 
   // 포맷팅 함수들 - 메모이제이션으로 최적화
   const formatNumber = useCallback((num: number | null) => {
-    if (num === null || num === undefined) return '-'
+    if (num === null || num === undefined) return "-";
     // 원 단위로 저장된 데이터를 적절한 단위로 변환
-    if (num >= 1e12) return `${(num / 1e12).toFixed(1)}조원`
-    if (num >= 1e8) return `${(num / 1e8).toFixed(1)}억원`
-    if (num >= 1e4) return `${(num / 1e4).toFixed(1)}만원`
-    return `${num.toLocaleString()}원`
-  }, [])
+    if (num >= 1e12) return `${(num / 1e12).toFixed(1)}조원`;
+    if (num >= 1e8) return `${(num / 1e8).toFixed(1)}억원`;
+    if (num >= 1e4) return `${(num / 1e4).toFixed(1)}만원`;
+    return `${num.toLocaleString()}원`;
+  }, []);
 
   const formatPercent = useCallback((num: number | null) => {
-    if (num === null || num === undefined || num === 0) return '-'
-    return `${num.toFixed(2)}%`
-  }, [])
+    if (num === null || num === undefined || num === 0) return "-";
+    return `${num.toFixed(2)}%`;
+  }, []);
 
   // 실시간 데이터 상태를 메모이제이션으로 최적화
   const realTimeStatus = useMemo(() => {
     if (!realTimeConnected) {
       return {
-        label: '오프라인',
-        variant: 'outline' as const,
-        color: 'bg-gray-400'
+        label: "오프라인",
+        variant: "outline" as const,
+        color: "bg-gray-400",
       };
     }
-    
+
     const realTimeData = realTimePrices[code];
     if (!realTimeData) {
       return {
-        label: '실시간',
-        variant: 'default' as const,
-        color: 'bg-green-500'
+        label: "실시간",
+        variant: "default" as const,
+        color: "bg-green-500",
       };
     }
-    
+
     switch (realTimeData.source) {
-      case 'realtime':
-      case 'kis_paper_trading_fixed':
-      case 'mock_websocket_optimized':
+      case "realtime":
+      case "kis_paper_trading_fixed":
+      case "mock_websocket_optimized":
         return {
-          label: '실시간',
-          variant: 'default' as const,
-          color: 'bg-green-500'
+          label: "실시간",
+          variant: "default" as const,
+          color: "bg-green-500",
         };
-      case 'closing':
+      case "closing":
         return {
-          label: '종가',
-          variant: 'default' as const,
-          color: 'bg-blue-500'
+          label: "종가",
+          variant: "default" as const,
+          color: "bg-blue-500",
         };
       default:
         return {
-          label: '전일종가',
-          variant: 'default' as const,
-          color: 'bg-orange-500'
+          label: "전일종가",
+          variant: "default" as const,
+          color: "bg-orange-500",
         };
     }
-  }, [realTimeConnected, realTimePrices, code])
+  }, [realTimeConnected, realTimePrices, code]);
 
   // 가격 변동 컬러 계산 - 메모이제이션
   const priceChangeColor = useMemo(() => {
-    if (!stockDetail) return 'text-gray-500';
-    if (stockDetail.change > 0) return 'text-red-500';
-    if (stockDetail.change < 0) return 'text-blue-500';
-    return 'text-gray-500';
-  }, [stockDetail?.change])
+    if (!stockDetail) return "text-gray-500";
+    if (stockDetail.change > 0) return "text-red-500";
+    if (stockDetail.change < 0) return "text-blue-500";
+    return "text-gray-500";
+  }, [stockDetail?.change]);
 
   if (loading) {
     return (
@@ -543,7 +631,7 @@ export default function StockDetailPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -566,10 +654,10 @@ export default function StockDetailPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!stockDetail) return null
+  if (!stockDetail) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -593,30 +681,38 @@ export default function StockDetailPage() {
                 </div>
                 <p className="text-gray-600 dark:text-gray-400">
                   {stockDetail.code} • {translateSectorToKorean(stockDetail.sector)}
+
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button 
-                variant={isFavorite ? "default" : "outline"} 
-                size="sm" 
+              <Button
+                variant={isFavorite ? "default" : "outline"}
+                size="sm"
                 onClick={handleFavoriteToggle}
                 disabled={favoriteLoading}
               >
-                <Star className={`h-4 w-4 mr-2 ${isFavorite ? "fill-current" : ""}`} />
-                {favoriteLoading 
-                  ? "처리 중..." 
-                  : (isFavorite ? "관심종목 해제" : "관심종목 추가")
-                }
+                <Star
+                  className={`h-4 w-4 mr-2 ${isFavorite ? "fill-current" : ""}`}
+                />
+                {favoriteLoading
+                  ? "처리 중..."
+                  : isFavorite
+                  ? "관심종목 해제"
+                  : "관심종목 추가"}
               </Button>
-              
+
               {/* 인증 상태에 따른 버튼 표시 */}
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
                       <User className="h-4 w-4" />
-                      {user?.first_name || user?.username || '사용자'}
+                      {user?.first_name || user?.username || "사용자"}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
@@ -646,9 +742,7 @@ export default function StockDetailPage() {
                     </Button>
                   </Link>
                   <Link href="/register">
-                    <Button size="sm">
-                      회원가입
-                    </Button>
+                    <Button size="sm">회원가입</Button>
                   </Link>
                 </div>
               )}
@@ -666,16 +760,18 @@ export default function StockDetailPage() {
                 <div className="flex items-center justify-between mb-2">
                   {/* StockPriceCell 컴포넌트로 통합하여 중복 제거 */}
                   <div className="text-3xl font-bold font-mono">
-                    <StockPriceCell 
+                    <StockPriceCell
                       data={{
                         price: stockDetail.price,
                         change: stockDetail.change,
                         changePercent: stockDetail.changePercent,
                         volume: stockDetail.volume,
                         isRealTime: !!realTimePrices[code] && realTimeConnected,
-                        isMarketClosed: !realTimeConnected || (!realTimePrices[code] && !realTimeLoading),
+                        isMarketClosed:
+                          !realTimeConnected ||
+                          (!realTimePrices[code] && !realTimeLoading),
                         lastTradingDay: "2025-01-06",
-                        timestamp: realTimePrices[code]?.timestamp
+                        timestamp: realTimePrices[code]?.timestamp,
                       }}
                       compact={false}
                     />
@@ -696,6 +792,7 @@ export default function StockDetailPage() {
               <div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">배당수익률</div>
                 <div className="text-lg font-mono text-gray-900 dark:text-white">{formatPercent(stockDetail.dividend_yield)}</div>
+
               </div>
             </div>
           </CardContent>
@@ -720,6 +817,7 @@ export default function StockDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.per ? stockDetail.per.toFixed(1) : '-'}</div>
+
                 </CardContent>
               </Card>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
@@ -728,6 +826,7 @@ export default function StockDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.pbr ? stockDetail.pbr.toFixed(1) : '-'}</div>
+
                 </CardContent>
               </Card>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
@@ -736,6 +835,7 @@ export default function StockDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.roe ? formatPercent(stockDetail.roe) : '-'}</div>
+
                 </CardContent>
               </Card>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
@@ -745,16 +845,21 @@ export default function StockDetailPage() {
                 <CardContent>
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">{(stockDetail.sentiment * 100).toFixed(0)}</span>
+
                     <Badge
                       variant={
                         stockDetail.sentiment >= 0.7
                           ? "default"
                           : stockDetail.sentiment >= 0.5
-                            ? "secondary"
-                            : "destructive"
+                          ? "secondary"
+                          : "destructive"
                       }
                     >
-                      {stockDetail.sentiment >= 0.7 ? "긍정" : stockDetail.sentiment >= 0.5 ? "중립" : "부정"}
+                      {stockDetail.sentiment >= 0.7
+                        ? "긍정"
+                        : stockDetail.sentiment >= 0.5
+                        ? "중립"
+                        : "부정"}
                     </Badge>
                   </div>
                 </CardContent>
@@ -795,7 +900,11 @@ export default function StockDetailPage() {
               </CardHeader>
               <CardContent>
                 {priceHistory.length > 0 ? (
-                                      <PriceChart data={priceHistory} title="주가 변동 추이" stockCode={code} />
+                  <PriceChart
+                    data={priceHistory}
+                    title="주가 변동 추이"
+                    stockCode={code}
+                  />
                 ) : (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     주가 데이터를 불러올 수 없습니다
@@ -815,6 +924,7 @@ export default function StockDetailPage() {
                   <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">재무 분석 차트 준비 중</h3>
                   <p className="text-sm">재무 데이터가 준비되면 상세한 분석 차트가 표시됩니다.</p>
+
                 </div>
               </div>
             )}
@@ -826,6 +936,7 @@ export default function StockDetailPage() {
                   <CardTitle className="text-gray-900 dark:text-white">재무제표</CardTitle>
                   <CardDescription className="text-gray-600 dark:text-gray-400">
                     {financialData.length > 0 ? `${financialData[0].year}년 기준` : '데이터 없음'}
+
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -835,6 +946,7 @@ export default function StockDetailPage() {
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
                           <TableCell className="text-gray-700 dark:text-gray-300">매출액</TableCell>
                           <TableCell className="font-mono text-right text-gray-900 dark:text-white">{formatNumber(financialData[0].revenue)}</TableCell>
+
                         </TableRow>
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
                           <TableCell className="text-gray-700 dark:text-gray-300">영업이익</TableCell>
@@ -864,6 +976,7 @@ export default function StockDetailPage() {
                           <TableCell className="text-gray-700 dark:text-gray-300">총자본</TableCell>
                           <TableCell className="font-mono text-right text-gray-900 dark:text-white">
                             {formatNumber(financialData[0].total_equity || null)}
+
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -920,6 +1033,7 @@ export default function StockDetailPage() {
                       <div className="flex justify-between">
                         <span className="text-gray-700 dark:text-gray-300">BPS</span>
                         <span className="font-mono text-gray-900 dark:text-white">{stockDetail.bps ? stockDetail.bps.toLocaleString() : '-'}</span>
+
                       </div>
                     </div>
                   ) : (
@@ -934,8 +1048,8 @@ export default function StockDetailPage() {
 
           <TabsContent value="technical" className="space-y-6">
             {technicalIndicators ? (
-              <TechnicalChart 
-                indicators={technicalIndicators} 
+              <TechnicalChart
+                indicators={technicalIndicators}
                 priceData={priceHistory}
                 title="기술적 분석 지표"
                 stockCode={code}
@@ -949,7 +1063,11 @@ export default function StockDetailPage() {
 
           <TabsContent value="sentiment" className="space-y-6">
             {sentimentAnalysis ? (
-              <SentimentChart sentiment={sentimentAnalysis} title="네이버 종목토론방 감정 분석" />
+              <SentimentChart
+                sentiment={sentimentAnalysis}
+                sentimentTrend={sentimentTrend}
+                title="네이버 종목토론방 감정 분석"
+              />
             ) : (
               <div className="space-y-6">
                 {/* 감정 분석 데이터가 없을 때 기존 UI 표시 */}
@@ -967,16 +1085,21 @@ export default function StockDetailPage() {
                             <span className="text-gray-700 dark:text-gray-300">감정 점수</span>
                             <div className="flex items-center space-x-2">
                               <span className="font-mono text-lg text-gray-900 dark:text-white">{(sentimentData.score * 100).toFixed(0)}</span>
+
                               <Badge
                                 variant={
                                   sentimentData.score >= 0.7
                                     ? "default"
                                     : sentimentData.score >= 0.5
-                                      ? "secondary"
-                                      : "destructive"
+                                    ? "secondary"
+                                    : "destructive"
                                 }
                               >
-                                {sentimentData.score >= 0.7 ? "긍정" : sentimentData.score >= 0.5 ? "중립" : "부정"}
+                                {sentimentData.score >= 0.7
+                                  ? "긍정"
+                                  : sentimentData.score >= 0.5
+                                  ? "중립"
+                                  : "부정"}
                               </Badge>
                             </div>
                           </div>
@@ -991,6 +1114,7 @@ export default function StockDetailPage() {
                           <div className="flex justify-between">
                             <span className="text-gray-700 dark:text-gray-300">부정 비율</span>
                             <span className="font-mono text-red-600 dark:text-red-400">{sentimentData.negativeRatio}%</span>
+
                           </div>
                         </div>
                       ) : (
@@ -1027,10 +1151,15 @@ export default function StockDetailPage() {
                 
                 <Card className="p-6 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                   <div className="text-center text-gray-500 dark:text-gray-400">
+
                     <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-medium mb-2">감정 분석 데이터 준비 중</h3>
+                    <h3 className="text-lg font-medium mb-2">
+                      감정 분석 데이터 준비 중
+                    </h3>
                     <p className="text-sm">
-                      네이버 종목토론방 크롤링 및 감정 분석이 2시간마다 자동으로 실행됩니다.<br/>
+                      네이버 종목토론방 크롤링 및 감정 분석이 2시간마다 자동으로
+                      실행됩니다.
+                      <br />
                       분석 결과가 준비되면 상세한 감정 분석 차트가 표시됩니다.
                     </p>
                   </div>
@@ -1045,5 +1174,5 @@ export default function StockDetailPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

@@ -18,8 +18,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-# Python lib 폴더만 제외 (Next.js lib 폴더는 보호)
+# Note: this ignores any directory named 'lib' anywhere (Python build output)
+# It accidentally hides frontend source dir `stock-dashboard/lib`. We unignore it below.
 lib/
+!stock-dashboard/lib/
 lib64/
 # Next.js lib 폴더는 예외 처리
 !stock-dashboard/lib/
