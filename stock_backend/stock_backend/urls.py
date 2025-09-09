@@ -16,61 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-import json
-
-# 임시 API 뷰들 (비회원 지원)
-@csrf_exempt
-@require_http_methods(["GET", "POST", "DELETE"])
-def watchlist_api(request, stock_code=None):
-    """임시 관심종목 API - 비회원은 빈 응답 반환"""
-    if request.method == 'GET':
-        return JsonResponse({"success": True, "data": []})
-    elif request.method == 'POST':
-        return JsonResponse({"success": False, "message": "로그인이 필요합니다."})
-    elif request.method == 'DELETE':
-        return JsonResponse({"success": False, "message": "로그인이 필요합니다."})
-
-def market_overview_api(request):
-    """임시 시장 개요 API"""
-    mock_data = {
-        "market_summary": {
-            "KOSPI": {
-                "current": 2650.5,
-                "change": 15.2,
-                "change_percent": 0.58,
-                "volume": 450000000,
-                "high": 2660.8,
-                "low": 2635.1,
-                "trade_value": 8500000000000
-            }
-        },
-        "sector_performance": [
-            {
-                "sector": "Technology",
-                "change_percent": 1.2,
-                "top_performer": {
-                    "name": "삼성전자",
-                    "code": "005930",
-                    "change_percent": 2.1
-                }
-            }
-        ]
-    }
-    return JsonResponse(mock_data)
+from analysis.views import market_overview_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include([
         # 인증 API
         path('auth/', include('authentication.urls')),
-        
-        # 임시 누락된 API들
-        path('watchlist/', watchlist_api, name='watchlist-list'),
-        path('watchlist/<str:stock_code>/', watchlist_api, name='watchlist-detail'),
-        path('market-overview/', market_overview_api, name='market-overview'),
+        # 시장 개요 (실제 캐시 적용된 뷰로 연결)
+        path('market-overview/', market_overview_view, name='market-overview'),
         
         # 올바른 API 구조
         path('stocks/', include('stocks.urls')),

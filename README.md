@@ -106,3 +106,23 @@ docker-compose up -d
 ---
 
 **Happy Trading! 📈** 
+
+## 🧭 RUNBOOK: Dev/Prod Switch & Env
+
+- Mode selection:
+  - Set `DJANGO_MODE=development` or `DJANGO_MODE=production` (default is `development`).
+  - `stock_backend/stock_backend/settings/__init__.py` selects `dev` or `prod` based on this value.
+- Required env (backend):
+  - Development: minimal — `SECRET_KEY`, DB (`DB_*`), optional `USE_REDIS_CHANNELS`.
+  - Production: set `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, Redis (`REDIS_HOST`, `REDIS_PORT`).
+- Compose env files:
+  - Backend: `stock_backend/.env` (copy from `.env.example`).
+  - Frontend: `stock-dashboard/.env.local` (copy from `.env.local.example`).
+  - Sentiment: `Stock_risk_analysis/.env`.
+- Frontend SSR (dev):
+  - Optionally set `INTERNAL_API_URL=http://backend:8000/api` in `docker-compose.override.yml` for server-side calls.
+- Quick checks:
+  - API base: `GET http://localhost:8000/api/stocks/` returns data.
+  - Market overview: `GET http://localhost:8000/api/market-overview/` returns summary JSON.
+  - WebSocket (prod): ensure Channels uses Redis; check container logs for connection messages.
+  - Sentiment bulk ingest (optional token): if `SENTIMENT_BULK_TOKEN` is set in backend env, POST to `/api/sentiment/bulk/` must include header `X-Internal-Token: <token>` (or `Authorization: Bearer <token>`).

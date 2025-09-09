@@ -11,6 +11,15 @@ import threading
 import time
 from django.conf import settings
 from kis_api.market_utils import market_utils
+from . import ws_loop
+from .ws_schema import (
+    WS_TYPE_CONNECTION_STATUS,
+    WS_TYPE_PRICE_UPDATE,
+    WS_TYPE_SUBSCRIBE_RESPONSE,
+    WS_TYPE_UNSUBSCRIBE_RESPONSE,
+    WS_TYPE_ERROR,
+)
+from .ws_utils import get_group_name_for_stock
 
 logger = logging.getLogger(__name__)
 performance_logger = logging.getLogger('performance')
@@ -38,20 +47,9 @@ class GlobalSubscriptionManager:
         
     def _initialize_broadcast_thread(self):
         """단일 브로드캐스트 스레드 초기화 - 성능 최적화"""
-        def run_broadcast_loop():
-            try:
-                self._broadcast_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(self._broadcast_loop)
-                performance_logger.info("Broadcast event loop initialized")
-                self._broadcast_loop.run_forever()
-            except Exception as e:
-                logger.error(f"Broadcast loop error: {e}")
-            finally:
-                self._broadcast_loop = None
-        
-        self._broadcast_thread = threading.Thread(target=run_broadcast_loop, daemon=True)
-        self._broadcast_thread.start()
-        performance_logger.info("Single broadcast thread started")
+        # Delegate to reusable utility to manage loop/thread
+        ws_loop.ensure_started()
+        performance_logger.info("Single broadcast thread ensured started")
         
     def add_client(self, client_id: str):
         """클라이언트 추가"""
@@ -166,67 +164,33 @@ class GlobalSubscriptionManager:
             logger.info(f"   - APP_KEY: {'설정됨' if app_key else '없음'} ({app_key[:10] + '...' if app_key else 'None'})")
             logger.info(f"   - APP_SECRET: {'설정됨' if app_secret else '없음'}")
             
-            # Mock 모드 체크
-            if use_mock:
-                logger.info("🎭 Mock 모드 활성화")
+            # Wrapper 사용 강제
+            try:
+                self.kis_client = KISWebSocketClient(is_mock=use_mock)
+            except Exception as e:
+                logger.error(f"❌ KIS 클라이언트 생성 오류: {e}")
                 self.kis_client = None
                 self.market_closed_mode = True
+                self.connection_status = "error"
                 return
             
-            # API 키 확인
-            if not app_key or not app_secret:
+            # USE_MOCK인 경우에도 wrapper가 내부에서 mock 처리
+            if not use_mock and (not app_key or not app_secret):
                 logger.error("❌ KIS API 키가 설정되지 않았습니다!")
-                logger.error("환경변수 KIS_APP_KEY와 KIS_APP_SECRET를 확인해주세요.")
-                self.kis_client = None
                 self.market_closed_mode = True
                 return
             
-            # 실제 KIS API 전용 사용 (Mock fallback 제거)
-            trading_mode = "모의투자" if is_paper_trading else "실계좌"
-            logger.info(f"🚀 실제 KIS API 클라이언트 전용 모드 ({trading_mode})...")
-            
-            # 최대 3번 재시도
-            max_attempts = 3
-            for attempt in range(1, max_attempts + 1):
-                try:
-                    logger.info(f"🔄 KIS API 연결 시도 #{attempt}/{max_attempts}")
-                    
-                    # RealKISWebSocketClient 직접 사용
-                    from kis_api.real_websocket_client import RealKISWebSocketClient
-                    self.kis_client = RealKISWebSocketClient()
-                    
-                    # 연결 시도
-                    if self.kis_client.connect():
-                        logger.info("✅ 전역 KIS API 클라이언트 연결 성공!")
-                        self.connection_status = "connected"
-                        return
-                    else:
-                        logger.warning(f"❌ 실제 KIS API 연결 실패 (시도 #{attempt})")
-                        
-                except Exception as e:
-                    logger.error(f"💥 KIS API 연결 오류 (시도 #{attempt}): {e}")
-                
-                # 재시도 대기 (점진적 증가)
-                if attempt < max_attempts:
-                    wait_time = attempt * 5
-                    logger.info(f"⏳ {wait_time}초 후 재시도...")
-                    import time
-                    time.sleep(wait_time)
-            
-            # 모든 시도 실패
-            logger.error("❌ 모든 KIS API 연결 시도 실패")
-            logger.error("📋 가능한 원인:")
-            logger.error("   1. KIS API 키가 잘못되었거나 만료됨")
-            logger.error("   2. KIS 서버 점검 또는 장애")
-            logger.error("   3. 네트워크 연결 문제")
-            logger.error("   4. 시장 운영시간 외 (실시간 데이터는 운영시간에만 제공)")
-            logger.error("   5. 모의투자 모드 설정 확인 필요")
-            
-            # 휴장일 모드로 폴백
-            logger.info("🔄 휴장일 모드로 폴백...")
-            self.kis_client = None
-            self.market_closed_mode = True
-            self.connection_status = "market_closed"
+            # 연결 시도
+            if self.kis_client.connect():
+                logger.info("✅ 전역 KIS API 클라이언트 연결 성공!")
+                self.connection_status = "connected"
+                self.market_closed_mode = False
+                return
+            else:
+                logger.error("❌ KIS API 연결 실패")
+                self.kis_client = None
+                self.market_closed_mode = True
+                self.connection_status = "error"
             
         except Exception as e:
             logger.error(f"❌ KIS 클라이언트 초기화 오류: {e}")
@@ -375,21 +339,15 @@ class GlobalSubscriptionManager:
             enhanced_data = get_enhanced_price_data(stock_code, enhanced_price_data)
             
             # Django Channels를 통해 브로드캐스트 (최적화된 방식)
-            if self._broadcast_loop and not self._broadcast_loop.is_closed():
-                # 기존 이벤트 루프에 스케줄링 (스레드 생성 없음)
-                future = asyncio.run_coroutine_threadsafe(
-                    self._async_broadcast(enhanced_data, stock_code),
-                    self._broadcast_loop
-                )
+            # Submit to background loop via utility
+            future = ws_loop.submit_coroutine(self._async_broadcast(enhanced_data, stock_code))
                 
-                # 논블로킹 완료 체크 (성능 최적화)
-                if self._callback_count % 50 == 1:
-                    try:
-                        future.result(timeout=0.1)  # 100ms 타임아웃
-                    except Exception:
-                        pass  # 타임아웃이나 기타 에러 무시
-            else:
-                logger.warning("Broadcast loop not available")
+            # 논블로킹 완료 체크 (성능 최적화)
+            if future and self._callback_count % 50 == 1:
+                try:
+                    future.result(timeout=0.1)  # 100ms 타임아웃
+                except Exception:
+                    pass  # 타임아웃이나 기타 에러 무시
                 
         except Exception as e:
             # 에러 로그도 빈도 줄이기
@@ -397,91 +355,28 @@ class GlobalSubscriptionManager:
                 logger.error(f"Price callback error: {e}")
     
     def _enhance_with_real_volume(self, price_data: Dict) -> Dict:
-        """실제 거래량 데이터로 보강 (모의투자 모드에서만)"""
+        """실제 거래량 데이터로 보강: 캐시 병합만 수행 (핫패스 비동기)"""
         try:
-            # 모의투자 모드이고 source가 kis_paper_trading인 경우에만 보강
-            if (price_data.get('source', '').startswith('kis_paper_trading') 
-                and self._callback_count % 10 == 1):  # 10번에 1번만 API 호출 (성능 최적화)
-                
-                stock_code = price_data.get('stock_code')
-                if not stock_code:
-                    return price_data
-                
-                # REST API로 실제 거래량 조회
-                real_volume_data = self._get_real_volume_from_api(stock_code)
-                
-                if real_volume_data:
-                    # 실제 거래량으로 교체
-                    enhanced_data = price_data.copy()
-                    enhanced_data.update({
-                        'volume': real_volume_data.get('volume', price_data.get('volume', 0)),
-                        'trading_value': real_volume_data.get('trading_value', price_data.get('trading_value', 0)),
-                        'source': f"{price_data.get('source', '')}_volume_enhanced",
-                        'volume_source': 'kis_rest_api'
-                    })
-                    
-                    # 성공 로그 (드물게)
-                    if self._callback_count % 100 == 1:
-                        logger.info(f"🔧 {stock_code} 거래량 보강: {real_volume_data['volume']:,}주")
-                    
-                    return enhanced_data
-            
-            return price_data
-            
+            if not getattr(settings, 'WS_ENABLE_VOLUME_ENHANCEMENT', False):
+                return price_data
+            stock_code = price_data.get('stock_code')
+            if not stock_code:
+                return price_data
+            cached = get_cached_volume(stock_code)
+            if not cached:
+                return price_data
+            enhanced_data = price_data.copy()
+            enhanced_data.update({
+                'volume': cached.get('volume', price_data.get('volume', 0)),
+                'trading_value': cached.get('trading_value', price_data.get('trading_value', 0)),
+                'volume_source': cached.get('source', 'cache'),
+            })
+            return enhanced_data
         except Exception as e:
             logger.warning(f"거래량 보강 실패: {e}")
             return price_data
 
-    def _get_real_volume_from_api(self, stock_code: str) -> Optional[Dict]:
-        """KIS REST API로 실제 거래량 조회"""
-        try:
-            import requests
-            import json
-            from django.conf import settings
-            
-            # 액세스 토큰 가져오기 (캐시된 토큰 사용)
-            access_token = self._get_cached_access_token()
-            if not access_token:
-                return None
-            
-            # 주식현재가 시세조회 API 호출
-            url = f"{settings.KIS_BASE_URL}/uapi/domestic-stock/v1/quotations/inquire-price"
-            
-            headers = {
-                'content-type': 'application/json',
-                'authorization': f'Bearer {access_token}',
-                'appkey': settings.KIS_APP_KEY,
-                'appsecret': settings.KIS_APP_SECRET,
-                'tr_id': 'FHKST01010100'
-            }
-            
-            params = {
-                'fid_cond_mrkt_div_code': 'J',  # 시장구분코드
-                'fid_input_iscd': stock_code
-            }
-            
-            response = requests.get(url, headers=headers, params=params, timeout=3)
-            
-            if response.status_code == 200:
-                result = response.json()
-                output = result.get('output')
-                
-                if output:
-                    volume = int(output.get('acml_vol', 0))  # 누적거래량
-                    trading_value = int(output.get('acml_tr_pbmn', 0))  # 누적거래대금
-                    
-                    return {
-                        'volume': volume,
-                        'trading_value': trading_value
-                    }
-            
-            return None
-            
-        except Exception as e:
-            # API 호출 실패는 조용히 처리 (너무 자주 로그 남지 않도록)
-            if self._callback_count % 200 == 1:
-                logger.debug(f"거래량 API 호출 실패: {e}")
-            return None
+    # REST 직접 호출 로직 제거(백그라운드 캐시 방식으로 대체)
 
     def _get_cached_access_token(self) -> Optional[str]:
         """캐시된 액세스 토큰 반환 (성능 최적화)"""
@@ -528,11 +423,22 @@ class GlobalSubscriptionManager:
             }
             
             response = requests.post(url, headers=headers, data=json.dumps(data), timeout=5)
-            
-            if response.status_code == 200:
-                result = response.json()
+
+            # 상세 로깅(성공/실패 공통): 상태코드 및 본문 프리뷰 (민감정보 없음)
+            status = response.status_code
+            body_preview = (response.text or "")[:500]
+            logger.info(f"KIS 토큰 발급 응답 코드: {status}")
+            if status != 200:
+                logger.warning(f"KIS 토큰 발급 실패 본문(프리뷰): {body_preview}")
+
+            if status == 200:
+                try:
+                    result = response.json()
+                except Exception as parse_err:
+                    logger.warning(f"KIS 토큰 응답 JSON 파싱 실패: {parse_err}. 본문(프리뷰): {body_preview}")
+                    return None
                 return result.get('access_token')
-            
+
             return None
             
         except Exception as e:
@@ -540,24 +446,30 @@ class GlobalSubscriptionManager:
             return None
     
     async def _async_broadcast(self, enhanced_data: Dict, stock_code: str):
-        """최적화된 비동기 브로드캐스트"""
+        """
+        최적화된 비동기 브로드캐스트
+        - 변경점(Step 1): 단일 그룹("stock_prices") → 종목별 그룹으로 전송
+        - 그룹 네이밍: Channels 제약(영문/숫자/하이픈/언더스코어 권장)을 고려해 `stock_<code>` 사용
+        """
         try:
             channel_layer = get_channel_layer()
             if not channel_layer:
                 return
-            
+
+            # 종목별 그룹으로만 전송하여, 구독하지 않은 클라이언트에게는 전송되지 않도록 함
+            group_name = get_group_name_for_stock(stock_code)
             await channel_layer.group_send(
-                "stock_prices",
+                group_name,
                 {
-                    "type": "price_update",
+                    "type": WS_TYPE_PRICE_UPDATE,  # Consumer의 handler 메서드명과 매칭
                     "data": enhanced_data
                 }
             )
-            
+
             # 성공 로그 빈도 줄이기 (200번에 1번)
             if self._callback_count % 200 == 1:
-                logger.info(f"✅ Price broadcasted: {stock_code}")
-                
+                logger.info(f"✅ Price broadcasted to {group_name}")
+
         except Exception as e:
             logger.error(f"Async broadcast error: {e}")
 
@@ -571,20 +483,24 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
         """클라이언트 연결"""
         try:
             self.client_id = f"client_{id(self)}"
+            # 이 연결(채널)이 구독 중인 종목코드를 추적하기 위한 로컬 상태
+            # - 변경점(Step 1): 단일 그룹에서 종목별 그룹으로 전환되었으므로
+            #   disconnect 시 각 종목 그룹에서 정확히 제거하기 위해 필요
+            self.subscribed_codes = set()
             
             # 연결 수락
             await self.accept()
             logger.info(f"📱 WebSocket connection accepted for {self.client_id}")
             
-            # 그룹 추가
-            await self.channel_layer.group_add("stock_prices", self.channel_name)
+            # 변경점(Step 1): 더 이상 단일 그룹("stock_prices")에 참가하지 않음
+            # 각 종목 구독 시점에 종목별 그룹에 참가하도록 변경
             
             # 글로벌 관리자에 클라이언트 추가
             global_subscription_manager.add_client(self.client_id)
             
             # 연결 확인 메시지
             await self.send(text_data=json.dumps({
-                'type': 'connection_status',
+                'type': WS_TYPE_CONNECTION_STATUS,
                 'status': 'connected',
                 'subscribed_stocks': global_subscription_manager.get_all_subscribed_stocks(),
                 'message': '실시간 주가 서비스에 연결되었습니다.'
@@ -597,8 +513,14 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         """클라이언트 연결 해제"""
         try:
-            # 그룹에서 제거
-            await self.channel_layer.group_discard("stock_prices", self.channel_name)
+            # 변경점(Step 1): 이 채널이 가입했던 모든 종목별 그룹에서 제거
+            for code in list(self.subscribed_codes):
+                group_name = f"stock_{code}"
+                try:
+                    await self.channel_layer.group_discard(group_name, self.channel_name)
+                except Exception:
+                    pass
+            self.subscribed_codes.clear()
             
             # 글로벌 관리자에서 클라이언트 제거
             if hasattr(self, 'client_id'):
@@ -642,20 +564,28 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
         try:
             if not isinstance(stock_codes, list) or not stock_codes:
                 await self.send(text_data=json.dumps({
-                    'type': 'error',
+                    'type': WS_TYPE_ERROR,
                     'message': 'stock_codes must be a non-empty list'
                 }))
                 return
             
-            # 글로벌 관리자를 통해 구독
+            # 글로벌 관리자를 통해 구독 (KIS 측 구독 디듀플/연결 관리를 담당)
             new_subscriptions = global_subscription_manager.subscribe_stocks(
                 self.client_id, stock_codes
             )
             
+            # 변경점(Step 1): 클라이언트 채널을 종목별 그룹에 가입시킴
+            # - 글로벌 신규/기존 여부와 관계없이 이 채널은 각 요청된 코드 그룹에 참가
+            for code in stock_codes:
+                group_name = get_group_name_for_stock(code)
+                await self.channel_layer.group_add(group_name, self.channel_name)
+                self.subscribed_codes.add(code)
+            
             # 응답 전송
             await self.send(text_data=json.dumps({
-                'type': 'subscribe_response',
+                'type': WS_TYPE_SUBSCRIBE_RESPONSE,
                 'subscribed': new_subscriptions,
+                # total_subscriptions는 전역(KIS) 기준; 클라이언트 로컬 구독은 self.subscribed_codes 참고
                 'total_subscriptions': global_subscription_manager.get_all_subscribed_stocks(),
                 'message': f'{len(new_subscriptions)}개 종목 구독 완료'
             }))
@@ -670,13 +600,22 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
     async def _handle_unsubscribe(self, stock_codes):
         """주식 구독 해제 처리"""
         try:
-            # 글로벌 관리자를 통해 구독 해제
+            # 글로벌 관리자를 통해 KIS 구독 해제
             removed_subscriptions = global_subscription_manager.unsubscribe_stocks(
                 self.client_id, stock_codes
             )
             
+            # 변경점(Step 1): 이 채널을 종목별 그룹에서 제거
+            for code in stock_codes:
+                group_name = get_group_name_for_stock(code)
+                try:
+                    await self.channel_layer.group_discard(group_name, self.channel_name)
+                except Exception:
+                    pass
+                self.subscribed_codes.discard(code)
+            
             await self.send(text_data=json.dumps({
-                'type': 'unsubscribe_response',
+                'type': WS_TYPE_UNSUBSCRIBE_RESPONSE,
                 'unsubscribed': removed_subscriptions,
                 'total_subscriptions': global_subscription_manager.get_all_subscribed_stocks(),
                 'message': f'{len(removed_subscriptions)}개 종목 구독 해제 완료'
@@ -688,7 +627,7 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
     async def price_update(self, event):
         """실시간 가격 업데이트 메시지 전송"""
         await self.send(text_data=json.dumps({
-            'type': 'price_update',
+            'type': WS_TYPE_PRICE_UPDATE,
             'data': event['data']
         }))
 
@@ -751,21 +690,27 @@ class RealTimePriceBroadcaster:
                 logger.info(f"📊 Broadcaster subscribed to {stock_code}")
     
     async def _async_broadcast(self, price_data: Dict):
-        """비동기 브로드캐스트"""
+        """
+        비동기 브로드캐스트
+        - 변경점(Step 1): 단일 그룹 → 종목별 그룹 전송으로 변경
+        - 이벤트 타입도 Consumer의 `price_update` 핸들러와 일치시킴
+        """
         try:
             # channel_layer가 없으면 초기화
             if not self.channel_layer:
                 self.channel_layer = get_channel_layer()
-                
+
+            stock_code = price_data.get('stock_code')
+            if not stock_code:
+                logger.warning("Broadcast skipped: missing stock_code in price_data")
+                return
+
+            group_name = get_group_name_for_stock(stock_code)
             await self.channel_layer.group_send(
-                "stock_prices",
+                group_name,
                 {
-                    "type": "price_message",
-                    "message": {
-                        'type': 'price_update',
-                        'data': price_data,
-                        'timestamp': price_data.get('timestamp', '')
-                    }
+                    "type": WS_TYPE_PRICE_UPDATE,
+                    "data": price_data
                 }
             )
         except Exception as e:

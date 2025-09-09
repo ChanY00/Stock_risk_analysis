@@ -20,12 +20,12 @@ class RealKISWebSocketClient:
     """실제 한국투자증권 WebSocket API 클라이언트 (연결 안정성 개선)"""
     
     def __init__(self):
-        self.app_key = getattr(settings, 'KIS_APP_KEY', os.getenv('KIS_APP_KEY'))
-        self.app_secret = getattr(settings, 'KIS_APP_SECRET', os.getenv('KIS_APP_SECRET'))
-        self.base_url = getattr(settings, 'KIS_BASE_URL', 'https://openapi.koreainvestment.com:9443')
-        self.ws_url = getattr(settings, 'KIS_WEBSOCKET_URL', 'ws://ops.koreainvestment.com:21000')
+        # 설정에서만 읽기
+        self.app_key = getattr(settings, 'KIS_APP_KEY', None)
+        self.app_secret = getattr(settings, 'KIS_APP_SECRET', None)
+        self.base_url = getattr(settings, 'KIS_BASE_URL', None)
+        self.ws_url = getattr(settings, 'KIS_WEBSOCKET_URL', None)
         
-        # 모의투자 모드 감지
         self.is_paper_trading = getattr(settings, 'KIS_IS_PAPER_TRADING', True)
         
         # 연결 설정
@@ -53,7 +53,6 @@ class RealKISWebSocketClient:
         # 휴장일 데이터 캐시
         self.cached_last_prices = {}  # {stock_code: price_data}
         
-        # 모의투자/실계좌 모드 로깅
         mode = "모의투자" if self.is_paper_trading else "실계좌"
         logger.info(f"🔧 KIS WebSocket 클라이언트 초기화 ({mode} 모드)")
         logger.info(f"   - Base URL: {self.base_url}")
@@ -175,16 +174,30 @@ class RealKISWebSocketClient:
             mode = "모의투자" if self.is_paper_trading else "실계좌"
             logger.info(f"🔑 {mode} 토큰 발급 요청: {url}")
             response = requests.post(url, headers=headers, json=data, timeout=self.timeout)
+
+            # 상세 로깅(성공/실패 공통): 상태코드 및 본문 일부
+            status = response.status_code
+            body_preview = (response.text or "")[:500]
+            logger.info(f"OAuth 토큰 응답 코드: {status}")
+            if status != 200:
+                logger.error(f"OAuth 토큰 응답 본문(프리뷰): {body_preview}")
+                # raise_for_status 전에 실패 처리 경로 분기
             response.raise_for_status()
             
-            result = response.json()
+            # JSON 파싱 실패 대비
+            try:
+                result = response.json()
+            except Exception as parse_err:
+                logger.error(f"❌ OAuth 응답 JSON 파싱 실패: {parse_err}. 본문(프리뷰): {body_preview}")
+                return False
+
             self.access_token = result.get('access_token')
             
             if self.access_token:
                 logger.info(f"✅ KIS {mode} OAuth 토큰 발급 성공")
                 return True
             else:
-                logger.error(f"❌ {mode} 액세스 토큰 발급 실패")
+                logger.error(f"❌ {mode} 액세스 토큰 발급 실패. 응답 본문(프리뷰): {body_preview}")
                 return False
                 
         except Exception as e:
@@ -209,16 +222,27 @@ class RealKISWebSocketClient:
             
             logger.info(f"🔑 WebSocket 접속키 발급 요청: {url}")
             response = requests.post(url, headers=headers, json=data, timeout=self.timeout)
+
+            status = response.status_code
+            body_preview = (response.text or "")[:500]
+            logger.info(f"Approval 응답 코드: {status}")
+            if status != 200:
+                logger.error(f"Approval 응답 본문(프리뷰): {body_preview}")
             response.raise_for_status()
             
-            result = response.json()
+            try:
+                result = response.json()
+            except Exception as parse_err:
+                logger.error(f"❌ Approval 응답 JSON 파싱 실패: {parse_err}. 본문(프리뷰): {body_preview}")
+                return False
+
             self.approval_key = result.get('approval_key')
             
             if self.approval_key:
                 logger.info("✅ KIS WebSocket 접속키 발급 성공")
                 return True
             else:
-                logger.error("❌ WebSocket 접속키 발급 실패")
+                logger.error("❌ WebSocket 접속키 발급 실패. 응답 본문(프리뷰) 포함: %s", body_preview)
                 return False
                 
         except Exception as e:
@@ -226,60 +250,12 @@ class RealKISWebSocketClient:
             return False
     
     def is_market_open(self) -> bool:
-        """시장 운영 시간 확인 (한국 시간 기준)"""
+        """시장 운영 시간 확인: market_utils에 위임하여 단일화"""
         try:
-            # 한국 시간으로 변환
-            korea_tz = pytz.timezone('Asia/Seoul')
-            now = datetime.now(korea_tz)
-            current_time = now.time()
-            
-            logger.info(f"⏰ 현재 한국 시간: {now.strftime('%Y-%m-%d %H:%M:%S KST')}")
-            logger.info(f"📅 요일: {now.strftime('%A')}")
-            
-            # 주말 체크
-            if now.weekday() >= 5:  # 토요일(5), 일요일(6)
-                logger.info("🏖️ 주말이므로 시장이 닫혀있습니다.")
-                return False
-            
-            # 공휴일 체크 (기본적인 체크만 - 실제로는 더 정교한 공휴일 API 사용 권장)
-            holidays_2025 = [
-                (1, 1),   # 신정
-                (1, 28),  # 설날 연휴
-                (1, 29),  # 설날
-                (1, 30),  # 설날 연휴
-                (3, 1),   # 삼일절
-                (5, 5),   # 어린이날
-                (5, 13),  # 부처님오신날
-                (6, 6),   # 현충일
-                (8, 15),  # 광복절
-                (9, 16),  # 추석 연휴
-                (9, 17),  # 추석
-                (9, 18),  # 추석 연휴
-                (10, 3),  # 개천절
-                (10, 9),  # 한글날
-                (12, 25), # 크리스마스
-            ]
-            
-            current_date = (now.month, now.day)
-            if current_date in holidays_2025:
-                logger.info(f"🎊 공휴일({now.month}/{now.day})이므로 시장이 닫혀있습니다.")
-                return False
-            
-            # 시장 운영 시간 체크
-            open_time = datetime.strptime(self.market_open_time, '%H:%M').time()
-            close_time = datetime.strptime(self.market_close_time, '%H:%M').time()
-            
-            logger.info(f"🕘 시장 운영시간: {self.market_open_time} ~ {self.market_close_time}")
-            logger.info(f"🕐 현재 시간: {current_time.strftime('%H:%M')}")
-            
-            is_open = open_time <= current_time <= close_time
-            logger.info(f"📊 시장 상태: {'🟢 열림' if is_open else '🔴 닫힘'}")
-            
+            is_open, _reason = market_utils.is_market_open()
             return is_open
-            
         except Exception as e:
             logger.error(f"❌ 시장 시간 확인 오류: {e}")
-            # 에러 시 기본적으로 열림으로 간주 (테스트 목적)
             return True
     
     def connect(self) -> bool:

@@ -20,6 +20,7 @@ services:
     environment:
       - NODE_ENV=development     # 개발 모드
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - INTERNAL_API_URL=http://backend:8000/api  # SSR에서 백엔드 내부 주소 사용
       - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001
     
     # 개발 서버 명령어

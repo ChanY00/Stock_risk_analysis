@@ -180,11 +180,12 @@ KIS_APP_KEY = os.getenv('KIS_APP_KEY')
 KIS_APP_SECRET = os.getenv('KIS_APP_SECRET')
 
 if KIS_IS_PAPER_TRADING:
-    KIS_BASE_URL = os.getenv('KIS_BASE_URL', 'https://openapivts.koreainvestment.com:29443')
-    KIS_WEBSOCKET_URL = os.getenv('KIS_WEBSOCKET_URL', 'ws://ops.koreainvestment.com:31000')
+    # strip()으로 환경변수에 섞여 들어온 보이지 않는 공백/개행/제로폭 문자 제거
+    KIS_BASE_URL = os.getenv('KIS_BASE_URL', 'https://openapivts.koreainvestment.com:29443').strip()
+    KIS_WEBSOCKET_URL = os.getenv('KIS_WEBSOCKET_URL', 'ws://ops.koreainvestment.com:31000').strip()
 else:
-    KIS_BASE_URL = os.getenv('KIS_BASE_URL', 'https://openapi.koreainvestment.com:9443')
-    KIS_WEBSOCKET_URL = os.getenv('KIS_WEBSOCKET_URL', 'ws://ops.koreainvestment.com:21000')
+    KIS_BASE_URL = os.getenv('KIS_BASE_URL', 'https://openapi.koreainvestment.com:9443').strip()
+    KIS_WEBSOCKET_URL = os.getenv('KIS_WEBSOCKET_URL', 'ws://ops.koreainvestment.com:21000').strip()
 
 KIS_WEBSOCKET_TIMEOUT = int(os.getenv('KIS_WEBSOCKET_TIMEOUT', '30'))
 KIS_RECONNECT_ATTEMPTS = int(os.getenv('KIS_RECONNECT_ATTEMPTS', '3'))
@@ -207,3 +208,9 @@ else:
         logger.warning("Mock 모드 사용: export KIS_USE_MOCK=true")
     else:
         logger.info("🚀 실제 KIS API 모드 활성화")
+
+# ===== WebSocket 보강/캐시 설정 =====
+# 거래량 보강 기능 토글(기본 비활성화)
+WS_ENABLE_VOLUME_ENHANCEMENT = os.getenv('WS_ENABLE_VOLUME_ENHANCEMENT', 'False').lower() == 'true'
+WS_VOLUME_REFRESH_INTERVAL_SEC = int(os.getenv('WS_VOLUME_REFRESH_INTERVAL_SEC', '5'))
+WS_VOLUME_CACHE_TTL_SEC = int(os.getenv('WS_VOLUME_CACHE_TTL_SEC', '10'))

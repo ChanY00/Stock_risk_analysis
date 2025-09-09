@@ -4,11 +4,10 @@ from rest_framework.exceptions import NotFound
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
-from django.db.models.functions import TruncDate
-from django.db.models import Avg, Count, F
+from django.conf import settings
 import logging
 from .models import SentimentAnalysis
-from .serializers import SentimentAnalysisSerializer
+from .serializers import SentimentAnalysisSerializer, SentimentBulkItemSerializer
 from stocks.models import Stock
 from rest_framework import status
 
@@ -57,13 +56,19 @@ class SentimentAnalysisBulkAPIView(APIView):
     http_method_names = ['post', 'options']
 
     def post(self, request, *args, **kwargs):
-        logger.info(f"Received request at {request.path}")
-        logger.info(f"Request method: {request.method}")
-        logger.info(f"Request headers: {request.headers}")
-        
+        # 최소 로그만 남기고, 민감 헤더/본문은 기록하지 않음
+        logger.info(f"Bulk sentiment ingest request at {request.path}")
+
+        # 내부 토큰 게이트: SENTIMENT_BULK_TOKEN이 설정됐을 때만 검사
+        ingest_token = getattr(settings, 'SENTIMENT_BULK_TOKEN', None) or None
+        if ingest_token:
+            provided = request.headers.get('X-Internal-Token') or request.headers.get('Authorization', '').replace('Bearer ', '')
+            if not provided or provided != ingest_token:
+                logger.warning("Unauthorized bulk ingest attempt (token mismatch)")
+                return Response({'detail': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             data = request.data if isinstance(request.data, list) else [request.data]
-            logger.info(f"Received data: {data}")
             
             results = []
             errors = []
@@ -72,42 +77,28 @@ class SentimentAnalysisBulkAPIView(APIView):
             
             for item in data:
                 try:
-                    stock_code = item.get('stock_code')
-                    logger.info(f"Processing stock: {stock_code}")
+                    # 1) 입력 검증
+                    item_serializer = SentimentBulkItemSerializer(data=item)
+                    item_serializer.is_valid(raise_exception=True)
+                    validated = item_serializer.validated_data
+                    stock_code = validated.get('stock_code')
                     
+                    # 2) 주식 존재 확인
                     try:
                         stock = Stock.objects.get(stock_code=stock_code)
-                        logger.info(f"Found stock: {stock.stock_name}")
                     except Stock.DoesNotExist as e:
-                        logger.error(f"Stock not found: {stock_code}")
-                        raise e
+                        raise NotFound(f"Stock not found: {stock_code}")
                     
-                    try:
-                        # 날짜 문자열 파싱
-                        date_str = item['updated_at']
-                        if date_str.endswith('Z'):
-                            date_str = date_str[:-1]  # Z 제거
-                        updated_at = timezone.datetime.fromisoformat(date_str)
-                        logger.info(f"Parsed updated_at: {updated_at}")
-                    except Exception as e:
-                        logger.error(f"Error parsing updated_at: {str(e)}")
-                        raise e
-                    
-                    try:
-                        logger.info(f"Attempting to save sentiment data for {stock_code}")
-                        sentiment, created = SentimentAnalysis.objects.update_or_create(
-                            stock=stock,
-                            defaults={
-                                'positive': item.get('positive', 0.0),
-                                'negative': item.get('negative', 0.0),
-                                'top_keywords': item.get('top_keywords', ''),
-                                'updated_at': updated_at
-                            }
-                        )
-                        logger.info(f"Successfully saved sentiment data for {stock_code}. Created: {created}")
-                    except Exception as e:
-                        logger.error(f"Database error while saving sentiment data: {str(e)}")
-                        raise e
+                    # 3) 저장/업서트
+                    sentiment, created = SentimentAnalysis.objects.update_or_create(
+                        stock=stock,
+                        defaults={
+                            'positive': validated.get('positive'),
+                            'negative': validated.get('negative'),
+                            'top_keywords': validated.get('top_keywords', ''),
+                            'updated_at': validated.get('updated_at')
+                        }
+                    )
                     
                     results.append({
                         'stock_code': stock_code,
@@ -115,21 +106,12 @@ class SentimentAnalysisBulkAPIView(APIView):
                         'created': created
                     })
                     success_count += 1
-                    logger.info(f"Successfully processed stock: {stock_code}")
                     
-                except Stock.DoesNotExist:
-                    error_msg = f"Stock not found: {stock_code}"
+                except Exception as e:
+                    error_msg = f"Error processing stock {item.get('stock_code', 'UNKNOWN')}: {str(e)}"
                     logger.warning(error_msg)
                     errors.append({
-                        'stock_code': stock_code,
-                        'error': error_msg
-                    })
-                    error_count += 1
-                except Exception as e:
-                    error_msg = f"Error processing stock {stock_code}: {str(e)}"
-                    logger.error(error_msg)
-                    errors.append({
-                        'stock_code': stock_code,
+                        'stock_code': item.get('stock_code', 'UNKNOWN'),
                         'error': error_msg
                     })
                     error_count += 1
@@ -146,12 +128,12 @@ class SentimentAnalysisBulkAPIView(APIView):
                 'errors': errors
             }
             
-            logger.info(f"Bulk update completed. Success: {success_count}, Errors: {error_count}")
+            logger.info(f"Bulk update completed. success={success_count} errors={error_count}")
             return Response(response_data, status=status.HTTP_200_OK)
             
         except Exception as e:
             error_msg = f"Error in bulk update: {str(e)}"
-            logger.error(error_msg)
+            logger.warning(error_msg)
             return Response({
                 'success': False,
                 'error': error_msg
