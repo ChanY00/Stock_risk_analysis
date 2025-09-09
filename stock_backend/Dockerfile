@@ -32,7 +32,7 @@ COPY . .
 RUN mkdir -p /app/staticfiles /app/media
 
 # 📜 엔트리포인트 스크립트 실행 권한 (USER 전환 전에 실행)
-RUN chmod +x /app/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 # 🔐 권한 설정
 RUN chown -R django:django /app
