@@ -660,9 +660,9 @@ export default function StockDetailPage() {
   if (!stockDetail) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="border-b bg-white">
+      <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -674,18 +674,14 @@ export default function StockDetailPage() {
               </Link>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold">{stockDetail.name}</h1>
-                  <Badge
-                    variant={
-                      stockDetail.market === "KOSPI" ? "default" : "secondary"
-                    }
-                  >
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.name}</h1>
+                  <Badge variant={stockDetail.market === 'KOSPI' ? 'default' : 'secondary'}>
                     {stockDetail.market}
                   </Badge>
                 </div>
-                <p className="text-gray-600">
-                  {stockDetail.code} •{" "}
-                  {translateSectorToKorean(stockDetail.sector)}
+                <p className="text-gray-600 dark:text-gray-400">
+                  {stockDetail.code} • {translateSectorToKorean(stockDetail.sector)}
+
                 </p>
               </div>
             </div>
@@ -757,7 +753,7 @@ export default function StockDetailPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Price Summary */}
-        <Card className="mb-8">
+        <Card className="mb-8 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
@@ -784,22 +780,19 @@ export default function StockDetailPage() {
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">거래량</div>
-                <div className="text-lg font-mono">
+                <div className="text-sm text-gray-600 dark:text-gray-400">거래량</div>
+                <div className="text-lg font-mono text-gray-900 dark:text-white">
                   {formatNumber(stockDetail.volume)}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">시가총액</div>
-                <div className="text-lg font-mono">
-                  {formatNumber(stockDetail.marketCap)}
-                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">시가총액</div>
+                <div className="text-lg font-mono text-gray-900 dark:text-white">{formatNumber(stockDetail.marketCap)}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">배당수익률</div>
-                <div className="text-lg font-mono">
-                  {formatPercent(stockDetail.dividend_yield)}
-                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">배당수익률</div>
+                <div className="text-lg font-mono text-gray-900 dark:text-white">{formatPercent(stockDetail.dividend_yield)}</div>
+
               </div>
             </div>
           </CardContent>
@@ -807,64 +800,52 @@ export default function StockDetailPage() {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">개요</TabsTrigger>
-            <TabsTrigger value="financials">재무</TabsTrigger>
-            <TabsTrigger value="technical">기술분석</TabsTrigger>
-            <TabsTrigger value="sentiment">감정분석</TabsTrigger>
-            <TabsTrigger value="clustering">클러스터링</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-gray-700">
+            <TabsTrigger value="overview" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">개요</TabsTrigger>
+            <TabsTrigger value="financials" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">재무</TabsTrigger>
+            <TabsTrigger value="technical" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">기술분석</TabsTrigger>
+            <TabsTrigger value="sentiment" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">감정분석</TabsTrigger>
+            <TabsTrigger value="clustering" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">클러스터링</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    PER
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">PER</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stockDetail.per ? stockDetail.per.toFixed(1) : "-"}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.per ? stockDetail.per.toFixed(1) : '-'}</div>
+
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    PBR
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">PBR</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stockDetail.pbr ? stockDetail.pbr.toFixed(1) : "-"}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.pbr ? stockDetail.pbr.toFixed(1) : '-'}</div>
+
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    ROE
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">ROE</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stockDetail.roe ? formatPercent(stockDetail.roe) : "-"}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.roe ? formatPercent(stockDetail.roe) : '-'}</div>
+
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    감정지수
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">감정지수</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold">
-                      {(stockDetail.sentiment * 100).toFixed(0)}
-                    </span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">{(stockDetail.sentiment * 100).toFixed(0)}</span>
+
                     <Badge
                       variant={
                         stockDetail.sentiment >= 0.7
@@ -883,13 +864,13 @@ export default function StockDetailPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600">AI 종합 점수</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">AI 종합 점수</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold text-blue-600">
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                       {typeof stockDetail.aiScore === 'number' ? stockDetail.aiScore : '-'}
                     </span>
                     <Badge
@@ -904,7 +885,7 @@ export default function StockDetailPage() {
                       {(stockDetail.aiScore || 0) >= 70 ? "긍정" : (stockDetail.aiScore || 0) >= 50 ? "중립" : "부정"}
                     </Badge>
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     기술분석(70%) + 감정분석(30%)
                   </div>
                 </CardContent>
@@ -912,10 +893,10 @@ export default function StockDetailPage() {
             </div>
 
             {/* Price Chart */}
-            <Card>
+            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>주가 차트</CardTitle>
-                <CardDescription>최근 30일 주가 동향</CardDescription>
+                <CardTitle className="text-gray-900 dark:text-white">주가 차트</CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-400">최근 30일 주가 동향</CardDescription>
               </CardHeader>
               <CardContent>
                 {priceHistory.length > 0 ? (
@@ -925,7 +906,7 @@ export default function StockDetailPage() {
                     stockCode={code}
                   />
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     주가 데이터를 불러올 수 없습니다
                   </div>
                 )}
@@ -938,80 +919,70 @@ export default function StockDetailPage() {
             {financialAnalysis ? (
               <FinancialChart financial={financialAnalysis} title="재무 분석" />
             ) : (
-              <div className="bg-white p-6 rounded-lg border">
-                <div className="text-center text-gray-500">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="text-center text-gray-500 dark:text-gray-400">
                   <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">
-                    재무 분석 차트 준비 중
-                  </h3>
-                  <p className="text-sm">
-                    재무 데이터가 준비되면 상세한 분석 차트가 표시됩니다.
-                  </p>
+                  <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">재무 분석 차트 준비 중</h3>
+                  <p className="text-sm">재무 데이터가 준비되면 상세한 분석 차트가 표시됩니다.</p>
+
                 </div>
               </div>
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Financial Data Table */}
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle>재무제표</CardTitle>
-                  <CardDescription>
-                    {financialData.length > 0
-                      ? `${financialData[0].year}년 기준`
-                      : "데이터 없음"}
+                  <CardTitle className="text-gray-900 dark:text-white">재무제표</CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    {financialData.length > 0 ? `${financialData[0].year}년 기준` : '데이터 없음'}
+
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {financialData.length > 0 ? (
                     <Table>
                       <TableBody>
-                        <TableRow>
-                          <TableCell>매출액</TableCell>
-                          <TableCell className="font-mono text-right">
-                            {formatNumber(financialData[0].revenue)}
-                          </TableCell>
+                        <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
+                          <TableCell className="text-gray-700 dark:text-gray-300">매출액</TableCell>
+                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">{formatNumber(financialData[0].revenue)}</TableCell>
+
                         </TableRow>
-                        <TableRow>
-                          <TableCell>영업이익</TableCell>
-                          <TableCell className="font-mono text-right">
+                        <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
+                          <TableCell className="text-gray-700 dark:text-gray-300">영업이익</TableCell>
+                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">
                             {formatNumber(financialData[0].operating_income)}
                           </TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell>순이익</TableCell>
-                          <TableCell className="font-mono text-right">
+                        <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
+                          <TableCell className="text-gray-700 dark:text-gray-300">순이익</TableCell>
+                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">
                             {formatNumber(financialData[0].net_income)}
                           </TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell>총자산</TableCell>
-                          <TableCell className="font-mono text-right">
-                            {formatNumber(
-                              financialData[0].total_assets || null
-                            )}
+                        <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
+                          <TableCell className="text-gray-700 dark:text-gray-300">총자산</TableCell>
+                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">
+                            {formatNumber(financialData[0].total_assets || null)}
                           </TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell>총부채</TableCell>
-                          <TableCell className="font-mono text-right">
-                            {formatNumber(
-                              financialData[0].total_liabilities || null
-                            )}
+                        <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
+                          <TableCell className="text-gray-700 dark:text-gray-300">총부채</TableCell>
+                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">
+                            {formatNumber(financialData[0].total_liabilities || null)}
                           </TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableCell>총자본</TableCell>
-                          <TableCell className="font-mono text-right">
-                            {formatNumber(
-                              financialData[0].total_equity || null
-                            )}
+                        <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
+                          <TableCell className="text-gray-700 dark:text-gray-300">총자본</TableCell>
+                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">
+                            {formatNumber(financialData[0].total_equity || null)}
+
                           </TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       재무 데이터를 불러올 수 없습니다
                     </div>
                   )}
@@ -1019,81 +990,54 @@ export default function StockDetailPage() {
               </Card>
 
               {/* Financial Ratios */}
-              <Card>
+              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle>재무 비율</CardTitle>
-                  <CardDescription>주요 재무 비율 분석</CardDescription>
+                  <CardTitle className="text-gray-900 dark:text-white">재무 비율</CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">주요 재무 비율 분석</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {financialData.length > 0 ? (
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <span>부채비율</span>
-                        <span className="font-mono">
-                          {financialData[0].total_liabilities &&
-                          financialData[0].total_equity
-                            ? (
-                                (financialData[0].total_liabilities /
-                                  financialData[0].total_equity) *
-                                100
-                              ).toFixed(1) + "%"
-                            : "-"}
+                        <span className="text-gray-700 dark:text-gray-300">부채비율</span>
+                        <span className="font-mono text-gray-900 dark:text-white">
+                          {(financialData[0].total_liabilities && financialData[0].total_equity) 
+                            ? ((financialData[0].total_liabilities / financialData[0].total_equity) * 100).toFixed(1) + '%'
+                            : '-'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>영업이익률</span>
-                        <span className="font-mono">
-                          {(
-                            (financialData[0].operating_income /
-                              financialData[0].revenue) *
-                            100
-                          ).toFixed(1)}
-                          %
+                        <span className="text-gray-700 dark:text-gray-300">영업이익률</span>
+                        <span className="font-mono text-gray-900 dark:text-white">
+                          {((financialData[0].operating_income / financialData[0].revenue) * 100).toFixed(1)}%
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>순이익률</span>
-                        <span className="font-mono">
-                          {(
-                            (financialData[0].net_income /
-                              financialData[0].revenue) *
-                            100
-                          ).toFixed(1)}
-                          %
+                        <span className="text-gray-700 dark:text-gray-300">순이익률</span>
+                        <span className="font-mono text-gray-900 dark:text-white">
+                          {((financialData[0].net_income / financialData[0].revenue) * 100).toFixed(1)}%
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>자기자본비율</span>
-                        <span className="font-mono">
-                          {financialData[0].total_equity &&
-                          financialData[0].total_assets
-                            ? (
-                                (financialData[0].total_equity /
-                                  financialData[0].total_assets) *
-                                100
-                              ).toFixed(1) + "%"
-                            : "-"}
+                        <span className="text-gray-700 dark:text-gray-300">자기자본비율</span>
+                        <span className="font-mono text-gray-900 dark:text-white">
+                          {(financialData[0].total_equity && financialData[0].total_assets) 
+                            ? ((financialData[0].total_equity / financialData[0].total_assets) * 100).toFixed(1) + '%'
+                            : '-'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>EPS</span>
-                        <span className="font-mono">
-                          {stockDetail.eps
-                            ? stockDetail.eps.toLocaleString()
-                            : "-"}
-                        </span>
+                        <span className="text-gray-700 dark:text-gray-300">EPS</span>
+                        <span className="font-mono text-gray-900 dark:text-white">{stockDetail.eps ? stockDetail.eps.toLocaleString() : '-'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>BPS</span>
-                        <span className="font-mono">
-                          {stockDetail.bps
-                            ? stockDetail.bps.toLocaleString()
-                            : "-"}
-                        </span>
+                        <span className="text-gray-700 dark:text-gray-300">BPS</span>
+                        <span className="font-mono text-gray-900 dark:text-white">{stockDetail.bps ? stockDetail.bps.toLocaleString() : '-'}</span>
+
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       재무 비율 데이터를 불러올 수 없습니다
                     </div>
                   )}
@@ -1111,7 +1055,7 @@ export default function StockDetailPage() {
                 stockCode={code}
               />
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 기술적 지표 데이터를 불러올 수 없습니다
               </div>
             )}
@@ -1129,20 +1073,19 @@ export default function StockDetailPage() {
                 {/* 감정 분석 데이터가 없을 때 기존 UI 표시 */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Sentiment Analysis */}
-                  <Card>
+                  <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                     <CardHeader>
-                      <CardTitle>감정 분석</CardTitle>
-                      <CardDescription>시장 심리 및 감정 지표</CardDescription>
+                      <CardTitle className="text-gray-900 dark:text-white">감정 분석</CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-400">시장 심리 및 감정 지표</CardDescription>
                     </CardHeader>
                     <CardContent>
                       {sentimentData ? (
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
-                            <span>감정 점수</span>
+                            <span className="text-gray-700 dark:text-gray-300">감정 점수</span>
                             <div className="flex items-center space-x-2">
-                              <span className="font-mono text-lg">
-                                {(sentimentData.score * 100).toFixed(0)}
-                              </span>
+                              <span className="font-mono text-lg text-gray-900 dark:text-white">{(sentimentData.score * 100).toFixed(0)}</span>
+
                               <Badge
                                 variant={
                                   sentimentData.score >= 0.7
@@ -1161,26 +1104,21 @@ export default function StockDetailPage() {
                             </div>
                           </div>
                           <div className="flex justify-between">
-                            <span>뉴스 건수</span>
-                            <span className="font-mono">
-                              {sentimentData.newsCount}건
-                            </span>
+                            <span className="text-gray-700 dark:text-gray-300">뉴스 건수</span>
+                            <span className="font-mono text-gray-900 dark:text-white">{sentimentData.newsCount}건</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>긍정 비율</span>
-                            <span className="font-mono text-green-600">
-                              {sentimentData.positiveRatio}%
-                            </span>
+                            <span className="text-gray-700 dark:text-gray-300">긍정 비율</span>
+                            <span className="font-mono text-green-600 dark:text-green-400">{sentimentData.positiveRatio}%</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>부정 비율</span>
-                            <span className="font-mono text-red-600">
-                              {sentimentData.negativeRatio}%
-                            </span>
+                            <span className="text-gray-700 dark:text-gray-300">부정 비율</span>
+                            <span className="font-mono text-red-600 dark:text-red-400">{sentimentData.negativeRatio}%</span>
+
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                           감정 분석 데이터를 불러올 수 없습니다
                         </div>
                       )}
@@ -1188,10 +1126,10 @@ export default function StockDetailPage() {
                   </Card>
 
                   {/* Keywords */}
-                  <Card>
+                  <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                     <CardHeader>
-                      <CardTitle>주요 키워드</CardTitle>
-                      <CardDescription>연관 검색어 및 이슈</CardDescription>
+                      <CardTitle className="text-gray-900 dark:text-white">주요 키워드</CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-400">연관 검색어 및 이슈</CardDescription>
                     </CardHeader>
                     <CardContent>
                       {sentimentData ? (
@@ -1203,16 +1141,17 @@ export default function StockDetailPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                           키워드 데이터를 불러올 수 없습니다
                         </div>
                       )}
                     </CardContent>
                   </Card>
                 </div>
+                
+                <Card className="p-6 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                  <div className="text-center text-gray-500 dark:text-gray-400">
 
-                <Card className="p-6">
-                  <div className="text-center text-gray-500">
                     <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-medium mb-2">
                       감정 분석 데이터 준비 중

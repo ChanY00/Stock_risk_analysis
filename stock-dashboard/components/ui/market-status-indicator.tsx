@@ -159,17 +159,17 @@ export function MarketStatusIndicator({
               {currentStatus.status}
             </Badge>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-xs">
+          <TooltipContent side="bottom" className="max-w-xs bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <div className="text-sm">
-              <div className="font-medium">{currentStatus.reason}</div>
-              <div className="text-gray-600 mt-1">
+              <div className="font-medium text-gray-900 dark:text-gray-100">{currentStatus.reason}</div>
+              <div className="text-gray-600 dark:text-gray-400 mt-1">
                 현재 시간: {currentStatus.currentTime}
               </div>
-              <div className="text-gray-600">
+              <div className="text-gray-600 dark:text-gray-400">
                 운영시간: {currentStatus.marketHours.open} - {currentStatus.marketHours.close}
               </div>
               {!currentStatus.isOpen && currentStatus.lastTradingDay && (
-                <div className="text-gray-600">
+                <div className="text-gray-600 dark:text-gray-400">
                   마지막 거래일: {currentStatus.lastTradingDay}
                 </div>
               )}
@@ -185,10 +185,10 @@ export function MarketStatusIndicator({
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <div className={`w-3 h-3 rounded-full ${getStatusColor()} ${currentStatus.isOpen ? 'animate-pulse' : ''}`} />
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
           {currentStatus.status}
         </span>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-500 dark:text-gray-400">
           {currentStatus.reason}
         </span>
       </div>
@@ -202,7 +202,7 @@ export function MarketStatusIndicator({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {getStatusIcon()}
-            <h3 className="font-semibold text-lg">시장 상태</h3>
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">시장 상태</h3>
           </div>
           <Badge variant={getStatusBadgeVariant()}>
             <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor()} ${currentStatus.isOpen ? 'animate-pulse' : ''}`} />
@@ -212,31 +212,31 @@ export function MarketStatusIndicator({
         
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 text-gray-400" />
-            <span>{currentStatus.reason}</span>
+            <Info className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            <span className="text-gray-700 dark:text-gray-300">{currentStatus.reason}</span>
           </div>
           
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-gray-400" />
-            <span>현재 시간: {currentStatus.currentTime}</span>
+            <Clock className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            <span className="text-gray-700 dark:text-gray-300">현재 시간: {currentStatus.currentTime}</span>
           </div>
           
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <span>운영시간: {currentStatus.marketHours.open} - {currentStatus.marketHours.close}</span>
+            <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            <span className="text-gray-700 dark:text-gray-300">운영시간: {currentStatus.marketHours.open} - {currentStatus.marketHours.close}</span>
           </div>
           
           {!currentStatus.isOpen && currentStatus.lastTradingDay && showDetails && (
-            <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="flex items-center gap-2 text-yellow-800">
+            <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
                 <Info className="h-4 w-4" />
                 <span className="font-medium">휴장일 안내</span>
               </div>
-              <div className="mt-1 text-sm text-yellow-700">
+              <div className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
                 현재 표시되는 주가는 마지막 거래일({currentStatus.lastTradingDay})의 종가입니다.
               </div>
               {currentStatus.nextTradingDay && (
-                <div className="text-sm text-yellow-700">
+                <div className="text-sm text-yellow-700 dark:text-yellow-300">
                   다음 거래일: {currentStatus.nextTradingDay}
                 </div>
               )}

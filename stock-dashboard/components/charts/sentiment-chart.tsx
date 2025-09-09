@@ -346,20 +346,18 @@ function SentimentChartContent({
   return (
     <div className="w-full space-y-6">
       {/* 시스템 정보 안내 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
-            <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5" />
+            <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
           </div>
           <div className="flex-1 text-sm">
-            <h4 className="font-medium text-blue-900 mb-1">
-              네이버 종목토론방 감정 분석
-            </h4>
-            <p className="text-blue-700">
-              • 2시간마다 자동 크롤링 및 Gemini AI 감정 분석
-              <br />
-              • 긍정/부정 글만 분석 (중립 제외)
-              <br />• 분석 결과는 긍정과 부정의 비율로 제공됩니다
+            <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-1">네이버 종목토론방 감정 분석</h4>
+            <p className="text-blue-700 dark:text-blue-300">
+              • 2시간마다 자동 크롤링 및 Gemini AI 감정 분석<br/>
+              • 긍정/부정 글만 분석 (중립 제외)<br/>
+              • 분석 결과는 긍정과 부정의 비율로 제공됩니다
+
             </p>
           </div>
         </div>
@@ -401,10 +399,9 @@ function SentimentChartContent({
       {viewType === "overview" && (
         <div className="space-y-6">
           {/* 메인 감정 분포 차트 */}
-          <div className="bg-white p-8 rounded-lg border shadow-sm">
-            <h4 className="text-lg font-semibold text-gray-800 mb-6 text-center">
-              감정 분포
-            </h4>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-6 text-center">감정 분포</h4>
+
             <div className="h-80 relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart width={400} height={320}>
@@ -427,12 +424,15 @@ function SentimentChartContent({
 
               {/* 중앙 텍스트 - absolute positioning */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="text-3xl font-bold text-gray-700">
-                  {sentimentScore100.toFixed(0)}
+                <div className="text-3xl font-bold text-gray-700 dark:text-gray-300">
+                  {sentimentScore.toFixed(2)}
                 </div>
-                <div className="text-sm text-gray-500 mt-1">감정 점수</div>
-                <div className="text-xs font-medium text-gray-600 mt-1">
-                  {getSentimentLabelByPositive(positiveValue)}
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  감정 점수
+                </div>
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
+                  {getSentimentLabel(sentimentScore)}
+
                 </div>
               </div>
             </div>
@@ -445,10 +445,10 @@ function SentimentChartContent({
                     className="w-4 h-4 rounded-full shadow-sm"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {item.name}
                   </span>
-                  <span className="text-sm text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded">
                     {item.percentage}%
                   </span>
                 </div>
@@ -459,10 +459,9 @@ function SentimentChartContent({
           {/* 감정 점수 및 통계 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 감정 점수 게이지 */}
-            <div className="bg-white p-6 rounded-lg border">
-              <h4 className="text-md font-medium text-gray-800 mb-4">
-                감정 점수
-              </h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="text-md font-medium text-gray-800 dark:text-white mb-4">감정 강도</h4>
+              
 
               {/* 점수 표시 */}
               <div className="text-center mb-6">
@@ -472,8 +471,9 @@ function SentimentChartContent({
                 >
                   {sentimentScore100.toFixed(0)}
                 </div>
-                <div className="text-sm text-gray-600">
-                  {getSentimentLabelByPositive(positiveValue)}
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {sentimentScore > 0 ? '긍정 우세' : sentimentScore < 0 ? '부정 우세' : '균형'}
+
                 </div>
               </div>
 
@@ -487,8 +487,9 @@ function SentimentChartContent({
                   }}
                 />
               </div>
+              
+              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
 
-              <div className="flex justify-between text-xs text-gray-500">
                 <span>매우 부정적</span>
                 <span>중립</span>
                 <span>매우 긍정적</span>
@@ -496,36 +497,35 @@ function SentimentChartContent({
             </div>
 
             {/* 분석 정보 */}
-            <div className="bg-white p-6 rounded-lg border">
-              <h4 className="text-md font-medium text-gray-800 mb-4">
-                분석 정보
-              </h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="text-md font-medium text-gray-800 dark:text-white mb-4">분석 정보</h4>
+
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-700">
+                <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-green-700 dark:text-green-300">
                     {(positiveValue * 100).toFixed(1)}%
                   </div>
-                  <div className="text-sm text-green-600">긍정 비율</div>
+                  <div className="text-sm text-green-600 dark:text-green-400">긍정 비율</div>
                 </div>
-                <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <div className="text-2xl font-bold text-red-700">
+                <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-red-700 dark:text-red-300">
                     {(negativeValue * 100).toFixed(1)}%
                   </div>
-                  <div className="text-sm text-red-600">부정 비율</div>
+                  <div className="text-sm text-red-600 dark:text-red-400">부정 비율</div>
                 </div>
                 {neutralValue > 0 && (
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-700">
+                  <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
                       {(Number(neutralValue) * 100).toFixed(1)}%
                     </div>
-                    <div className="text-sm text-gray-600">중립 비율</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">중립 비율</div>
                   </div>
                 )}
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-700">
+                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                     {keywordArray.length}
                   </div>
-                  <div className="text-sm text-blue-600">키워드 수</div>
+                  <div className="text-sm text-blue-600 dark:text-blue-400">키워드 수</div>
                 </div>
               </div>
             </div>
@@ -571,10 +571,10 @@ function SentimentChartContent({
       {viewType === "keywords" && (
         <div className="space-y-6">
           {/* 주요 키워드 */}
-          <div className="bg-white p-6 rounded-lg border">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
-              <h4 className="text-lg font-medium text-gray-800">주요 키워드</h4>
-              <div className="text-sm text-gray-500">
+              <h4 className="text-lg font-medium text-gray-800 dark:text-white">주요 키워드</h4>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 총 {keywordArray.length}개 키워드
               </div>
             </div>
@@ -583,9 +583,8 @@ function SentimentChartContent({
               <div className="space-y-6">
                 {/* 키워드 클라우드 - 크기별 구분 */}
                 <div className="space-y-4">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">
-                    키워드 분포
-                  </h5>
+                  <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">키워드 분포</h5>
+
                   <div className="flex flex-wrap gap-3">
                     {keywordArray.map((keyword, index) => {
                       // 첫 번째부터 크기 순으로 표시 (첫 번째가 가장 중요)

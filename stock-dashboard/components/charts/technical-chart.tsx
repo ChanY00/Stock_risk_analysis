@@ -161,12 +161,12 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
   const CustomTooltip = useCallback(({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
+        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900 dark:text-white">{label}</p>
           <div className="mt-2">
             {payload.map((entry: any, index: number) => (
               <p key={index} className="text-sm">
-                <span className="text-gray-600">{entry.name || entry.dataKey}: </span>
+                <span className="text-gray-600 dark:text-gray-400">{entry.name || entry.dataKey}: </span>
                 <span className="font-mono" style={{ color: entry.color }}>
                   {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
                 </span>
@@ -259,7 +259,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
   // 조건부 렌더링을 JSX에서 처리 - 모든 hooks가 실행된 후
   if (!indicators) {
     return (
-      <div className="h-64 flex items-center justify-center text-gray-500">
+      <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
         기술적 지표 데이터가 없습니다.
       </div>
     )
@@ -267,7 +267,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
 
   if (loading) {
     return (
-      <div className="h-64 flex items-center justify-center text-gray-500">
+      <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
         기술적 분석을 위한 데이터를 로딩 중입니다...
       </div>
     )
@@ -276,7 +276,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
   return (
     <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
         
         {/* 탭 선택 */}
         <div className="flex space-x-1">
@@ -287,7 +287,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
               className={`px-3 py-1 text-sm rounded-md transition-colors ${
                 selectedTab === tab.id
                   ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {tab.label}
@@ -300,8 +300,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
       {selectedTab === 'overview' && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* RSI 게이지 */}
-          <div className="bg-white p-4 rounded-lg border">
-            <h4 className="text-sm font-medium text-gray-800 mb-3">RSI</h4>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">RSI</h4>
             <div className="h-32">
               <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={rsiData}>
@@ -327,19 +327,19 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           </div>
 
           {/* MACD 요약 */}
-          <div className="bg-white p-4 rounded-lg border">
-            <h4 className="text-sm font-medium text-gray-800 mb-3">MACD</h4>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">MACD</h4>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">MACD:</span>
+                <span className="text-gray-600 dark:text-gray-400">MACD:</span>
                 <span className="font-mono">{indicators.macd ? Math.round(indicators.macd).toLocaleString() : 'N/A'}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">Signal:</span>
+                <span className="text-gray-600 dark:text-gray-400">Signal:</span>
                 <span className="font-mono">{indicators.macd_signal ? Math.round(indicators.macd_signal).toLocaleString() : 'N/A'}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">Histogram:</span>
+                <span className="text-gray-600 dark:text-gray-400">Histogram:</span>
                 <span className={`font-mono ${(indicators.macd_histogram || 0) > 0 ? 'text-red-600' : 'text-blue-600'}`}>
                   {indicators.macd_histogram ? Math.round(indicators.macd_histogram).toLocaleString() : 'N/A'}
                 </span>
@@ -357,8 +357,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           </div>
 
           {/* 이동평균 요약 */}
-          <div className="bg-white p-4 rounded-lg border">
-            <h4 className="text-sm font-medium text-gray-800 mb-3">이동평균</h4>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">이동평균</h4>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="text-red-500">MA5:</span>
@@ -376,11 +376,11 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           </div>
 
           {/* 볼린저밴드 요약 */}
-          <div className="bg-white p-4 rounded-lg border">
-            <h4 className="text-sm font-medium text-gray-800 mb-3">볼린저밴드</h4>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">볼린저밴드</h4>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">상단:</span>
+                <span className="text-gray-600 dark:text-gray-400">상단:</span>
                 <span className="font-mono">
                   {(() => {
                     const latestData = candlestickData[candlestickData.length - 1]
@@ -389,7 +389,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">중앙:</span>
+                <span className="text-gray-600 dark:text-gray-400">중앙:</span>
                 <span className="font-mono">
                   {(() => {
                     const latestData = candlestickData[candlestickData.length - 1]
@@ -398,7 +398,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600">하단:</span>
+                <span className="text-gray-600 dark:text-gray-400">하단:</span>
                 <span className="font-mono">
                   {(() => {
                     const latestData = candlestickData[candlestickData.length - 1]
@@ -413,8 +413,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
 
       {/* 이동평균 + 주가 차트 */}
       {selectedTab === 'ma' && (
-        <div className="bg-white p-6 rounded-lg border">
-          <h4 className="text-lg font-medium text-gray-800 mb-4">주가 + 이동평균선</h4>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 + 이동평균선</h4>
           {candlestickData.length > 0 ? (
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -507,26 +507,26 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
               </div>
               <div className="text-lg font-mono text-gray-700">현재가</div>
             </div>
-            <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-sm text-red-600 font-medium flex items-center justify-center">
-                <div className="w-4 h-0.5 bg-red-600 mr-2"></div>
+            <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <div className="text-sm text-red-600 dark:text-red-400 font-medium flex items-center justify-center">
+                <div className="w-4 h-0.5 bg-red-600 dark:bg-red-400 mr-2"></div>
                 MA5
               </div>
-              <div className="text-lg font-mono text-red-700">{indicators.ma5?.toLocaleString() || 'N/A'}</div>
+              <div className="text-lg font-mono text-red-700 dark:text-red-300">{indicators.ma5?.toLocaleString() || 'N/A'}</div>
             </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-sm text-blue-600 font-medium flex items-center justify-center">
-                <div className="w-4 h-0.5 bg-blue-600 mr-2 border-dashed"></div>
+            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-sm text-blue-600 dark:text-blue-400 font-medium flex items-center justify-center">
+                <div className="w-4 h-0.5 bg-blue-600 dark:bg-blue-400 mr-2 border-dashed"></div>
                 MA20
               </div>
-              <div className="text-lg font-mono text-blue-700">{indicators.ma20?.toLocaleString() || 'N/A'}</div>
+              <div className="text-lg font-mono text-blue-700 dark:text-blue-300">{indicators.ma20?.toLocaleString() || 'N/A'}</div>
             </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-sm text-green-600 font-medium flex items-center justify-center">
-                <div className="w-4 h-0.5 bg-green-600 mr-2 border-dotted"></div>
+            <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center justify-center">
+                <div className="w-4 h-0.5 bg-green-600 dark:bg-green-400 mr-2 border-dotted"></div>
                 MA60
               </div>
-              <div className="text-lg font-mono text-green-700">{indicators.ma60?.toLocaleString() || 'N/A'}</div>
+              <div className="text-lg font-mono text-green-700 dark:text-green-300">{indicators.ma60?.toLocaleString() || 'N/A'}</div>
             </div>
           </div>
         </div>
@@ -536,8 +536,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
       {selectedTab === 'oscillators' && (
         <div className="space-y-6">
           {/* 상단: 주가 차트 */}
-          <div className="bg-white p-6 rounded-lg border">
-            <h4 className="text-lg font-medium text-gray-800 mb-4">주가 차트</h4>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 차트</h4>
             {candlestickData.length > 0 ? (
               <div className="h-60">
                 <PriceAreaChart data={candlestickData} />
@@ -550,8 +550,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           {/* 하단: RSI + Stochastic */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* RSI */}
-            <div className="bg-white p-6 rounded-lg border">
-              <h4 className="text-lg font-medium text-gray-800 mb-4">RSI (Relative Strength Index)</h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">RSI (Relative Strength Index)</h4>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={[{name: 'RSI', value: indicators.rsi || 0}]}>
@@ -574,12 +574,12 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 </ResponsiveContainer>
               </div>
               <div className="text-center mt-2">
-                <span className="text-2xl font-bold">{indicators.rsi?.toFixed(1) || 'N/A'}</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">{indicators.rsi?.toFixed(1) || 'N/A'}</span>
                 <div className={`text-sm font-medium ${
-                  !indicators.rsi ? 'text-gray-400' :
-                  indicators.rsi > 70 ? 'text-red-600' : 
-                  indicators.rsi < 30 ? 'text-blue-600' : 
-                  'text-green-600'
+                  !indicators.rsi ? 'text-gray-400 dark:text-gray-500' :
+                  indicators.rsi > 70 ? 'text-red-600 dark:text-red-400' : 
+                  indicators.rsi < 30 ? 'text-blue-600 dark:text-blue-400' : 
+                  'text-green-600 dark:text-green-400'
                 }`}>
                   {!indicators.rsi ? '데이터 없음' :
                    indicators.rsi > 70 ? '과매수 구간' : 
@@ -589,8 +589,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
             </div>
 
             {/* Stochastic */}
-            <div className="bg-white p-6 rounded-lg border">
-              <h4 className="text-lg font-medium text-gray-800 mb-4">Stochastic (%K, %D)</h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Stochastic (%K, %D)</h4>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stochasticData}>
@@ -625,8 +625,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
       {selectedTab === 'macd' && (
         <div className="space-y-6">
           {/* 상단: 주가 차트 */}
-          <div className="bg-white p-6 rounded-lg border">
-            <h4 className="text-lg font-medium text-gray-800 mb-4">주가 차트</h4>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 차트</h4>
             {candlestickData.length > 0 ? (
               <div className="h-60">
                 <PriceAreaChart data={candlestickData} />
@@ -637,8 +637,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           </div>
 
           {/* 하단: MACD */}
-          <div className="bg-white p-6 rounded-lg border">
-            <h4 className="text-lg font-medium text-gray-800 mb-4">MACD 지표</h4>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">MACD 지표</h4>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={macdData}>
@@ -672,17 +672,17 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
             </div>
             
             <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-sm text-green-600 font-medium">MACD</div>
-                <div className="text-lg font-mono text-green-700">{indicators.macd ? Math.round(indicators.macd).toLocaleString() : 'N/A'}</div>
+              <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="text-sm text-green-600 dark:text-green-400 font-medium">MACD</div>
+                <div className="text-lg font-mono text-green-700 dark:text-green-300">{indicators.macd ? Math.round(indicators.macd).toLocaleString() : 'N/A'}</div>
               </div>
-              <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                <div className="text-sm text-yellow-600 font-medium">Signal</div>
-                <div className="text-lg font-mono text-yellow-700">{indicators.macd_signal ? Math.round(indicators.macd_signal).toLocaleString() : 'N/A'}</div>
+              <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <div className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">Signal</div>
+                <div className="text-lg font-mono text-yellow-700 dark:text-yellow-300">{indicators.macd_signal ? Math.round(indicators.macd_signal).toLocaleString() : 'N/A'}</div>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600 font-medium">Histogram</div>
-                <div className={`text-lg font-mono ${(indicators.macd_histogram || 0) > 0 ? 'text-red-700' : 'text-blue-700'}`}>
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">Histogram</div>
+                <div className={`text-lg font-mono ${(indicators.macd_histogram || 0) > 0 ? 'text-red-700 dark:text-red-300' : 'text-blue-700 dark:text-blue-300'}`}>
                   {indicators.macd_histogram ? Math.round(indicators.macd_histogram).toLocaleString() : 'N/A'}
                 </div>
               </div>
@@ -703,12 +703,12 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
 
       {/* 볼린저밴드 + 주가 차트 */}
       {selectedTab === 'bollinger' && (
-        <div className="bg-white p-6 rounded-lg border">
-          <h4 className="text-lg font-medium text-gray-800 mb-4">주가 + 볼린저밴드</h4>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 + 볼린저밴드</h4>
           
           {/* 디버깅 정보 (개발 환경에서만) */}
           {process.env.NODE_ENV === 'development' && (
-            <div className="mb-4 p-2 bg-yellow-50 rounded text-xs">
+            <div className="mb-4 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded text-xs text-gray-800 dark:text-gray-200">
               <div>볼린저밴드 값: Upper={indicators.bollinger_upper}, Middle={indicators.bollinger_middle}, Lower={indicators.bollinger_lower}</div>
               <div>데이터 포인트 수: {candlestickData.length}</div>
               <div>첫 번째 데이터 포인트 볼린저밴드: {candlestickData[0] ? `${candlestickData[0].bb_upper}, ${candlestickData[0].bb_middle}, ${candlestickData[0].bb_lower}` : 'N/A'}</div>
@@ -718,12 +718,13 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           {candlestickData.length > 0 && candlestickData.some(d => d.bb_upper !== null || d.bb_middle !== null || d.bb_lower !== null) ? (
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={candlestickData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <LineChart data={candlestickData} className="dark:bg-gray-800">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:stroke-gray-600" />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: 'currentColor' }}
                     stroke="#666"
+                    className="dark:stroke-gray-400 dark:text-gray-300"
                   />
                   <YAxis 
                     domain={(() => {
@@ -748,8 +749,9 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                       
                       return [centeredMin, centeredMax]
                     })()}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: 'currentColor' }}
                     stroke="#666"
+                    className="dark:stroke-gray-400 dark:text-gray-300"
                   />
                   <Tooltip content={CustomTooltip} />
                   
@@ -801,7 +803,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <div className="mb-2">볼린저밴드 데이터가 없거나 주가 데이터가 부족합니다.</div>
               <div className="text-sm">
                 {!indicators.bollinger_upper && !indicators.bollinger_middle && !indicators.bollinger_lower 
@@ -815,27 +817,27 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
           
           {/* 볼린저밴드 정보 */}
           <div className="mt-4 grid grid-cols-3 gap-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600 font-medium">상단 밴드</div>
-              <div className="text-lg font-mono text-gray-700">
+            <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">상단 밴드</div>
+              <div className="text-lg font-mono text-gray-700 dark:text-gray-300">
                 {(() => {
                   const latestData = candlestickData[candlestickData.length - 1]
                   return latestData?.bb_upper ? Math.round(latestData.bb_upper).toLocaleString() : 'N/A'
                 })()}
               </div>
             </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-sm text-blue-600 font-medium">중간선 (MA20)</div>
-              <div className="text-lg font-mono text-blue-700">
+            <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">중간선 (MA20)</div>
+              <div className="text-lg font-mono text-blue-700 dark:text-blue-300">
                 {(() => {
                   const latestData = candlestickData[candlestickData.length - 1]
                   return latestData?.bb_middle ? Math.round(latestData.bb_middle).toLocaleString() : 'N/A'
                 })()}
               </div>
             </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600 font-medium">하단 밴드</div>
-              <div className="text-lg font-mono text-gray-700">
+            <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">하단 밴드</div>
+              <div className="text-lg font-mono text-gray-700 dark:text-gray-300">
                 {(() => {
                   const latestData = candlestickData[candlestickData.length - 1]
                   return latestData?.bb_lower ? Math.round(latestData.bb_lower).toLocaleString() : 'N/A'

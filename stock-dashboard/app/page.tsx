@@ -33,6 +33,7 @@ import { AdvancedFilters, FilterCriteria } from "@/components/filters/advanced-f
 import { NotificationCenter } from "@/components/notifications/notification-center"
 import { MarketStatusIndicator } from "@/components/ui/market-status-indicator"
 import { StockPriceCell, StockPriceData } from "@/components/ui/stock-price-cell"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 // 섹터 매핑 유틸리티
 import { translateSectorToKorean, translateSectorToKoreanShort, getSectorColor } from "@/lib/sector-mapping"
@@ -738,19 +739,19 @@ export default function Dashboard() {
   const availableSectors = Array.from(new Set(stocks.map(s => s.sector)))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-stone-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-stone-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* 개선된 헤더 */}
-      <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-50 shadow-sm">
+      <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
                 {/* Investment Insight 텍스트 로고 */}
                 <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-edu-handwriting font-bold bg-gradient-to-r from-slate-600 to-blue-600 bg-clip-text text-transparent modern-underline">
+                  <span className="text-4xl font-edu-handwriting font-bold bg-gradient-to-r from-slate-600 to-blue-600 dark:from-slate-300 dark:to-blue-400 bg-clip-text text-transparent modern-underline">
                     investment
                   </span>
-                  <span className="text-4xl font-edu-handwriting font-bold bg-gradient-to-r from-blue-600 to-slate-700 bg-clip-text text-transparent modern-underline">
+                  <span className="text-4xl font-edu-handwriting font-bold bg-gradient-to-r from-blue-600 to-slate-700 dark:from-blue-400 dark:to-slate-300 bg-clip-text text-transparent modern-underline">
                     insight
                   </span>
                 </div>
@@ -763,33 +764,37 @@ export default function Dashboard() {
               
               {/* 인증 상태에 따른 버튼 표시 */}
               {isAuthenticated ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {user?.first_name || user?.username || '사용자'}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>내 계정</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      프로필
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Star className="mr-2 h-4 w-4" />
-                      관심종목 ({favorites.length})
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      로그아웃
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {user?.first_name || user?.username || '사용자'}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuLabel>내 계정</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        프로필
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Star className="mr-2 h-4 w-4" />
+                        관심종목 ({favorites.length})
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        로그아웃
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               ) : (
                 <div className="flex items-center gap-2">
+                  <ThemeToggle />
                   <Link href="/login">
                     <Button variant="outline" size="sm">
                       <LogIn className="mr-2 h-4 w-4" />
@@ -810,10 +815,10 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-700 via-gray-800 to-slate-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-700 via-gray-800 to-slate-600 dark:from-slate-300 dark:via-gray-200 dark:to-slate-400 bg-clip-text text-transparent mb-3">
             🚀 KOSPI 200 Real-Time Dashboard
           </h1>
-          <p className="text-lg text-gray-600 font-medium">KOSPI 200 종목의 실시간 정보와 시장 동향을 확인하세요</p>
+          <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">KOSPI 200 종목의 실시간 정보와 시장 동향을 확인하세요</p>
           {/* 상승률 상위 10개 마퀴 배너 */}
           <RisingTicker stocks={filteredStocks} key={`ticker-${Math.floor(Date.now()/(10*60*1000))}`} />
         </div>
@@ -822,51 +827,51 @@ export default function Dashboard() {
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <Card 
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 bg-white"
+              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               onClick={() => setActiveTab("stocks")}
             >
               <CardContent className="p-6 h-32">
                 <div className="flex items-start justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-gray-500 font-medium mb-3 text-sm">전체 종목</p>
-                    <p className="text-2xl font-bold text-gray-800 group-hover:text-slate-700 transition-colors duration-300 mb-1">
+                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">전체 종목</p>
+                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
                       {filteredStocks.length.toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       페이지 {currentPage} / {totalPages}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-slate-200 transition-colors duration-300">
-                    <TrendingUp className="h-6 w-6 text-slate-600" />
+                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center group-hover:bg-slate-200 dark:group-hover:bg-slate-600 transition-colors duration-300">
+                    <TrendingUp className="h-6 w-6 text-slate-600 dark:text-slate-300" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card 
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 bg-white"
+              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               onClick={() => setActiveTab("favorites")}
             >
               <CardContent className="p-6 h-32">
                 <div className="flex items-start justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-gray-500 font-medium mb-3 text-sm">관심 종목</p>
-                    <p className="text-2xl font-bold text-gray-800 group-hover:text-slate-700 transition-colors duration-300 mb-1">
+                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">관심 종목</p>
+                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
                       {favorites.length}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {favoriteConnected ? '실시간 연결' : '정적 데이터'}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center group-hover:bg-amber-200 transition-colors duration-300">
-                    <Star className="h-6 w-6 text-amber-600" />
+                  <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50 transition-colors duration-300">
+                    <Star className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card 
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 bg-white"
+              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               onClick={() => {
                 setActiveTab("stocks");
                 setTimeout(() => {
@@ -880,38 +885,38 @@ export default function Dashboard() {
               <CardContent className="p-6 h-32">
                 <div className="flex items-start justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-gray-500 font-medium mb-3 text-sm">검색 & 필터</p>
-                    <p className="text-2xl font-bold text-gray-800 group-hover:text-slate-700 transition-colors duration-300 mb-1">
+                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">검색 & 필터</p>
+                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
                       빠른 검색
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       종목명/코드 검색
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-300">
-                    <Search className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300">
+                    <Search className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card 
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 bg-white"
+              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               onClick={() => setActiveTab("recent")}
             >
               <CardContent className="p-6 h-32">
                 <div className="flex items-start justify-between h-full">
                   <div className="flex-1">
-                    <p className="text-gray-500 font-medium mb-3 text-sm">최근 검색</p>
-                    <p className="text-2xl font-bold text-gray-800 group-hover:text-slate-700 transition-colors duration-300 mb-1">
+                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">최근 검색</p>
+                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
                       {recentSearches.length}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       검색 기록
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 transition-colors duration-300">
-                    <Clock className="h-6 w-6 text-emerald-600" />
+                  <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors duration-300">
+                    <Clock className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </div>
               </CardContent>
@@ -929,16 +934,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3 order-2 lg:order-1 space-y-8">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-gray-100 border-0 p-1 h-12">
-                  <TabsTrigger value="stocks" className="rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">
+                <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-700 border-0 p-1 h-12">
+                  <TabsTrigger value="stocks" className="rounded-lg font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300">
                     전체 종목
                   </TabsTrigger>
-                  <TabsTrigger value="favorites" className="rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">
+                  <TabsTrigger value="favorites" className="rounded-lg font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300">
                     관심 종목
                   </TabsTrigger>
-                  <TabsTrigger value="recent" className="rounded-lg font-semibold data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200">
+                  <TabsTrigger value="recent" className="rounded-lg font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300">
                     최근 검색
                   </TabsTrigger>
                 </TabsList>
@@ -946,16 +951,16 @@ export default function Dashboard() {
                 <TabsContent value="stocks" className="space-y-6 mt-6">
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1 group">
-                      <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400 group-focus-within:text-slate-600 transition-colors duration-200" />
+                      <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-slate-600 dark:group-focus-within:text-slate-400 transition-colors duration-200" />
                       <Input
                         placeholder="종목명 또는 코드 검색 (예: 삼성전자, 005930)"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-14 border-gray-200 bg-white shadow-sm rounded-xl group-focus-within:ring-2 group-focus-within:ring-slate-200 group-focus-within:border-slate-300 transition-all duration-200 text-lg"
+                        className="pl-12 h-14 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 shadow-sm rounded-xl group-focus-within:ring-2 group-focus-within:ring-slate-200 dark:group-focus-within:ring-slate-700 group-focus-within:border-slate-300 dark:group-focus-within:border-slate-600 transition-all duration-200 text-lg"
                       />
                       {searchQuery && (
                         <div className="absolute right-4 top-4">
-                          <div className="text-sm text-gray-500 bg-slate-100 px-3 py-1 rounded-full font-medium">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full font-medium">
                             {filteredStocks.length}개 결과
                           </div>
                         </div>
@@ -963,16 +968,16 @@ export default function Dashboard() {
                     </div>
                     <div className="flex gap-3">                      
                       <Select value={filterBy} onValueChange={setFilterBy}>
-                        <SelectTrigger className="w-40 h-14 border-gray-200 bg-white shadow-sm rounded-xl hover:shadow-md transition-all duration-200">
-                          <Filter className="h-5 w-5 mr-2" />
+                        <SelectTrigger className="w-40 h-14 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm rounded-xl hover:shadow-md transition-all duration-200 text-gray-900 dark:text-white">
+                          <Filter className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="border-gray-200 shadow-lg bg-white">
-                          <SelectItem value="all">전체</SelectItem>
-                          <SelectItem value="positive">상승</SelectItem>
-                          <SelectItem value="negative">하락</SelectItem>
-                          <SelectItem value="high-sentiment">긍정 심리</SelectItem>
-                          <SelectItem value="top-ai">AI 종합 점수 상위</SelectItem>
+                        <SelectContent className="border-gray-200 dark:border-gray-700 shadow-lg bg-white dark:bg-gray-800">
+                          <SelectItem value="all" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">전체</SelectItem>
+                          <SelectItem value="positive" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">상승</SelectItem>
+                          <SelectItem value="negative" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">하락</SelectItem>
+                          <SelectItem value="high-sentiment" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">긍정 심리</SelectItem>
+                          <SelectItem value="top-ai" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">AI 종합 점수 상위</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -989,15 +994,15 @@ export default function Dashboard() {
                       ) : (
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-b border-gray-200 bg-gray-50">
-                              <TableHead className="font-bold text-gray-700 py-4 w-48">종목</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-32 text-center">섹터</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-36 text-right">현재가</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-28 text-right">변동률</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-24 text-right">거래량</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-20 text-right">AI 종합 점수</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-24 text-center">감정</TableHead>
-                              <TableHead className="font-bold text-gray-700 w-16 text-center">관심</TableHead>
+                            <TableRow className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 py-4 w-48">종목</TableHead>
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-32 text-center">섹터</TableHead>
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-36 text-right">현재가</TableHead>
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-28 text-right">변동률</TableHead>
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-24 text-right">거래량</TableHead>
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-20 text-right">AI 종합 점수</TableHead>
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-24 text-center">감정</TableHead>
+                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-16 text-center">관심</TableHead>
                               
                             </TableRow>
                           </TableHeader>
@@ -1028,7 +1033,7 @@ export default function Dashboard() {
                               return (
                                 <TableRow 
                                   key={stock.id} 
-                                  className="cursor-pointer hover:bg-gray-50 transition-colors duration-200 group border-b border-gray-100"
+                                  className="cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 group border-b border-gray-100 dark:border-gray-700"
                                 >
                                   <TableCell className="py-4">
                                     <div 
@@ -1038,11 +1043,11 @@ export default function Dashboard() {
                                         window.open(`/stock/${stock.code}`, '_blank')
                                       }}
                                     >
-                                      <div className="font-semibold text-gray-900 group-hover:text-slate-700 hover:text-blue-600 transition-colors duration-200">{stock.name}</div>
-                                      <div className="text-sm text-gray-500 font-medium flex items-center gap-2">
+                                      <div className="font-semibold text-gray-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">{stock.name}</div>
+                                      <div className="text-sm text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
                                         {stock.code}
                                         {realTimeData && (
-                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
                                             실시간
                                           </span>
                                         )}
@@ -1055,13 +1060,13 @@ export default function Dashboard() {
                                         <TooltipTrigger asChild>
                                           <Badge 
                                             variant="outline" 
-                                            className="border-gray-300 hover:border-slate-400 transition-colors duration-200 text-xs cursor-help max-w-full truncate"
+                                            className="border-gray-300 dark:border-gray-600 hover:border-slate-400 dark:hover:border-slate-500 transition-colors duration-200 text-xs cursor-help max-w-full truncate text-gray-700 dark:text-gray-300"
                                           >
                                             {translateSectorToKoreanShort(stock.sector)}
                                           </Badge>
                                         </TooltipTrigger>
-                                        <TooltipContent side="top">
-                                          <div className="text-xs">
+                                        <TooltipContent side="top" className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+                                          <div className="text-xs text-gray-900 dark:text-gray-100">
                                             {translateSectorToKorean(stock.sector)}
                                           </div>
                                         </TooltipContent>
@@ -1082,17 +1087,17 @@ export default function Dashboard() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    <div className="font-mono font-medium text-gray-700">
+                                    <div className="font-mono font-medium text-gray-700 dark:text-gray-300">
                                       {formatNumber(currentVolume)}
                                     </div>
                                     {realTimeData && realTimeData.trading_value && (
-                                      <div className="text-xs text-gray-500 mt-1 font-mono">
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-mono">
                                         {formatNumber(realTimeData.trading_value)}원
                                       </div>
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    <span className="font-mono font-bold text-gray-900">
+                                    <span className="font-mono font-bold text-gray-900 dark:text-white">
                                       {typeof stock.aiScore === 'number' ? stock.aiScore : '-'}
                                     </span>
                                   </TableCell>
@@ -1103,7 +1108,7 @@ export default function Dashboard() {
                                         {(stock.sentiment * 100).toFixed(0)}%
                                       </span>
                                       {stock.sentimentData && (
-                                        <div className="text-xs text-gray-500 bg-gray-100 rounded px-2 py-1 whitespace-nowrap">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded px-2 py-1 whitespace-nowrap">
                                           긍정 {(stock.sentimentData.positive * 100).toFixed(0)}% / 부정 {(stock.sentimentData.negative * 100).toFixed(0)}%
                                         </div>
                                       )}
@@ -1123,8 +1128,8 @@ export default function Dashboard() {
                                       }}
                                       className={`hover:scale-110 transition-all duration-200 rounded-full ${
                                         isFavorite(stock.code) 
-                                          ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50' 
-                                          : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50'
+                                          ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/30' 
+                                          : 'text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
                                       }`}
                                     >
                                       <Star className={`h-5 w-5 ${isFavorite(stock.code) ? 'fill-current' : ''}`} />
@@ -1144,7 +1149,7 @@ export default function Dashboard() {
                   {!loading && filteredStocks.length > 0 && (
                     <div className="space-y-6">
                       {/* 페이지 정보 */}
-                      <div className="flex items-center justify-between text-sm text-gray-600 bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                         <div className="flex items-center gap-4">
                           <span className="font-medium">
                             {startIndex + 1}-{Math.min(endIndex, filteredStocks.length)} / {filteredStocks.length}개 종목
@@ -1156,14 +1161,14 @@ export default function Dashboard() {
                               setCurrentPage(1)
                             }}
                           >
-                            <SelectTrigger className="w-28 border-gray-200 bg-white shadow-sm rounded-lg">
+                            <SelectTrigger className="w-28 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm rounded-lg text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-gray-200 shadow-lg bg-white">
-                              <SelectItem value="10">10개</SelectItem>
-                              <SelectItem value="15">15개</SelectItem>
-                              <SelectItem value="20">20개</SelectItem>
-                              <SelectItem value="30">30개</SelectItem>
+                            <SelectContent className="border-gray-200 dark:border-gray-700 shadow-lg bg-white dark:bg-gray-800">
+                              <SelectItem value="10" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">10개</SelectItem>
+                              <SelectItem value="15" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">15개</SelectItem>
+                              <SelectItem value="20" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">20개</SelectItem>
+                              <SelectItem value="30" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">30개</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -1176,11 +1181,11 @@ export default function Dashboard() {
                       {totalPages > 1 && (
                         <div className="flex justify-center">
                           <Pagination>
-                            <PaginationContent className="bg-white border border-gray-200 rounded-lg shadow-sm p-2">
+                            <PaginationContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-2 text-gray-900 dark:text-white">
                               <PaginationItem>
                                 <PaginationPrevious 
                                   onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                                  className={`${currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100 hover:text-gray-700"} rounded-lg transition-colors duration-200`}
+                                  className={`${currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300"} rounded-lg transition-colors duration-200 text-gray-700 dark:text-gray-300`}
                                 />
                               </PaginationItem>
                               
@@ -1203,7 +1208,7 @@ export default function Dashboard() {
                                     <PaginationLink
                                       onClick={() => handlePageChange(pageNumber)}
                                       isActive={pageNumber === currentPage}
-                                      className="cursor-pointer rounded-lg hover:bg-gray-100 hover:text-gray-700 transition-colors duration-200 data-[active]:bg-slate-600 data-[active]:text-white"
+                                      className="cursor-pointer rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 data-[active]:bg-slate-600 dark:data-[active]:bg-slate-500 data-[active]:text-white text-gray-700 dark:text-gray-300"
                                     >
                                       {pageNumber}
                                     </PaginationLink>
@@ -1214,7 +1219,7 @@ export default function Dashboard() {
                               <PaginationItem>
                                 <PaginationNext 
                                   onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                                  className={`${currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100 hover:text-gray-700"} rounded-lg transition-colors duration-200`}
+                                  className={`${currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300"} rounded-lg transition-colors duration-200 text-gray-700 dark:text-gray-300`}
                                 />
                               </PaginationItem>
                             </PaginationContent>
@@ -1226,9 +1231,9 @@ export default function Dashboard() {
                 </TabsContent>
 
                 <TabsContent value="favorites">
-                  <Card className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
-                    <CardHeader className="bg-gray-50 border-b border-gray-200">
-                      <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-800">
+                  <Card className="border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+                    <CardHeader className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                      <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-800 dark:text-gray-200">
                         <Star className="h-6 w-6 text-amber-600" />
                         관심 종목
                         {/* 관심종목 실시간 상태 표시 */}
@@ -1257,14 +1262,14 @@ export default function Dashboard() {
                           </Button>
                         </div>
                       </CardTitle>
-                      <CardDescription className="text-gray-600 font-medium">
+                      <CardDescription className="text-gray-600 dark:text-gray-400 font-medium">
                         자주 확인하는 종목들
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
                       {favorites.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                          <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                          <Star className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                           <p className="text-lg font-medium">관심 종목이 없습니다</p>
                           <p className="text-sm mt-2">종목 목록에서 ⭐ 버튼을 클릭해서 관심종목을 추가해보세요</p>
                         </div>
@@ -1335,9 +1340,9 @@ export default function Dashboard() {
                 </TabsContent>
 
                 <TabsContent value="recent">
-                  <Card className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
-                    <CardHeader className="bg-gray-50 border-b border-gray-200">
-                      <CardTitle className="flex items-center justify-between text-xl font-bold text-gray-800">
+                  <Card className="border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+                    <CardHeader className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                      <CardTitle className="flex items-center justify-between text-xl font-bold text-gray-800 dark:text-gray-200">
                         <div className="flex items-center gap-3">
                           <Clock className="h-6 w-6 text-slate-600" />
                           최근 검색
@@ -1353,14 +1358,14 @@ export default function Dashboard() {
                           </Button>
                         )}
                       </CardTitle>
-                      <CardDescription className="text-gray-600 font-medium">
+                      <CardDescription className="text-gray-600 dark:text-gray-400 font-medium">
                         최근에 조회한 종목들 (최대 10개까지 저장)
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
                       {recentSearches.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                          <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                          <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
                           <p className="text-lg font-medium">최근 검색 기록이 없습니다</p>
                           <p className="text-sm mt-2">종목명을 클릭하거나 상세보기를 클릭하면 자동으로 기록됩니다</p>
                         </div>
@@ -1509,7 +1514,7 @@ function RisingTicker({ stocks }: { stocks: Stock[] }) {
   const duplicatedStocks = [...top, ...top]
 
   return (
-    <div className="marquee-container w-full h-16 mt-3">
+    <div className="marquee-container w-full h-16 mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-2">
       <div ref={marqueeRef} className="marquee h-full flex items-center">
         {duplicatedStocks.map((s, idx) => {
           const sign = (s.changePercent || 0) >= 0 ? '+' : ''
@@ -1518,14 +1523,14 @@ function RisingTicker({ stocks }: { stocks: Stock[] }) {
           return (
             <div 
               key={`${s.code}-${idx}`} 
-              className="flex-shrink-0 mx-4 bg-gray-800 rounded-lg p-3 min-w-[200px] border border-gray-700 hover:border-gray-600 transition-colors duration-200"
+              className="flex-shrink-0 mx-4 bg-white dark:bg-gray-800 rounded-lg p-3 min-w-[200px] border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-200 shadow-sm dark:shadow-gray-900/20"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="text-white font-semibold text-sm truncate">
+                  <div className="text-gray-900 dark:text-white font-semibold text-sm truncate">
                     {s.name}
                   </div>
-                  <div className="text-gray-400 text-xs">
+                  <div className="text-gray-600 dark:text-gray-400 text-xs">
                     {s.code}
                   </div>
                 </div>
@@ -1534,11 +1539,11 @@ function RisingTicker({ stocks }: { stocks: Stock[] }) {
                     <div className={`font-bold text-lg ${isPositive ? 'text-red-400' : 'text-blue-400'}`}>
                       {sign}{(s.changePercent || 0).toFixed(2)}%
                     </div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-gray-500 dark:text-gray-400 text-xs">
                       AI: {s.aiScore || '-'}
                     </div>
                   </div>
-                  <div className="w-8 h-8 bg-gray-700 rounded flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
                     <TrendingUp className={`w-4 h-4 ${isPositive ? 'text-red-400' : 'text-blue-400'}`} />
                   </div>
                 </div>
