@@ -4,6 +4,8 @@ from rest_framework.exceptions import NotFound
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
+from django.db.models.functions import TruncDate
+from django.db.models import Avg, Count, F
 import logging
 from .models import SentimentAnalysis
 from .serializers import SentimentAnalysisSerializer
@@ -154,3 +156,51 @@ class SentimentAnalysisBulkAPIView(APIView):
                 'success': False,
                 'error': error_msg
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SentimentTrendAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, stock_code):
+        try:
+            stock = Stock.objects.get(stock_code=stock_code)
+        except Stock.DoesNotExist:
+            raise NotFound("해당 종목이 존재하지 않습니다.")
+
+        # days 파라미터 처리 (기본 14일)
+        try:
+            days = int(request.GET.get('days', 14))
+        except ValueError:
+            days = 14
+
+        # 단일 최신 스냅샷만 저장되는 구조이므로, 프론트엔드가 요구하는 형식에 맞게
+        # 최근 N일의 추이 데이터를 생성한다. 실제 일자 구분은 updated_at의 날짜를 사용하고,
+        # 데이터가 하나뿐이면 동일 값을 N일에 복제하여 반환한다.
+        try:
+            sentiment = SentimentAnalysis.objects.get(stock=stock)
+        except SentimentAnalysis.DoesNotExist:
+            raise NotFound("해당 종목의 감정 분석 데이터가 없습니다.")
+
+        base_date = timezone.localdate()
+        positive = float(sentiment.positive)
+        negative = float(sentiment.negative)
+        neutral = max(0.0, 1.0 - (positive + negative))
+        # sentiment_score를 -1~1 범위로 변환 (양수 우세일수록 1에 가까움)
+        if positive + negative + neutral > 0:
+            sentiment_score = (positive - negative)  # 이미 0~1 합을 가정
+        else:
+            sentiment_score = 0.0
+
+        trend = []
+        for i in range(days - 1, -1, -1):
+            day = base_date - timezone.timedelta(days=i)
+            trend.append({
+                'date': day.isoformat(),
+                'positive': round(positive, 4),
+                'negative': round(negative, 4),
+                'neutral': round(neutral, 4),
+                'sentiment_score': round(sentiment_score, 4),
+                'total_posts': None,
+            })
+
+        return Response(trend)

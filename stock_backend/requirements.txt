@@ -5,6 +5,7 @@ djangorestframework>=3.14.0
 # Django Channels (WebSocket 지원)
 channels>=4.0.0
 daphne>=4.0.0
+channels-redis>=4.2.0
 
 # 데이터베이스
 psycopg2-binary>=2.9.0
