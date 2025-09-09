@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Roboto, Edu_NSW_ACT_Foundation } from "next/font/google"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 
 const roboto = Roboto({ 
@@ -25,11 +26,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <body className={`${roboto.className} ${eduFont.variable}`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

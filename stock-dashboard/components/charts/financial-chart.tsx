@@ -19,7 +19,7 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
 
   if (!financial || !financial.financials || Object.keys(financial.financials).length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-gray-500">
+      <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
         재무 데이터가 없습니다.
       </div>
     )
@@ -70,12 +70,12 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 border rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-900">{label}년</p>
+        <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+          <p className="font-semibold text-gray-900 dark:text-white">{label}년</p>
           <div className="mt-2 space-y-1">
             {payload.map((entry: any, index: number) => (
               <p key={index} className="text-sm">
-                <span className="text-gray-600">{entry.name}: </span>
+                <span className="text-gray-600 dark:text-gray-400">{entry.name}: </span>
                 <span className="font-mono font-medium" style={{ color: entry.color }}>
                   {typeof entry.value === 'number' 
                     ? entry.dataKey === 'eps' 
@@ -183,9 +183,9 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     return (
       <div className="space-y-2 mb-4">
         {errorIssues.length > 0 && (
-          <Alert className="border-red-200 bg-red-50">
+          <Alert className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="text-red-800">
+            <AlertDescription className="text-red-800 dark:text-red-200">
               <strong>데이터 확인 필요:</strong>
               <ul className="mt-1 ml-4 list-disc">
                 {errorIssues.map((issue, idx) => (
@@ -197,9 +197,9 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
         )}
         
         {warningIssues.length > 0 && (
-          <Alert className="border-yellow-200 bg-yellow-50">
+          <Alert className="border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="text-yellow-800">
+            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
               <strong>참고사항:</strong>
               <ul className="mt-1 ml-4 list-disc">
                 {warningIssues.map((issue, idx) => (
@@ -238,9 +238,9 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           {has2024Data && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
+            <Badge variant="secondary" className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
               2024년 최신 데이터
             </Badge>
           )}
@@ -252,6 +252,7 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
             variant={viewType === 'overview' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewType('overview')}
+            className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <DollarSign className="h-4 w-4 mr-1" />
             개요
@@ -260,6 +261,7 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
             variant={viewType === 'trends' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewType('trends')}
+            className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <TrendingUp className="h-4 w-4 mr-1" />
             추세
@@ -268,6 +270,7 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
             variant={viewType === 'ratios' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewType('ratios')}
+            className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Building className="h-4 w-4 mr-1" />
             비율
@@ -276,6 +279,7 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
             variant={viewType === 'assets' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewType('assets')}
+            className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <PieIcon className="h-4 w-4 mr-1" />
             자산
@@ -302,16 +306,16 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
         <div className="space-y-6">
           {/* 핵심 재무 지표 카드 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                         <Card className={`${latestDataWithIssues.issues?.some((i: any) => i.type === 'REVENUE_TOO_SMALL') ? 'border-red-200' : ''}`}>
+                         <Card className={`bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${latestDataWithIssues.issues?.some((i: any) => i.type === 'REVENUE_TOO_SMALL') ? 'border-red-200 dark:border-red-800' : ''}`}>
                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-sm font-medium">매출액</CardTitle>
-                 <DollarSign className="h-4 w-4 text-muted-foreground" />
+                 <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">매출액</CardTitle>
+                 <DollarSign className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                </CardHeader>
                <CardContent>
-                 <div className="text-2xl font-bold">
+                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                    {formatSafeValue(latestDataWithIssues.revenue, '조', latestDataWithIssues.issues || [])}
                  </div>
-                 <p className="text-xs text-muted-foreground">
+                 <p className="text-xs text-muted-foreground dark:text-gray-400">
                    전년 대비: {
                      previousData 
                        ? `${((latestDataWithIssues.revenue - previousData.revenue) / previousData.revenue * 100).toFixed(1)}%`
@@ -320,16 +324,16 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                  </p>
                </CardContent>
              </Card>
-             <Card className={`${latestDataWithIssues.issues?.some((i: any) => i.type === 'OPERATING_GT_REVENUE') ? 'border-yellow-200' : ''}`}>
+             <Card className={`bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${latestDataWithIssues.issues?.some((i: any) => i.type === 'OPERATING_GT_REVENUE') ? 'border-yellow-200 dark:border-yellow-800' : ''}`}>
                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-sm font-medium">영업이익</CardTitle>
-                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                 <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">영업이익</CardTitle>
+                 <TrendingUp className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                </CardHeader>
                <CardContent>
-                 <div className={`text-2xl font-bold ${latestDataWithIssues.operating_income < 0 ? 'text-red-600' : ''}`}>
+                 <div className={`text-2xl font-bold text-gray-900 dark:text-white ${latestDataWithIssues.operating_income < 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
                    {formatSafeValue(latestDataWithIssues.operating_income, '조', latestDataWithIssues.issues || [])}
                  </div>
-                 <p className="text-xs text-muted-foreground">
+                 <p className="text-xs text-muted-foreground dark:text-gray-400">
                    {latestDataWithIssues.operating_income < 0 ? '영업손실' : ''}
                    {previousData 
                      ? `전년 대비: ${((latestDataWithIssues.operating_income - previousData.operating_income) / Math.abs(previousData.operating_income) * 100).toFixed(1)}%`
@@ -338,31 +342,31 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                  </p>
                </CardContent>
              </Card>
-             <Card>
+             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-sm font-medium">순이익</CardTitle>
-                 <Building className="h-4 w-4 text-muted-foreground" />
+                 <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">순이익</CardTitle>
+                 <Building className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                </CardHeader>
                <CardContent>
-                 <div className={`text-2xl font-bold ${latestDataWithIssues.net_income < 0 ? 'text-red-600' : latestDataWithIssues.net_income === 0 ? 'text-gray-500' : ''}`}>
+                 <div className={`text-2xl font-bold text-gray-900 dark:text-white ${latestDataWithIssues.net_income < 0 ? 'text-red-600 dark:text-red-400' : latestDataWithIssues.net_income === 0 ? 'text-gray-500 dark:text-gray-400' : ''}`}>
                    {latestDataWithIssues.net_income === 0 
                      ? (latestDataWithIssues.year === 2024 ? '미공시' : '손실없음')
                      : formatSafeValue(latestDataWithIssues.net_income, '조')
                    }
                  </div>
-                 <p className="text-xs text-muted-foreground">
+                 <p className="text-xs text-muted-foreground dark:text-gray-400">
                    {latestDataWithIssues.net_income < 0 ? '순손실' : ''}
                    {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year === 2024 ? '2024년 실적 대기 중' : ''}
                  </p>
                </CardContent>
              </Card>
-             <Card className={`${latestDataWithIssues.issues?.some((i: any) => i.type === 'ABNORMAL_EPS') ? 'border-yellow-200' : ''}`}>
+             <Card className={`bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${latestDataWithIssues.issues?.some((i: any) => i.type === 'ABNORMAL_EPS') ? 'border-yellow-200 dark:border-yellow-800' : ''}`}>
                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-sm font-medium">EPS</CardTitle>
-                 <PieIcon className="h-4 w-4 text-muted-foreground" />
+                 <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">EPS</CardTitle>
+                 <PieIcon className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
                </CardHeader>
                <CardContent>
-                 <div className="text-2xl font-bold">
+                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
                    {latestDataWithIssues.eps === 0 
                      ? 'N/A'
                      : latestDataWithIssues.eps > 100000
@@ -370,15 +374,15 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                      : `${latestDataWithIssues.eps.toLocaleString()}원`
                    }
                  </div>
-                 <p className="text-xs text-muted-foreground">주당순이익</p>
+                 <p className="text-xs text-muted-foreground dark:text-gray-400">주당순이익</p>
                </CardContent>
              </Card>
           </div>
 
           {/* 연도별 성장률 표시 */}
           {financialData.length >= 2 && (
-            <div className="bg-white p-6 rounded-lg border">
-              <h4 className="text-lg font-medium text-gray-800 mb-4">전년 대비 성장률</h4>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">전년 대비 성장률</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {(() => {
                   const currentYear = financialData[financialData.length - 1]
@@ -394,20 +398,20 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                   return (
                     <>
                       <div className="text-center">
-                        <div className="text-sm text-gray-600 mb-1">매출액 성장률</div>
-                        <div className={`text-xl font-bold ${parseFloat(revenueGrowth) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">매출액 성장률</div>
+                        <div className={`text-xl font-bold ${parseFloat(revenueGrowth) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {revenueGrowth !== 'N/A' ? `${parseFloat(revenueGrowth) >= 0 ? '+' : ''}${revenueGrowth}%` : 'N/A'}
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-600 mb-1">영업이익 성장률</div>
-                        <div className={`text-xl font-bold ${parseFloat(operatingGrowth) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">영업이익 성장률</div>
+                        <div className={`text-xl font-bold ${parseFloat(operatingGrowth) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {operatingGrowth !== 'N/A' ? `${parseFloat(operatingGrowth) >= 0 ? '+' : ''}${operatingGrowth}%` : 'N/A'}
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-600 mb-1">순이익 성장률</div>
-                        <div className={`text-xl font-bold ${netGrowth === 'N/A' ? 'text-gray-500' : parseFloat(netGrowth) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">순이익 성장률</div>
+                        <div className={`text-xl font-bold ${netGrowth === 'N/A' ? 'text-gray-500 dark:text-gray-400' : parseFloat(netGrowth) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {netGrowth !== 'N/A' ? `${parseFloat(netGrowth) >= 0 ? '+' : ''}${netGrowth}%` : 'N/A'}
                         </div>
                       </div>
@@ -419,8 +423,8 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
           )}
 
           {/* 최근 실적 차트 */}
-          <div className="bg-white p-6 rounded-lg border">
-            <h4 className="text-lg font-medium text-gray-800 mb-4">최근 실적 현황</h4>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">최근 실적 현황</h4>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={financialData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>

@@ -195,11 +195,11 @@ export function AdvancedFilters({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-96 p-0" align="start">
-          <Card className="border-0 shadow-none">
+        <PopoverContent className="w-96 p-0 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700" align="start">
+          <Card className="border-0 shadow-none bg-white dark:bg-gray-800">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">고급 필터</CardTitle>
+                <CardTitle className="text-lg text-gray-900 dark:text-white">고급 필터</CardTitle>
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={clearAllFilters}>
                     <RotateCcw className="h-4 w-4 mr-1" />
@@ -211,7 +211,7 @@ export function AdvancedFilters({
                   </Button>
                 </div>
               </div>
-              <CardDescription>
+              <CardDescription className="text-gray-600 dark:text-gray-400">
                 상세한 조건으로 종목을 필터링하세요
               </CardDescription>
             </CardHeader>
@@ -261,22 +261,23 @@ export function AdvancedFilters({
 
               {/* 기본 필터 */}
               <Collapsible open={expandedSections.basic} onOpenChange={() => toggleSection('basic')}>
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gray-50 rounded">
-                  <Label className="font-medium">기본 필터</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                  <Label className="font-medium text-gray-900 dark:text-white">기본 필터</Label>
                   {expandedSections.basic ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-3 pt-2">
                   <div>
-                    <Label className="text-sm">종목명/코드 검색</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">종목명/코드 검색</Label>
                     <Input
                       placeholder="삼성전자, 005930..."
                       value={criteria.search || ''}
                       onChange={(e) => updateCriteria({ search: e.target.value })}
+                      className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-sm">섹터 선택</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">섹터 선택</Label>
                     <div className="mt-2 space-y-2">
                       <div className="flex flex-wrap gap-2">
                         {KOREAN_SECTORS.map((koreanSector) => {
@@ -318,7 +319,7 @@ export function AdvancedFilters({
                       </div>
                       {criteria.sectors && criteria.sectors.length > 0 && (
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500">선택된 섹터:</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">선택된 섹터:</span>
                           <div className="flex flex-wrap gap-1">
                             {criteria.sectors.map((englishSector) => (
                               <Badge 
@@ -344,15 +345,15 @@ export function AdvancedFilters({
                   </div>
                   
                   <div>
-                    <Label className="text-sm">정렬</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">정렬</Label>
                     <div className="flex gap-2 mt-1">
                       <Select value={criteria.sortBy} onValueChange={(value) => updateCriteria({ sortBy: value })}>
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger className="flex-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                           <SelectValue placeholder="정렬 기준" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                           {SORT_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
+                            <SelectItem key={option.value} value={option.value} className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">
                               {option.label}
                             </SelectItem>
                           ))}
@@ -362,12 +363,12 @@ export function AdvancedFilters({
                         value={criteria.sortOrder} 
                         onValueChange={(value: 'asc' | 'desc') => updateCriteria({ sortOrder: value })}
                       >
-                        <SelectTrigger className="w-20">
+                        <SelectTrigger className="w-20 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                           <SelectValue placeholder="순서" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="asc">오름차순</SelectItem>
-                          <SelectItem value="desc">내림차순</SelectItem>
+                        <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                          <SelectItem value="asc" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">오름차순</SelectItem>
+                          <SelectItem value="desc" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">내림차순</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -377,13 +378,13 @@ export function AdvancedFilters({
 
               {/* 재무 지표 필터 */}
               <Collapsible open={expandedSections.financial} onOpenChange={() => toggleSection('financial')}>
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gray-50 rounded">
-                  <Label className="font-medium">재무 지표</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                  <Label className="font-medium text-gray-900 dark:text-white">재무 지표</Label>
                   {expandedSections.financial ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-3 pt-2">
                   <div>
-                    <Label className="text-sm">주가 범위 (원)</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">주가 범위 (원)</Label>
                     <div className="px-2 mt-2">
                       <Slider
                         value={criteria.priceRange || DEFAULT_RANGES.price}
@@ -393,7 +394,7 @@ export function AdvancedFilters({
                         step={1000}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                         <span>{(criteria.priceRange?.[0] || DEFAULT_RANGES.price[0]).toLocaleString()}원</span>
                         <span>{(criteria.priceRange?.[1] || DEFAULT_RANGES.price[1]).toLocaleString()}원</span>
                       </div>
@@ -401,7 +402,7 @@ export function AdvancedFilters({
                   </div>
 
                   <div>
-                    <Label className="text-sm">PER 범위</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">PER 범위</Label>
                     <div className="px-2 mt-2">
                       <Slider
                         value={criteria.perRange || DEFAULT_RANGES.per}
@@ -411,7 +412,7 @@ export function AdvancedFilters({
                         step={1}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                         <span>{criteria.perRange?.[0] || DEFAULT_RANGES.per[0]}</span>
                         <span>{criteria.perRange?.[1] || DEFAULT_RANGES.per[1]}</span>
                       </div>
@@ -419,7 +420,7 @@ export function AdvancedFilters({
                   </div>
 
                   <div>
-                    <Label className="text-sm">PBR 범위</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">PBR 범위</Label>
                     <div className="px-2 mt-2">
                       <Slider
                         value={criteria.pbrRange || DEFAULT_RANGES.pbr}
@@ -429,7 +430,7 @@ export function AdvancedFilters({
                         step={0.1}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                         <span>{criteria.pbrRange?.[0] || DEFAULT_RANGES.pbr[0]}</span>
                         <span>{criteria.pbrRange?.[1] || DEFAULT_RANGES.pbr[1]}</span>
                       </div>
@@ -437,7 +438,7 @@ export function AdvancedFilters({
                   </div>
 
                   <div>
-                    <Label className="text-sm">ROE 범위 (%)</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">ROE 범위 (%)</Label>
                     <div className="px-2 mt-2">
                       <Slider
                         value={criteria.roeRange || DEFAULT_RANGES.roe}
@@ -447,7 +448,7 @@ export function AdvancedFilters({
                         step={1}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                         <span>{criteria.roeRange?.[0] || DEFAULT_RANGES.roe[0]}%</span>
                         <span>{criteria.roeRange?.[1] || DEFAULT_RANGES.roe[1]}%</span>
                       </div>
@@ -458,31 +459,31 @@ export function AdvancedFilters({
 
               {/* 감정 분석 필터 */}
               <Collapsible open={expandedSections.sentiment} onOpenChange={() => toggleSection('sentiment')}>
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gray-50 rounded">
-                  <Label className="font-medium">감정 분석</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                  <Label className="font-medium text-gray-900 dark:text-white">감정 분석</Label>
                   {expandedSections.sentiment ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-3 pt-2">
                   <div>
-                    <Label className="text-sm">감정 유형</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">감정 유형</Label>
                     <Select 
                       value={criteria.sentimentType || 'all'} 
                       onValueChange={(value) => updateCriteria({ sentimentType: value as any })}
                     >
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">전체</SelectItem>
-                        <SelectItem value="positive">긍정적</SelectItem>
-                        <SelectItem value="neutral">중립적</SelectItem>
-                        <SelectItem value="negative">부정적</SelectItem>
+                      <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                        <SelectItem value="all" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">전체</SelectItem>
+                        <SelectItem value="positive" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">긍정적</SelectItem>
+                        <SelectItem value="neutral" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">중립적</SelectItem>
+                        <SelectItem value="negative" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600">부정적</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
-                    <Label className="text-sm">감정 점수 범위</Label>
+                    <Label className="text-sm text-gray-700 dark:text-gray-300">감정 점수 범위</Label>
                     <div className="px-2 mt-2">
                       <Slider
                         value={criteria.sentimentRange || DEFAULT_RANGES.sentiment}
@@ -492,7 +493,7 @@ export function AdvancedFilters({
                         step={5}
                         className="w-full"
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
                         <span>{criteria.sentimentRange?.[0] || DEFAULT_RANGES.sentiment[0]}</span>
                         <span>{criteria.sentimentRange?.[1] || DEFAULT_RANGES.sentiment[1]}</span>
                       </div>
