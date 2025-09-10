@@ -18,7 +18,6 @@ const API_BASE_URL = getApiBaseUrl();
 
 // CSRF 토큰 관리
 const getCsrfToken = (): string | null => {
-
   if (typeof document === "undefined") return null;
 
   const cookie = document.cookie
@@ -79,7 +78,6 @@ export interface Stock {
 }
 
 export interface StockDetail extends Stock {
-
   financial_data?: FinancialData; // 단일 객체로 수정
   price_history?: PriceData[];
   technical_indicators?: TechnicalIndicators;
@@ -307,7 +305,6 @@ export interface CreateAlertRequest {
 
 // 클러스터링 관련 타입들
 export interface ClusterAnalysis {
-
   cluster_type: "spectral" | "agglomerative";
   cluster_id: number;
   cluster_name: string;
@@ -438,6 +435,10 @@ class ApiClient {
               sector_performance: [],
             } as T;
           }
+          if (endpoint.includes("/sentiment/")) {
+            console.log(`⚠️ Sentiment API 404 오류 - null 반환: ${url}`);
+            return null as T;
+          }
         }
       }
       if (!response.ok) {
@@ -509,6 +510,9 @@ class ApiClient {
             sector_performance: [],
           } as T;
         }
+        if (endpoint.includes("/sentiment/")) {
+          return null as T;
+        }
       }
       throw error;
     }
@@ -516,7 +520,6 @@ class ApiClient {
 
   // Authentication APIs (인증 필요)
   async register(userData: RegisterData): Promise<AuthResponse> {
-
     return this.request<AuthResponse>(
       "/auth/register/",
       {
@@ -650,8 +653,25 @@ class ApiClient {
     return this.request<PriceData[]>(endpoint, {}, false);
   }
 
-  async getSentimentAnalysis(code: string): Promise<SentimentAnalysis> {
-    return this.request<SentimentAnalysis>(`/sentiment/${code}/`, {}, false);
+  async getSentimentAnalysis(code: string): Promise<SentimentAnalysis | null> {
+    try {
+      return await this.request<SentimentAnalysis>(
+        `/sentiment/${code}/`,
+        {},
+        false
+      );
+    } catch (error: any) {
+      // 404 오류는 감정 분석 데이터가 없음을 의미하므로 null 반환
+      if (
+        error.message?.includes("404") ||
+        error.message?.includes("감정 분석 데이터가 없습니다")
+      ) {
+        console.log(`감정 분석 데이터 없음: ${code}`);
+        return null;
+      }
+      // 다른 오류는 다시 던짐
+      throw error;
+    }
   }
 
   // 감정 추이 조회 (기본 14일)
@@ -671,7 +691,6 @@ class ApiClient {
   }
 
   async getMarketOverview(): Promise<MarketOverview> {
-
     return this.request<MarketOverview>("/market-overview/", {}, false);
   }
 
