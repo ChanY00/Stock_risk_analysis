@@ -13,6 +13,7 @@ import logging
 import pytz
 from django.conf import settings
 from .market_utils import market_utils
+from .client import KISApiClient, TokenManager
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,10 @@ class RealKISWebSocketClient:
         logger.info(f"🔧 KIS WebSocket 클라이언트 초기화 ({mode} 모드)")
         logger.info(f"   - Base URL: {self.base_url}")
         logger.info(f"   - WebSocket URL: {self.ws_url}")
+        
+        # 전역 토큰 관리자 사용(중복 발급/1분 제한 회피)
+        self.rest_client = KISApiClient(is_mock=self.is_paper_trading)
+        self.token_manager = self.rest_client.token_manager
         
         # 시장 상태 확인
         is_open, reason = market_utils.is_market_open()
@@ -160,48 +165,17 @@ class RealKISWebSocketClient:
             return False
 
     def _get_access_token(self) -> bool:
-        """OAuth 2.0 액세스 토큰 발급 (모의투자/실계좌 지원)"""
+        """전역 TokenManager로 토큰 발급/공유 (1분 제한 및 동시요청 방지)."""
         try:
-            # 모의투자와 실계좌는 동일한 토큰 발급 URL 사용
-            url = f"{self.base_url}/oauth2/tokenP"
-            headers = {'Content-Type': 'application/json'}
-            data = {
-                "grant_type": "client_credentials",
-                "appkey": self.app_key,
-                "appsecret": self.app_secret
-            }
-            
-            mode = "모의투자" if self.is_paper_trading else "실계좌"
-            logger.info(f"🔑 {mode} 토큰 발급 요청: {url}")
-            response = requests.post(url, headers=headers, json=data, timeout=self.timeout)
-
-            # 상세 로깅(성공/실패 공통): 상태코드 및 본문 일부
-            status = response.status_code
-            body_preview = (response.text or "")[:500]
-            logger.info(f"OAuth 토큰 응답 코드: {status}")
-            if status != 200:
-                logger.error(f"OAuth 토큰 응답 본문(프리뷰): {body_preview}")
-                # raise_for_status 전에 실패 처리 경로 분기
-            response.raise_for_status()
-            
-            # JSON 파싱 실패 대비
-            try:
-                result = response.json()
-            except Exception as parse_err:
-                logger.error(f"❌ OAuth 응답 JSON 파싱 실패: {parse_err}. 본문(프리뷰): {body_preview}")
+            success = self.token_manager.get_token(self.rest_client)
+            if not success:
+                logger.warning("⚠️ KIS 토큰 요청 제한 또는 진행 중. 잠시 후 재시도 필요")
                 return False
-
-            self.access_token = result.get('access_token')
-            
-            if self.access_token:
-                logger.info(f"✅ KIS {mode} OAuth 토큰 발급 성공")
-                return True
-            else:
-                logger.error(f"❌ {mode} 액세스 토큰 발급 실패. 응답 본문(프리뷰): {body_preview}")
-                return False
-                
+            self.access_token = self.token_manager.access_token
+            logger.info("✅ KIS OAuth 토큰 준비 완료 (공유 토큰)")
+            return True
         except Exception as e:
-            logger.error(f"❌ OAuth 토큰 발급 오류: {e}")
+            logger.error(f"❌ OAuth 토큰 획득 오류(TokenManager): {e}")
             return False
     
     def _get_approval_key(self) -> bool:
@@ -283,10 +257,7 @@ class RealKISWebSocketClient:
                 on_open=self._on_open,
                 on_message=self._on_message,
                 on_error=self._on_error,
-                on_close=self._on_close,
-                # 연결 옵션 추가
-                on_ping=self._on_ping,
-                on_pong=self._on_pong
+                on_close=self._on_close
             )
             
             # 별도 스레드에서 실행
@@ -359,34 +330,14 @@ class RealKISWebSocketClient:
         if self.ping_thread and self.ping_thread.is_alive():
             return
             
-        self.should_ping = True
-        self.ping_thread = threading.Thread(
-            target=self._ping_loop, 
-            daemon=True, 
-            name="KIS-Ping"
-        )
-        self.ping_thread.start()
-        logger.info("🏓 연결 유지 ping 스레드 시작")
+        self.should_ping = False
+        logger.info("🏓 클라이언트 ping 비활성화 (KIS PINGPONG 사용)")
     
     def _ping_loop(self):
         """주기적으로 ping 전송"""
-        while self.should_ping and self.is_connected:
-            try:
-                time.sleep(self.ping_interval)
-                if self.ws and self.is_connected:
-                    self.ws.send("ping")
-                    logger.debug("🏓 ping 전송")
-            except Exception as e:
-                logger.warning(f"⚠️ ping 전송 실패: {e}")
-                break
+        return
     
-    def _on_ping(self, ws, data):
-        """ping 수신 시 호출"""
-        logger.debug("🏓 ping 수신")
-    
-    def _on_pong(self, ws, data):
-        """pong 수신 시 호출"""
-        logger.debug("🏓 pong 수신")
+    # on_ping/on_pong 훅 제거: 서버 PINGPONG은 on_message에서 무시 처리
     
     def _on_open(self, ws):
         """WebSocket 연결 성공 시 호출"""
@@ -402,6 +353,21 @@ class RealKISWebSocketClient:
             logger.info(f"📨 KIS 원본 메시지: {message}")
             
             # KIS WebSocket 프로토콜에 따른 메시지 파싱
+            # 서버 PINGPONG JSON 및 오류 JSON(OPSP9999) 무시 처리
+            if message.startswith('{'):
+                try:
+                    obj = json.loads(message)
+                    tr_id = obj.get('header', {}).get('tr_id')
+                    if tr_id == 'PINGPONG':
+                        logger.debug('🏓 서버 PINGPONG 수신 - 무시')
+                        return
+                    if obj.get('body', {}).get('rt_cd') == '9' and obj.get('body', {}).get('msg_cd') == 'OPSP9999':
+                        logger.warning("⚠️ 서버 JSON 경고(OPSP9999): %s", obj.get('body', {}).get('msg1'))
+                        return
+                except Exception:
+                    # JSON 파싱 실패 시 무시
+                    return
+
             if message.startswith('0|'):
                 logger.info("🔍 실시간 데이터 메시지 감지")
                 # 실시간 데이터
