@@ -335,3 +335,13 @@ uv.lock
 # 성능 프로파일링
 **/*.prof
 **/*.pstats 
+
+# ==============================================
+# 🚫 Local-only rules: ignore newly added scaffolding
+# ==============================================
+.cursorrules
+.cursor/
+.pre-commit-config.yaml
+pyproject.toml
+Makefile
+.github/
