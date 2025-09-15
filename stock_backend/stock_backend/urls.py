@@ -23,7 +23,7 @@ urlpatterns = [
     path('api/', include([
         # 인증 API
         path('auth/', include('authentication.urls')),
-        # 시장 개요 (실제 캐시 적용된 뷰로 연결)
+        # 시장 개요 (분산 캐시 포함 실제 서비스)
         path('market-overview/', market_overview_view, name='market-overview'),
         
         # 올바른 API 구조

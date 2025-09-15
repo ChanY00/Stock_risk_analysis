@@ -269,8 +269,8 @@ class RealKISWebSocketClient:
             )
             self.ws_thread.start()
             
-            # 연결 대기 (더 긴 대기 시간)
-            max_wait = 10  # 10초 대기
+            # 연결 대기 + 초기 지수적 백오프로 재시도
+            max_wait = 10
             wait_count = 0
             while not self.is_connected and wait_count < max_wait:
                 time.sleep(1)
@@ -283,6 +283,11 @@ class RealKISWebSocketClient:
                 return True
             else:
                 logger.error("❌ KIS WebSocket 연결 실패 (타임아웃)")
+                # 토큰 발급 직후 Approval 연쇄 호출 방지: 짧은 백오프 후 한 번만 재시도
+                backoff = min(5 * (self.reconnect_count + 1), 15)
+                logger.info(f"⏳ 재시도 전 대기 {backoff}s (토큰/접속키 폭주 방지)")
+                time.sleep(backoff)
+                # 토큰/접속키 갱신은 _run_websocket 재연결 루프에서 일괄 수행
                 return False
             
         except Exception as e:

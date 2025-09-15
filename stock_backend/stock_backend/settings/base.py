@@ -214,3 +214,6 @@ else:
 WS_ENABLE_VOLUME_ENHANCEMENT = os.getenv('WS_ENABLE_VOLUME_ENHANCEMENT', 'False').lower() == 'true'
 WS_VOLUME_REFRESH_INTERVAL_SEC = int(os.getenv('WS_VOLUME_REFRESH_INTERVAL_SEC', '5'))
 WS_VOLUME_CACHE_TTL_SEC = int(os.getenv('WS_VOLUME_CACHE_TTL_SEC', '10'))
+
+# ===== Internal ingestion token (optional gate) =====
+SENTIMENT_BULK_TOKEN = os.getenv('SENTIMENT_BULK_TOKEN')

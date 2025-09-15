@@ -41,7 +41,7 @@ def send_to_django(data, retry_count=0):
         'Accept': 'application/json'
     }
     if DJANGO_API_KEY:
-        headers['Authorization'] = f"Token {DJANGO_API_KEY}"
+        headers['X-Internal-Token'] = DJANGO_API_KEY
 
     try:
         logger.debug(f"Sending data to Django: {json.dumps(data, ensure_ascii=False)}")

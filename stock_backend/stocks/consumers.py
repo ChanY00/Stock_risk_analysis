@@ -378,72 +378,9 @@ class GlobalSubscriptionManager:
 
     # REST 직접 호출 로직 제거(백그라운드 캐시 방식으로 대체)
 
-    def _get_cached_access_token(self) -> Optional[str]:
-        """캐시된 액세스 토큰 반환 (성능 최적화)"""
-        try:
-            # 클래스 레벨 토큰 캐시 (30분 유효)
-            if not hasattr(self, '_cached_token') or not hasattr(self, '_token_expires'):
-                self._cached_token = None
-                self._token_expires = 0
-            
-            current_time = time.time()
-            
-            # 토큰이 만료되었거나 없으면 새로 발급
-            if current_time >= self._token_expires or not self._cached_token:
-                new_token = self._issue_access_token()
-                if new_token:
-                    self._cached_token = new_token
-                    self._token_expires = current_time + 1800  # 30분 후 만료
-                    return new_token
-                return None
-            
-            return self._cached_token
-            
-        except Exception as e:
-            logger.warning(f"토큰 캐시 오류: {e}")
-            return None
+    # 제거됨: TokenManager 기반으로 통일
 
-    def _issue_access_token(self) -> Optional[str]:
-        """새로운 액세스 토큰 발급"""
-        try:
-            import requests
-            import json
-            from django.conf import settings
-            
-            url = f"{settings.KIS_BASE_URL}/oauth2/tokenP"
-            
-            headers = {
-                'content-type': 'application/json'
-            }
-            
-            data = {
-                "grant_type": "client_credentials",
-                "appkey": settings.KIS_APP_KEY,
-                "appsecret": settings.KIS_APP_SECRET
-            }
-            
-            response = requests.post(url, headers=headers, data=json.dumps(data), timeout=5)
-
-            # 상세 로깅(성공/실패 공통): 상태코드 및 본문 프리뷰 (민감정보 없음)
-            status = response.status_code
-            body_preview = (response.text or "")[:500]
-            logger.info(f"KIS 토큰 발급 응답 코드: {status}")
-            if status != 200:
-                logger.warning(f"KIS 토큰 발급 실패 본문(프리뷰): {body_preview}")
-
-            if status == 200:
-                try:
-                    result = response.json()
-                except Exception as parse_err:
-                    logger.warning(f"KIS 토큰 응답 JSON 파싱 실패: {parse_err}. 본문(프리뷰): {body_preview}")
-                    return None
-                return result.get('access_token')
-
-            return None
-            
-        except Exception as e:
-            logger.warning(f"토큰 발급 실패: {e}")
-            return None
+    # 제거됨: TokenManager 기반으로 통일
     
     async def _async_broadcast(self, enhanced_data: Dict, stock_code: str):
         """

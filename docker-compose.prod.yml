@@ -4,14 +4,21 @@ services:
   backend:
     environment:
       - DJANGO_MODE=production
-      # Keep existing CORS_ALLOWED_ORIGINS from base compose
       # Ensure Redis channels is used (prod.py uses Redis by default)
       - USE_REDIS_CHANNELS=True
+      # Security-critical: set your production hosts and origins explicitly
+      # Replace example.com with your domains. Multiple values must be comma-separated.
+      - ALLOWED_HOSTS=api.example.com,backend.example.com
+      - CORS_ALLOWED_ORIGINS=https://app.example.com,https://www.example.com
+      - CSRF_TRUSTED_ORIGINS=https://app.example.com,https://www.example.com
+      # Optional but recommended: gate internal bulk ingest
+      - SENTIMENT_BULK_TOKEN=${SENTIMENT_BULK_TOKEN}
 
   frontend:
     # Use production build as in base compose
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
-      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001
+      # Set to your public API base URL in production
+      - NEXT_PUBLIC_API_URL=https://api.example.com/api
+      - NEXT_PUBLIC_SENTIMENT_URL=https://sentiment.example.com
 

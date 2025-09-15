@@ -7,8 +7,10 @@ import time
 import random
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Callable
+import websocket
 from django.conf import settings
 from .market_utils import market_utils
+from .client import KISApiClient
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +23,13 @@ class KISMarketIndexClient:
         self.base_url = getattr(settings, 'KIS_BASE_URL', 'https://openapi.koreainvestment.com:9443')
         self.is_paper_trading = getattr(settings, 'KIS_IS_PAPER_TRADING', True)
         
-        self.access_token = None
-        self.token_expires_at = None
+        # 전역 TokenManager를 공유하는 REST 클라이언트 사용
+        self._client = KISApiClient(is_mock=self.is_paper_trading)
         self.running = False
         self.update_interval = 30  # 30초마다 업데이트
         self.callbacks = []  # 업데이트 콜백 리스트
+        # WebSocket 기반 실시간 구독 클라이언트 (지연 초기화)
+        self._ws_client: Optional[KISMarketIndexWSClient] = None  # type: ignore[name-defined]
         
         # 시장 지수 코드 정의
         self.market_indices = {
@@ -43,49 +47,18 @@ class KISMarketIndexClient:
         
         logger.info(f"🔧 KIS 시장 지수 클라이언트 초기화 ({'모의투자' if self.is_paper_trading else '실계좌'} 모드)")
 
-    def _get_access_token(self) -> bool:
-        """KIS API 액세스 토큰 발급"""
+    def _ensure_token(self) -> bool:
+        """TokenManager를 통해 전역적으로 보호된 토큰 확보"""
         try:
-            # 기존 토큰이 유효한지 확인
-            if self.access_token and self.token_expires_at:
-                if datetime.now() < self.token_expires_at - timedelta(minutes=5):
-                    return True
-
-            url = f"{self.base_url}/oauth2/tokenP"
-            
-            headers = {
-                'content-type': 'application/json'
-            }
-            
-            data = {
-                "grant_type": "client_credentials",
-                "appkey": self.app_key,
-                "appsecret": self.app_secret
-            }
-            
-            response = requests.post(url, headers=headers, json=data, timeout=30)
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            if result.get('access_token'):
-                self.access_token = result['access_token']
-                # 토큰 만료 시간 설정 (24시간 - 5분 여유)
-                self.token_expires_at = datetime.now() + timedelta(hours=23, minutes=55)
-                logger.info("✅ KIS 시장 지수용 액세스 토큰 발급 성공")
-                return True
-            else:
-                logger.error(f"❌ 토큰 발급 실패: {result}")
-                return False
-                
+            return self._client.ensure_token()
         except Exception as e:
-            logger.error(f"❌ 토큰 발급 오류: {e}")
+            logger.error(f"❌ 토큰 확보 오류: {e}")
             return False
 
     def get_market_index_data(self, index_code: str, market_div: str) -> Optional[Dict]:
         """특정 시장 지수 데이터 조회"""
         try:
-            if not self._get_access_token():
+            if not self._ensure_token():
                 return None
                 
             # KIS API 시장 지수 조회
@@ -93,7 +66,7 @@ class KISMarketIndexClient:
             
             headers = {
                 'content-type': 'application/json',
-                'authorization': f'Bearer {self.access_token}',
+                'authorization': f'Bearer {self._client.token_manager.access_token}',
                 'appkey': self.app_key,
                 'appsecret': self.app_secret,
                 'tr_id': 'FHPUP02100000',  # 지수시세조회
@@ -149,35 +122,62 @@ class KISMarketIndexClient:
         return f"INDEX_{index_code}"
 
     def get_all_market_indices(self) -> Dict[str, Dict]:
-        """모든 시장 지수 데이터 조회 (Mock 데이터로 구현)"""
+        """실제 시장 지수 데이터 조회(가급적 실데이터, 실패 시 Mock 폴백)"""
         try:
-            # 개발/테스트용 Mock 데이터
-            mock_data = {
-                'kospi': {
-                    'current': 2650.5 + random.uniform(-10, 10),
-                    'change': random.uniform(-20, 20),
-                    'change_percent': random.uniform(-1, 1),
-                    'volume': random.randint(400000000, 500000000),
-                    'high': 2665.0,
-                    'low': 2640.0,
-                    'trade_value': random.randint(8000000000000, 9000000000000)
-                },
-                'kosdaq': {
-                    'current': 850.2 + random.uniform(-5, 5),
-                    'change': random.uniform(-10, 10),
-                    'change_percent': random.uniform(-0.8, 0.8),
-                    'volume': random.randint(600000000, 700000000),
-                    'high': 855.0,
-                    'low': 845.0,
-                    'trade_value': random.randint(3000000000000, 4000000000000)
+            indices: Dict[str, Dict] = {}
+            kospi = self.get_market_index_data(self.market_indices['KOSPI']['code'], self.market_indices['KOSPI']['market_div'])
+            kosdaq = self.get_market_index_data(self.market_indices['KOSDAQ']['code'], self.market_indices['KOSDAQ']['market_div'])
+
+            if kospi:
+                indices['kospi'] = {
+                    'current': kospi.get('current_value', 0),
+                    'change': kospi.get('change', 0),
+                    'change_percent': kospi.get('change_percent', 0),
+                    'volume': kospi.get('volume', 0),
+                    'high': kospi.get('high', 0),
+                    'low': kospi.get('low', 0),
+                    'trade_value': kospi.get('trade_value', 0),
                 }
-            }
-            
-            logger.info(f"📊 Mock 시장 지수 데이터 생성 완료")
-            return mock_data
-            
+            if kosdaq:
+                indices['kosdaq'] = {
+                    'current': kosdaq.get('current_value', 0),
+                    'change': kosdaq.get('change', 0),
+                    'change_percent': kosdaq.get('change_percent', 0),
+                    'volume': kosdaq.get('volume', 0),
+                    'high': kosdaq.get('high', 0),
+                    'low': kosdaq.get('low', 0),
+                    'trade_value': kosdaq.get('trade_value', 0),
+                }
+
+            # 둘 다 실패 시 Mock 폴백
+            if not indices:
+                mock_data = {
+                    'kospi': {
+                        'current': 2650.5 + random.uniform(-10, 10),
+                        'change': random.uniform(-20, 20),
+                        'change_percent': random.uniform(-1, 1),
+                        'volume': random.randint(400000000, 500000000),
+                        'high': 2665.0,
+                        'low': 2640.0,
+                        'trade_value': random.randint(8000000000000, 9000000000000)
+                    },
+                    'kosdaq': {
+                        'current': 850.2 + random.uniform(-5, 5),
+                        'change': random.uniform(-10, 10),
+                        'change_percent': random.uniform(-0.8, 0.8),
+                        'volume': random.randint(600000000, 700000000),
+                        'high': 855.0,
+                        'low': 845.0,
+                        'trade_value': random.randint(3000000000000, 4000000000000)
+                    }
+                }
+                logger.info("📊 Mock 시장 지수 데이터 폴백 사용")
+                return mock_data
+
+            logger.info(f"📊 시장 지수 업데이트 완료 ({list(indices.keys())})")
+            return indices
         except Exception as e:
-            logger.error(f"❌ 시장 지수 데이터 생성 오류: {e}")
+            logger.error(f"❌ 시장 지수 데이터 조회 오류: {e}")
             return {}
 
     def start_real_time_updates(self, callback: Callable[[Dict], None]) -> bool:
@@ -190,7 +190,25 @@ class KISMarketIndexClient:
             self.callbacks.append(callback)
             self.running = True
             
-            # 별도 스레드에서 주기적 업데이트
+            # 1) WebSocket 실시간 구독 우선 시도
+            try:
+                if self._ws_client is None:
+                    self._ws_client = KISMarketIndexWSClient(
+                        app_key=self.app_key,
+                        app_secret=self.app_secret,
+                        base_url=self.base_url,
+                        ws_url=getattr(settings, 'KIS_WEBSOCKET_URL', 'ws://ops.koreainvestment.com:31000'),
+                        is_paper_trading=self.is_paper_trading,
+                        on_update=self._emit_update
+                    )
+                if not self._ws_client.is_connected:
+                    self._ws_client.connect_and_subscribe(['0001', '1001'])  # KOSPI, KOSDAQ
+                    if self._ws_client.is_connected:
+                        logger.info("📡 시장 지수 WebSocket 구독 시작(H0IXASP0)")
+            except Exception as e:
+                logger.warning(f"지수 WebSocket 시작 실패: {e}")
+
+            # 2) 별도 스레드에서 주기적 REST 폴백 업데이트 (WS 실패 시)
             update_thread = threading.Thread(
                 target=self._update_loop,
                 daemon=True,
@@ -215,7 +233,11 @@ class KISMarketIndexClient:
                 is_open, reason = market_utils.is_market_open()
                 
                 if is_open:
-                    # 시장 개장 중: 실시간 데이터 조회
+                    # WS가 연결되어 있으면 WS 이벤트에 의해 갱신되므로 폴백 주기만 유지
+                    if self._ws_client and self._ws_client.is_connected:
+                        time.sleep(self.update_interval)
+                        continue
+                    # 시장 개장 중: 실데이터 우선 조회 (REST 폴백)
                     indices_data = self.get_all_market_indices()
                     
                     if indices_data:
@@ -253,7 +275,198 @@ class KISMarketIndexClient:
     def stop(self):
         """실시간 업데이트 중지"""
         self.running = False
+        try:
+            if self._ws_client:
+                self._ws_client.close()
+        except Exception:
+            pass
         logger.info("🛑 시장 지수 실시간 업데이트 중지")
 
 # 전역 인스턴스
 market_index_client = KISMarketIndexClient() 
+
+
+class KISMarketIndexWSClient:
+    """KIS WebSocket 클라이언트 (시장 지수 전용) - H0IXASP0 구독"""
+
+    def __init__(self, app_key: str, app_secret: str, base_url: str, ws_url: str, is_paper_trading: bool, on_update: Callable[[Dict], None]):
+        self.app_key = app_key
+        self.app_secret = app_secret
+        self.base_url = base_url
+        self.ws_url = ws_url
+        self.is_paper_trading = is_paper_trading
+        self.on_update = on_update
+
+        # Token/Approval 관리
+        from .client import KISApiClient
+        self._client = KISApiClient(is_mock=is_paper_trading)
+        self._approval_key: Optional[str] = None
+
+        # WS 상태
+        self.ws: Optional[websocket.WebSocketApp] = None
+        self.is_connected: bool = False
+        self._thread: Optional[threading.Thread] = None
+        self._subscribed: set[str] = set()
+        self.timeout = 15
+        self.ping_interval = getattr(settings, 'KIS_PING_INTERVAL', 30)
+
+    def _get_approval_key(self) -> bool:
+        try:
+            if not self._client.ensure_token():
+                return False
+            url = f"{self.base_url}/oauth2/Approval"
+            headers = {
+                'Content-Type': 'application/json',
+                'authorization': f'Bearer {self._client.token_manager.access_token}',
+                'appkey': self.app_key,
+                'appsecret': self.app_secret,
+            }
+            data = {
+                'grant_type': 'client_credentials',
+                'appkey': self.app_key,
+                'secretkey': self.app_secret,
+            }
+            resp = requests.post(url, headers=headers, json=data, timeout=self.timeout)
+            if resp.status_code == 200:
+                body = resp.json()
+                self._approval_key = body.get('approval_key')
+                logger.info("✅ 지수용 Approval Key 발급 성공")
+                return True
+            logger.error(f"❌ 지수 Approval 실패: {resp.status_code} {resp.text[:200]}")
+            return False
+        except Exception as e:
+            logger.error(f"❌ 지수 Approval 오류: {e}")
+            return False
+
+    def connect_and_subscribe(self, index_codes: List[str]) -> bool:
+        try:
+            if not self._get_approval_key():
+                return False
+
+            websocket.setdefaulttimeout(self.timeout)
+            self.ws = websocket.WebSocketApp(
+                self.ws_url,
+                on_open=self._on_open,
+                on_message=self._on_message,
+                on_error=self._on_error,
+                on_close=self._on_close,
+            )
+
+            self._thread = threading.Thread(target=self._run, daemon=True, name="KIS-Index-WS")
+            self._thread.start()
+
+            # 접속 대기 후 구독 전송
+            waited = 0
+            while not self.is_connected and waited < 10:
+                time.sleep(1)
+                waited += 1
+            if not self.is_connected:
+                return False
+
+            for code in index_codes:
+                self._subscribe_index(code)
+            return True
+        except Exception as e:
+            logger.error(f"❌ 지수 WS 연결 실패: {e}")
+            return False
+
+    def _run(self):
+        try:
+            self.ws.run_forever(ping_interval=self.ping_interval, ping_timeout=10, ping_payload="ping")  # type: ignore[union-attr]
+        except Exception as e:
+            logger.error(f"❌ 지수 WS 실행 오류: {e}")
+
+    def _on_open(self, ws):
+        self.is_connected = True
+        logger.info("🟢 지수 WebSocket 연결됨")
+
+    def _on_error(self, ws, error):
+        logger.error(f"🔴 지수 WebSocket 오류: {error}")
+
+    def _on_close(self, ws, code, msg):
+        self.is_connected = False
+        logger.warning(f"🟡 지수 WebSocket 종료: {code} {msg}")
+
+    def _subscribe_index(self, index_code: str):
+        try:
+            if not self.is_connected or not self._approval_key:
+                return
+            # KIS 문서 포맷에 맞는 메시지 작성
+            msg = {
+                "header": {
+                    "approval_key": self._approval_key,
+                    "custtype": "P",
+                    "tr_type": "1",
+                    "content-type": "utf-8",
+                },
+                "body": {
+                    "tr_id": "H0IXASP0",
+                    "tr_key": index_code,
+                },
+            }
+            self.ws.send(json.dumps(msg))  # type: ignore[union-attr]
+            self._subscribed.add(index_code)
+            logger.info(f"📤 지수 구독 전송: tr_id=H0IXASP0 tr_key={index_code}")
+        except Exception as e:
+            logger.error(f"❌ 지수 구독 오류({index_code}): {e}")
+
+    def _on_message(self, ws, message: str):
+        try:
+            # JSON 형태 우선 처리
+            if message.startswith('{'):
+                obj = json.loads(message)
+                tr_id = obj.get('body', {}).get('tr_id') or obj.get('header', {}).get('tr_id')
+                if tr_id == 'H0IXASP0':
+                    # 실제 필드명은 문서에 따르되, 최소 변환 시도 후 콜백
+                    body = obj.get('body', {})
+                    output = body.get('output') or {}
+                    idx_code = body.get('tr_key') or output.get('index_code') or 'UNKNOWN'
+                    data = {
+                        'code': idx_code,
+                        'name': 'KOSPI' if idx_code == '0001' else ('KOSDAQ' if idx_code == '1001' else idx_code),
+                        'current_value': float(output.get('bstp_nmix_prpr', output.get('current', 0)) or 0),
+                        'change': float(output.get('bstp_nmix_prdy_vrss', output.get('change', 0)) or 0),
+                        'change_percent': float(output.get('prdy_vrss_sign', output.get('change_percent', 0)) or 0),
+                        'volume': int(output.get('acml_vol', output.get('volume', 0)) or 0),
+                        'trade_value': int(output.get('acml_tr_pbmn', output.get('trade_value', 0)) or 0),
+                        'high': float(output.get('bstp_nmix_hgpr', output.get('high', 0)) or 0),
+                        'low': float(output.get('bstp_nmix_lwpr', output.get('low', 0)) or 0),
+                        'timestamp': datetime.now().isoformat(),
+                        'source': 'kis_ws_index',
+                    }
+                    self.on_update({data['name'].lower(): data})
+                    return
+
+            # 텍스트 파이프 구분 형식 폴백
+            if message.startswith('0|'):
+                parts = message.split('|')
+                # 최소한 인덱스 코드가 포함되어 있는지 탐색
+                idx_code = None
+                for code in ['0001', '1001']:
+                    if code in message:
+                        idx_code = code
+                        break
+                name = 'KOSPI' if idx_code == '0001' else ('KOSDAQ' if idx_code == '1001' else 'INDEX')
+                data = {
+                    'code': idx_code or 'UNKNOWN',
+                    'name': name,
+                    'current_value': 0,
+                    'change': 0,
+                    'change_percent': 0,
+                    'volume': 0,
+                    'trade_value': 0,
+                    'high': 0,
+                    'low': 0,
+                    'timestamp': datetime.now().isoformat(),
+                    'source': 'kis_ws_index_raw',
+                }
+                self.on_update({name.lower(): data})
+        except Exception as e:
+            logger.error(f"❌ 지수 메시지 처리 오류: {e}")
+
+    def close(self):
+        try:
+            if self.ws:
+                self.ws.close()
+        except Exception:
+            pass
