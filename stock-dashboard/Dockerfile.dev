@@ -19,7 +19,7 @@ RUN \
   elif [ -f yarn.lock ]; then \
     yarn install; \
   else \
-    npm install; \
+    npm install --legacy-peer-deps; \
   fi
 
 # 소스코드 복사
