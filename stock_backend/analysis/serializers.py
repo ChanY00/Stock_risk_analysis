@@ -149,10 +149,14 @@ class SimilarStockSerializer(serializers.ModelSerializer):
     stock_code = serializers.CharField(source='target_stock.stock_code')
     stock_name = serializers.CharField(source='target_stock.stock_name')
     sector = serializers.CharField(source='target_stock.sector')
-    current_price = serializers.IntegerField(source='target_stock.current_price')
-    market_cap = serializers.IntegerField(source='target_stock.market_cap')
-    per = serializers.FloatField(source='target_stock.per')
-    pbr = serializers.FloatField(source='target_stock.pbr')
+    current_price = serializers.IntegerField(source='target_stock.current_price', allow_null=True)
+    market_cap = serializers.IntegerField(source='target_stock.market_cap', allow_null=True)
+    per = serializers.FloatField(source='target_stock.per', allow_null=True)
+    pbr = serializers.FloatField(source='target_stock.pbr', allow_null=True)
+    
+    # 유사도 관련 필드가 비어있을 수 있어 null 허용
+    distance = serializers.FloatField(allow_null=True)
+    similarity_score = serializers.FloatField(allow_null=True)
     
     class Meta:
         model = StockSimilarity

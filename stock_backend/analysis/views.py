@@ -1,5 +1,5 @@
 from rest_framework import generics, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
@@ -13,6 +13,7 @@ from .serializers import (
     ClusterAnalysisSerializer, ClusterStockListSerializer,
     SpectralClusterSerializer, AgglomerativeClusterSerializer, SimilarStockSerializer, StockSimilaritySerializer
 )
+from sentiment.models import SentimentAnalysis
 from stocks.serializers import StockListSerializer
 from .cache_utils import CacheManager
 
@@ -336,6 +337,113 @@ def stock_cluster_info_api(request, stock_code):
         
     except Stock.DoesNotExist:
         return Response({'error': 'Stock not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_report_view(request, stock_code):
+    """AI 기반 종합 리포트 생성 API"""
+    # from .gemini_utils import generate_stock_report # 실제로는 gemini_utils.py 파일에 구현
+
+    try:
+        # Gemini API 호출을 모킹하는 함수입니다. 실제 구현 시에는 이 부분을 Gemini API 호출 코드로 대체해야 합니다.
+        def generate_stock_report(data):
+            opinion = "관망"
+            tech_data = data.get('technical', {})
+            senti_data = data.get('sentiment', {})
+
+            if tech_data and senti_data and tech_data.get('rsi', 50) > 70 and senti_data.get('sentiment_score', 0.5) < 0.4:
+                opinion = "매도 타이밍"
+            elif tech_data and senti_data and tech_data.get('rsi', 50) < 30 and senti_data.get('sentiment_score', 0.5) > 0.6:
+                opinion = "매수 타이밍"
+
+            recommendation_stock = "추천 종목 없음"
+            recommendation_reason = "유사 그룹 내 추천할 만한 종목을 찾지 못했습니다."
+            recommendations = []
+            if data.get('similar_stocks'):
+                # 상위 3개 추천 생성
+                for sim in data['similar_stocks'][:3]:
+                    name = sim.get('stock_name', '추천 종목')
+                    reasons = []
+                    if sim.get('per') is not None:
+                        reasons.append("밸류에이션이 안정적")
+                    if sim.get('pbr') is not None:
+                        reasons.append("자산가치 대비 합리적")
+                    if sim.get('market_cap'):
+                        reasons.append("시가총액 규모 적정")
+                    reason_text = ", ".join(reasons) if reasons else "재무적으로 안정적인 모습"
+                    recommendations.append({
+                        'stock_name': name,
+                        'reason': f"{name}은(는) {reason_text}을 보이고 있습니다."
+                    })
+                if recommendations:
+                    recommendation_stock = recommendations[0]['stock_name']
+                    recommendation_reason = recommendations[0]['reason']
+
+            return {
+                "investment_opinion": opinion,
+                "financial_analysis": f"{data['stock_name']}의 재무 상태는 안정적으로 보입니다.",
+                "technical_analysis": "기술적 지표상 현재 주가는 과매수/과매도 구간에 있습니다.",
+                "sentiment_analysis": "시장의 감정은 현재 긍정적/부정적입니다.",
+                "recommendation": {
+                    "stock_name": recommendation_stock,
+                    "reason": recommendation_reason
+                },
+                # 다건 추천 (옵션)
+                "recommendations": recommendations,
+                "excluded_sections": data.get('excluded_sections', [])
+            }
+
+        try:
+            stock = Stock.objects.select_related('technical', 'sentiment').get(stock_code=stock_code)
+        except Stock.DoesNotExist:
+            return Response({'error': 'Stock not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        excluded_sections = []
+        stock_data = {
+            'stock_code': stock.stock_code, 'stock_name': stock.stock_name, 'sector': stock.sector,
+            'current_price': stock.current_price, 'market_cap': stock.market_cap, 'per': stock.per,
+            'pbr': stock.pbr, 'roe': stock.roe, 'dividend_yield': stock.dividend_yield,
+        }
+
+        try:
+            financials = stock.financials.latest('year')
+            stock_data['financials'] = {'revenue': financials.revenue, 'operating_income': financials.operating_income, 'net_income': financials.net_income}
+        except Exception:
+            excluded_sections.append('재무 분석')
+            stock_data['financials'] = None
+
+        try:
+            stock_data['technical'] = TechnicalIndicatorSerializer(stock.technical).data
+        except TechnicalIndicator.DoesNotExist:
+            excluded_sections.append('기술적 분석')
+            stock_data['technical'] = None
+        
+        try:
+            # sentiment 앱의 모델은 Stock에 related_name='sentiment'로 연결
+            stock_data['sentiment'] = {
+                'sentiment_score': float(stock.sentiment.positive) - float(stock.sentiment.negative) if getattr(stock, 'sentiment', None) else None,
+                'positive_ratio': float(stock.sentiment.positive) if getattr(stock, 'sentiment', None) else None,
+                'negative_ratio': float(stock.sentiment.negative) if getattr(stock, 'sentiment', None) else None,
+                'top_keywords': stock.sentiment.top_keywords if getattr(stock, 'sentiment', None) else ''
+            }
+        except (SentimentAnalysis.DoesNotExist, AttributeError, ValueError, TypeError) as e:
+            excluded_sections.append('감정 분석')
+            stock_data['sentiment'] = None
+
+        similar_stocks = StockSimilarity.get_most_similar_stocks(stock=stock, limit=5)
+        if similar_stocks.exists():
+            stock_data['similar_stocks'] = SimilarStockSerializer(similar_stocks, many=True).data
+        else:
+            excluded_sections.append('유사 그룹 내 주식 추천')
+            stock_data['similar_stocks'] = None
+            
+        stock_data['excluded_sections'] = excluded_sections
+
+        report_content = generate_stock_report(stock_data)
+        return Response(report_content)
+    except Exception as e:
+        # 어떤 예외도 JSON으로 반환하여 프론트에서 메시지 확인 가능하게 함
+        return Response({'error': f'AI 리포트 생성 중 서버 오류: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def similar_stocks_api(request, stock_code):

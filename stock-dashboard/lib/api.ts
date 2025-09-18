@@ -362,6 +362,24 @@ export interface SimilarStocks {
   similar_stocks: Stock[];
 }
 
+// AI Report type
+export interface AIReport {
+  investment_opinion: "매수 타이밍" | "매도 타이밍" | "관망";
+  financial_analysis: string;
+  technical_analysis: string;
+  sentiment_analysis: string;
+  recommendation: {
+    stock_name: string;
+    reason: string;
+  };
+  // optional: multiple recommendations
+  recommendations?: Array<{
+    stock_name: string;
+    reason: string;
+  }>;
+  excluded_sections?: string[];
+}
+
 // API Utility Class
 class ApiClient {
   private baseUrl: string;
@@ -959,6 +977,15 @@ class ApiClient {
       false
     );
   }
+
+  // AI Report API (requires authentication)
+  async generateReport(code: string): Promise<AIReport> {
+    return this.request<AIReport>(
+      `/analysis/report/${code}/`,
+      { method: "POST" },
+      true
+    );
+  }
 }
 
 // Export singleton instance
@@ -1016,6 +1043,8 @@ export const stocksApi = {
     type?: "spectral" | "agglomerative",
     limit?: number
   ) => apiClient.getSimilarStocksByCluster(stockCode, type, limit),
+  // AI Report
+  generateReport: (code: string) => apiClient.generateReport(code),
 };
 
 // Portfolio API convenience functions

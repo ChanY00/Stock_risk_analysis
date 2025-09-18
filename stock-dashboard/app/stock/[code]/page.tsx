@@ -10,6 +10,7 @@ import {
   MessageSquare,
   DollarSign,
   User,
+  BrainCircuit,
   LogOut,
   LogIn,
 } from "lucide-react";
@@ -56,6 +57,7 @@ import {
   type SentimentAnalysis,
   type SentimentTrendData,
   type FinancialAnalysis,
+  type AIReport,
 } from "@/lib/api";
 
 import { PriceChart } from "@/components/charts/price-chart";
@@ -63,6 +65,7 @@ import { TechnicalChart } from "@/components/charts/technical-chart";
 import { SentimentChart } from "@/components/charts/sentiment-chart";
 import { FinancialChart } from "@/components/charts/financial-chart";
 import { ClusterVisualization } from "@/components/charts/cluster-visualization";
+import { AIReportDialog } from "@/components/report/ai-report-dialog";
 
 // 섹터 매핑 유틸리티
 import { translateSectorToKorean, getSectorColor } from "@/lib/sector-mapping";
@@ -81,31 +84,30 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 // AI 점수 계산 유틸리티
-import { computeAiScore } from "@/lib/ai-score-utils"
+import { computeAiScore } from "@/lib/ai-score-utils";
 
 // 전역 감정 데이터 스토어
-import { sentimentStore, calculateSentimentScore } from "@/lib/sentiment-store"
+import { sentimentStore, calculateSentimentScore } from "@/lib/sentiment-store";
 
 // 백엔드 API 타입을 프론트엔드 인터페이스에 맞게 변환
 interface StockDetail {
-  code: string
-  name: string
-  price: number
-  change: number
-  changePercent: number
-  volume: number
-  marketCap: number | null
-  per: number | null
-  pbr: number | null
-  roe: number | null
-  eps: number | null
-  bps: number | null
-  sentiment: number
-  aiScore?: number   // AI 종합 점수 (0-100)
-  sector: string
-  market: string
-  dividend_yield: number | null
-
+  code: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  marketCap: number | null;
+  per: number | null;
+  pbr: number | null;
+  roe: number | null;
+  eps: number | null;
+  bps: number | null;
+  sentiment: number;
+  aiScore?: number; // AI 종합 점수 (0-100)
+  sector: string;
+  market: string;
+  dividend_yield: number | null;
 }
 
 interface FinancialData {
@@ -128,41 +130,48 @@ interface SentimentData {
 }
 
 // AI 점수 계산 함수 (공통 유틸리티 사용)
-const computeAiScoreForStock = (stock: StockDetail, technicalIndicators?: any): number => {
-  return computeAiScore({ 
-    sentiment: stock.sentiment, 
+const computeAiScoreForStock = (
+  stock: StockDetail,
+  technicalIndicators?: any
+): number => {
+  return computeAiScore({
+    sentiment: stock.sentiment,
     changePercent: stock.changePercent,
-    technicalIndicators: technicalIndicators
-  })
-}
+    technicalIndicators: technicalIndicators,
+  });
+};
 
 // 전역 감정 스토어 사용
 
 // API 데이터를 로컬 인터페이스로 변환하는 함수 (실시간 데이터 통합)
-const convertApiStockToDetail = (apiStock: ApiStockDetail, realTimeData?: any, sentimentOverride?: { positive: number; negative: number; neutral?: number }): StockDetail => {
-  const realTime = realTimeData?.[apiStock.stock_code]
-  
+const convertApiStockToDetail = (
+  apiStock: ApiStockDetail,
+  realTimeData?: any,
+  sentimentOverride?: { positive: number; negative: number; neutral?: number }
+): StockDetail => {
+  const realTime = realTimeData?.[apiStock.stock_code];
+
   let sentiment: number;
-  
+
   // 1. 직접 제공된 감정 데이터 사용 (우선순위 1)
   // 2. 전역 스토어에서 데이터 사용 (우선순위 2)
   // 3. 랜덤 값 사용 (fallback)
-  const sentimentAnalysis = sentimentOverride || sentimentStore.getSentiment(apiStock.stock_code);
-  
+  const sentimentAnalysis =
+    sentimentOverride || sentimentStore.getSentiment(apiStock.stock_code);
+
   if (sentimentAnalysis) {
     // 실제 감정 분석 데이터가 있으면 사용
     sentiment = calculateSentimentScore(
-      sentimentAnalysis.positive, 
-      sentimentAnalysis.negative, 
+      sentimentAnalysis.positive,
+      sentimentAnalysis.negative,
       sentimentAnalysis.neutral || 0
     );
   } else {
     // 데이터가 없으면 임시 랜덤 값 사용 (메인 페이지와 동일)
     sentiment = Math.random() * 0.4 + 0.3; // 0.3-0.7
   }
-  
-  const stockDetail: StockDetail = {
 
+  const stockDetail: StockDetail = {
     code: apiStock.stock_code,
     name: apiStock.stock_name,
     price: realTime?.current_price || apiStock.current_price,
@@ -178,15 +187,14 @@ const convertApiStockToDetail = (apiStock: ApiStockDetail, realTimeData?: any, s
     sentiment,
     sector: apiStock.sector,
     market: apiStock.market,
-    dividend_yield: apiStock.dividend_yield
-  }
-  
-  // AI 점수 계산
-  stockDetail.aiScore = computeAiScoreForStock(stockDetail)
-  
-  return stockDetail
-}
+    dividend_yield: apiStock.dividend_yield,
+  };
 
+  // AI 점수 계산
+  stockDetail.aiScore = computeAiScoreForStock(stockDetail);
+
+  return stockDetail;
+};
 
 export default function StockDetailPage() {
   const params = useParams();
@@ -214,6 +222,12 @@ export default function StockDetailPage() {
   const [error, setError] = useState<string>("");
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+
+  // AI 리포트 상태
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [aiReport, setAiReport] = useState<AIReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   // 실시간 데이터 업데이트 추적을 위한 ref
   const lastRealTimePriceRef = useRef<any>(null);
@@ -259,7 +273,6 @@ export default function StockDetailPage() {
 
         // React 18 배치 업데이트를 이용한 최적화
         setStockDetail((prevDetail: StockDetail | null) => {
-
           if (!prevDetail) return prevDetail;
 
           // 객체 참조 비교 최적화 - 동일한 값이면 기존 객체 반환
@@ -280,10 +293,9 @@ export default function StockDetailPage() {
             changePercent: realTimeData.change_percent,
             volume: realTimeData.volume,
           };
-          
+
           // AI 점수 재계산 (변동률이 변경되었으므로)
           updatedDetail.aiScore = computeAiScoreForStock(updatedDetail);
-          
 
           stockDetailRef.current = updatedDetail;
           return updatedDetail;
@@ -379,6 +391,29 @@ export default function StockDetailPage() {
     }
   }, [stockDetail, isFavorite, code]);
 
+  // AI 리포트 생성 핸들러
+  const handleGenerateReport = useCallback(async () => {
+    if (!code) return;
+
+    setIsReportDialogOpen(true);
+    setReportLoading(true);
+    setAiReport(null);
+    setReportError(null);
+
+    try {
+      console.log("AI 리포트 생성 시작:", code);
+      const reportData = await stocksApi.generateReport(code);
+      console.log("✅ AI 리포트 생성 성공:", reportData);
+      setAiReport(reportData);
+    } catch (err: any) {
+      const errorMessage = handleApiError(err);
+      console.error("❌ AI 리포트 생성 실패:", errorMessage);
+      setReportError(errorMessage);
+    } finally {
+      setReportLoading(false);
+    }
+  }, [code]);
+
   // 데이터 로딩 로직 - 한 번만 실행되도록 최적화
   useEffect(() => {
     if (!code) return;
@@ -389,34 +424,43 @@ export default function StockDetailPage() {
 
       try {
         // 주식 기본 정보 먼저 로드
-        const stockData = await stocksApi.getStock(code)
-        console.log('📊 주식 데이터 로드 결과:', stockData)
-        
+        const stockData = await stocksApi.getStock(code);
+        console.log("📊 주식 데이터 로드 결과:", stockData);
+
         // 감정 분석 데이터를 먼저 로드한 후 주식 데이터 변환
         let sentimentData = null;
         try {
-          const sentimentApiData = await stocksApi.getSentimentAnalysis(code)
+          const sentimentApiData = await stocksApi.getSentimentAnalysis(code);
           if (sentimentApiData) {
-            const positive = sentimentApiData.positive ? parseFloat(String(sentimentApiData.positive)) : 0;
-            const negative = sentimentApiData.negative ? parseFloat(String(sentimentApiData.negative)) : 0;
-            const neutral = sentimentApiData.neutral 
-              ? (typeof sentimentApiData.neutral === 'string' ? parseFloat(sentimentApiData.neutral) : sentimentApiData.neutral)
+            const positive = sentimentApiData.positive
+              ? parseFloat(String(sentimentApiData.positive))
               : 0;
-            
+            const negative = sentimentApiData.negative
+              ? parseFloat(String(sentimentApiData.negative))
+              : 0;
+            const neutral = sentimentApiData.neutral
+              ? typeof sentimentApiData.neutral === "string"
+                ? parseFloat(sentimentApiData.neutral)
+                : sentimentApiData.neutral
+              : 0;
+
             sentimentData = { positive, negative, neutral };
-            
+
             // 전역 스토어에 저장
             sentimentStore.setSentiment(code, positive, negative, neutral);
           }
         } catch (err) {
-          console.log('감정 분석 데이터 로드 실패:', err);
+          console.log("감정 분석 데이터 로드 실패:", err);
         }
-        
+
         // API 데이터만으로 초기 상태 설정 (감정 데이터 포함)
-        const convertedStock = convertApiStockToDetail(stockData, undefined, sentimentData)
-        setStockDetail(convertedStock)
-        stockDetailRef.current = convertedStock
-        
+        const convertedStock = convertApiStockToDetail(
+          stockData,
+          undefined,
+          sentimentData
+        );
+        setStockDetail(convertedStock);
+        stockDetailRef.current = convertedStock;
 
         // 주가 히스토리 설정 - stockData에서 직접 가져오기
         const apiStockData = stockData as any;
@@ -470,31 +514,34 @@ export default function StockDetailPage() {
           techIndicators = apiStockData.technical_indicators;
           setTechnicalIndicators(apiStockData.technical_indicators);
         }
-        
+
         // 감정 분석 데이터 UI 설정 (이미 위에서 로드됨)
         if (sentimentData) {
           try {
-            const sentimentApiData = await stocksApi.getSentimentAnalysis(code)
+            const sentimentApiData = await stocksApi.getSentimentAnalysis(code);
             if (sentimentApiData) {
-              setSentimentAnalysis(sentimentApiData)
-              
+              setSentimentAnalysis(sentimentApiData);
+
               // top_keywords를 배열로 변환
-              const keywords = sentimentApiData.top_keywords 
-                ? String(sentimentApiData.top_keywords).split(',').map(k => k.trim()).filter(k => k.length > 0)
+              const keywords = sentimentApiData.top_keywords
+                ? String(sentimentApiData.top_keywords)
+                    .split(",")
+                    .map((k) => k.trim())
+                    .filter((k) => k.length > 0)
                 : ["기업분석", "투자", "주식"];
-              
-              console.log('🔑 키워드 처리 결과:', keywords)
-              
+
+              console.log("🔑 키워드 처리 결과:", keywords);
+
               setSentimentData({
                 score: sentimentData.positive - sentimentData.negative,
                 keywords: keywords,
                 newsCount: Math.floor(Math.random() * 200) + 50,
                 positiveRatio: Math.floor(sentimentData.positive * 100),
-                negativeRatio: Math.floor(sentimentData.negative * 100)
-              })
+                negativeRatio: Math.floor(sentimentData.negative * 100),
+              });
             }
           } catch (err) {
-            console.log('감정 분석 UI 데이터 설정 실패:', err);
+            console.log("감정 분석 UI 데이터 설정 실패:", err);
           }
         } else {
           // 감정 데이터가 없으면 기본값 설정
@@ -674,14 +721,20 @@ export default function StockDetailPage() {
               </Link>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.name}</h1>
-                  <Badge variant={stockDetail.market === 'KOSPI' ? 'default' : 'secondary'}>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {stockDetail.name}
+                  </h1>
+                  <Badge
+                    variant={
+                      stockDetail.market === "KOSPI" ? "default" : "secondary"
+                    }
+                  >
                     {stockDetail.market}
                   </Badge>
                 </div>
                 <p className="text-gray-600 dark:text-gray-400">
-                  {stockDetail.code} • {translateSectorToKorean(stockDetail.sector)}
-
+                  {stockDetail.code} •{" "}
+                  {translateSectorToKorean(stockDetail.sector)}
                 </p>
               </div>
             </div>
@@ -780,19 +833,28 @@ export default function StockDetailPage() {
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">거래량</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  거래량
+                </div>
                 <div className="text-lg font-mono text-gray-900 dark:text-white">
                   {formatNumber(stockDetail.volume)}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">시가총액</div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">{formatNumber(stockDetail.marketCap)}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  시가총액
+                </div>
+                <div className="text-lg font-mono text-gray-900 dark:text-white">
+                  {formatNumber(stockDetail.marketCap)}
+                </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">배당수익률</div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">{formatPercent(stockDetail.dividend_yield)}</div>
-
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  배당수익률
+                </div>
+                <div className="text-lg font-mono text-gray-900 dark:text-white">
+                  {formatPercent(stockDetail.dividend_yield)}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -800,12 +862,57 @@ export default function StockDetailPage() {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
+          {/* AI 리포트 생성 버튼 - 개요 탭 위에 위치 */}
+          <Card>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  AI 종합 분석 리포트
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Gemini AI를 통해 종목을 심층 분석하고 투자 의견을 확인하세요.
+                </p>
+              </div>
+              <Button
+                onClick={handleGenerateReport}
+                disabled={reportLoading || !isAuthenticated}
+              >
+                <BrainCircuit className="h-4 w-4 mr-2" />
+                {reportLoading ? "리포트 생성 중..." : "리포트 생성"}
+              </Button>
+            </CardContent>
+          </Card>
           <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-gray-700">
-            <TabsTrigger value="overview" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">개요</TabsTrigger>
-            <TabsTrigger value="financials" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">재무</TabsTrigger>
-            <TabsTrigger value="technical" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">기술분석</TabsTrigger>
-            <TabsTrigger value="sentiment" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">감정분석</TabsTrigger>
-            <TabsTrigger value="clustering" className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white">클러스터링</TabsTrigger>
+            <TabsTrigger
+              value="overview"
+              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+            >
+              개요
+            </TabsTrigger>
+            <TabsTrigger
+              value="financials"
+              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+            >
+              재무
+            </TabsTrigger>
+            <TabsTrigger
+              value="technical"
+              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+            >
+              기술분석
+            </TabsTrigger>
+            <TabsTrigger
+              value="sentiment"
+              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+            >
+              감정분석
+            </TabsTrigger>
+            <TabsTrigger
+              value="clustering"
+              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+            >
+              클러스터링
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -813,38 +920,51 @@ export default function StockDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">PER</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    PER
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.per ? stockDetail.per.toFixed(1) : '-'}</div>
-
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {stockDetail.per ? stockDetail.per.toFixed(1) : "-"}
+                  </div>
                 </CardContent>
               </Card>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">PBR</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    PBR
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.pbr ? stockDetail.pbr.toFixed(1) : '-'}</div>
-
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {stockDetail.pbr ? stockDetail.pbr.toFixed(1) : "-"}
+                  </div>
                 </CardContent>
               </Card>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">ROE</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    ROE
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stockDetail.roe ? formatPercent(stockDetail.roe) : '-'}</div>
-
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {stockDetail.roe ? formatPercent(stockDetail.roe) : "-"}
+                  </div>
                 </CardContent>
               </Card>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">감정지수</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    감정지수
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">{(stockDetail.sentiment * 100).toFixed(0)}</span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {(stockDetail.sentiment * 100).toFixed(0)}
+                    </span>
 
                     <Badge
                       variant={
@@ -866,23 +986,31 @@ export default function StockDetailPage() {
               </Card>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">AI 종합 점수</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    AI 종합 점수
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {typeof stockDetail.aiScore === 'number' ? stockDetail.aiScore : '-'}
+                      {typeof stockDetail.aiScore === "number"
+                        ? stockDetail.aiScore
+                        : "-"}
                     </span>
                     <Badge
                       variant={
                         (stockDetail.aiScore || 0) >= 70
                           ? "default"
                           : (stockDetail.aiScore || 0) >= 50
-                            ? "secondary"
-                            : "destructive"
+                          ? "secondary"
+                          : "destructive"
                       }
                     >
-                      {(stockDetail.aiScore || 0) >= 70 ? "긍정" : (stockDetail.aiScore || 0) >= 50 ? "중립" : "부정"}
+                      {(stockDetail.aiScore || 0) >= 70
+                        ? "긍정"
+                        : (stockDetail.aiScore || 0) >= 50
+                        ? "중립"
+                        : "부정"}
                     </Badge>
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -895,8 +1023,12 @@ export default function StockDetailPage() {
             {/* Price Chart */}
             <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="text-gray-900 dark:text-white">주가 차트</CardTitle>
-                <CardDescription className="text-gray-600 dark:text-gray-400">최근 30일 주가 동향</CardDescription>
+                <CardTitle className="text-gray-900 dark:text-white">
+                  주가 차트
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-gray-400">
+                  최근 30일 주가 동향
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {priceHistory.length > 0 ? (
@@ -922,9 +1054,12 @@ export default function StockDetailPage() {
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div className="text-center text-gray-500 dark:text-gray-400">
                   <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">재무 분석 차트 준비 중</h3>
-                  <p className="text-sm">재무 데이터가 준비되면 상세한 분석 차트가 표시됩니다.</p>
-
+                  <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">
+                    재무 분석 차트 준비 중
+                  </h3>
+                  <p className="text-sm">
+                    재무 데이터가 준비되면 상세한 분석 차트가 표시됩니다.
+                  </p>
                 </div>
               </div>
             )}
@@ -933,10 +1068,13 @@ export default function StockDetailPage() {
               {/* Financial Data Table */}
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle className="text-gray-900 dark:text-white">재무제표</CardTitle>
+                  <CardTitle className="text-gray-900 dark:text-white">
+                    재무제표
+                  </CardTitle>
                   <CardDescription className="text-gray-600 dark:text-gray-400">
-                    {financialData.length > 0 ? `${financialData[0].year}년 기준` : '데이터 없음'}
-
+                    {financialData.length > 0
+                      ? `${financialData[0].year}년 기준`
+                      : "데이터 없음"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -944,39 +1082,57 @@ export default function StockDetailPage() {
                     <Table>
                       <TableBody>
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
-                          <TableCell className="text-gray-700 dark:text-gray-300">매출액</TableCell>
-                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">{formatNumber(financialData[0].revenue)}</TableCell>
-
+                          <TableCell className="text-gray-700 dark:text-gray-300">
+                            매출액
+                          </TableCell>
+                          <TableCell className="font-mono text-right text-gray-900 dark:text-white">
+                            {formatNumber(financialData[0].revenue)}
+                          </TableCell>
                         </TableRow>
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
-                          <TableCell className="text-gray-700 dark:text-gray-300">영업이익</TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300">
+                            영업이익
+                          </TableCell>
                           <TableCell className="font-mono text-right text-gray-900 dark:text-white">
                             {formatNumber(financialData[0].operating_income)}
                           </TableCell>
                         </TableRow>
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
-                          <TableCell className="text-gray-700 dark:text-gray-300">순이익</TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300">
+                            순이익
+                          </TableCell>
                           <TableCell className="font-mono text-right text-gray-900 dark:text-white">
                             {formatNumber(financialData[0].net_income)}
                           </TableCell>
                         </TableRow>
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
-                          <TableCell className="text-gray-700 dark:text-gray-300">총자산</TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300">
+                            총자산
+                          </TableCell>
                           <TableCell className="font-mono text-right text-gray-900 dark:text-white">
-                            {formatNumber(financialData[0].total_assets || null)}
+                            {formatNumber(
+                              financialData[0].total_assets || null
+                            )}
                           </TableCell>
                         </TableRow>
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
-                          <TableCell className="text-gray-700 dark:text-gray-300">총부채</TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300">
+                            총부채
+                          </TableCell>
                           <TableCell className="font-mono text-right text-gray-900 dark:text-white">
-                            {formatNumber(financialData[0].total_liabilities || null)}
+                            {formatNumber(
+                              financialData[0].total_liabilities || null
+                            )}
                           </TableCell>
                         </TableRow>
                         <TableRow className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
-                          <TableCell className="text-gray-700 dark:text-gray-300">총자본</TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300">
+                            총자본
+                          </TableCell>
                           <TableCell className="font-mono text-right text-gray-900 dark:text-white">
-                            {formatNumber(financialData[0].total_equity || null)}
-
+                            {formatNumber(
+                              financialData[0].total_equity || null
+                            )}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -992,48 +1148,91 @@ export default function StockDetailPage() {
               {/* Financial Ratios */}
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle className="text-gray-900 dark:text-white">재무 비율</CardTitle>
-                  <CardDescription className="text-gray-600 dark:text-gray-400">주요 재무 비율 분석</CardDescription>
+                  <CardTitle className="text-gray-900 dark:text-white">
+                    재무 비율
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-gray-400">
+                    주요 재무 비율 분석
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {financialData.length > 0 ? (
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">부채비율</span>
+                        <span className="text-gray-700 dark:text-gray-300">
+                          부채비율
+                        </span>
                         <span className="font-mono text-gray-900 dark:text-white">
-                          {(financialData[0].total_liabilities && financialData[0].total_equity) 
-                            ? ((financialData[0].total_liabilities / financialData[0].total_equity) * 100).toFixed(1) + '%'
-                            : '-'}
+                          {financialData[0].total_liabilities &&
+                          financialData[0].total_equity
+                            ? (
+                                (financialData[0].total_liabilities /
+                                  financialData[0].total_equity) *
+                                100
+                              ).toFixed(1) + "%"
+                            : "-"}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">영업이익률</span>
+                        <span className="text-gray-700 dark:text-gray-300">
+                          영업이익률
+                        </span>
                         <span className="font-mono text-gray-900 dark:text-white">
-                          {((financialData[0].operating_income / financialData[0].revenue) * 100).toFixed(1)}%
+                          {(
+                            (financialData[0].operating_income /
+                              financialData[0].revenue) *
+                            100
+                          ).toFixed(1)}
+                          %
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">순이익률</span>
+                        <span className="text-gray-700 dark:text-gray-300">
+                          순이익률
+                        </span>
                         <span className="font-mono text-gray-900 dark:text-white">
-                          {((financialData[0].net_income / financialData[0].revenue) * 100).toFixed(1)}%
+                          {(
+                            (financialData[0].net_income /
+                              financialData[0].revenue) *
+                            100
+                          ).toFixed(1)}
+                          %
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">자기자본비율</span>
+                        <span className="text-gray-700 dark:text-gray-300">
+                          자기자본비율
+                        </span>
                         <span className="font-mono text-gray-900 dark:text-white">
-                          {(financialData[0].total_equity && financialData[0].total_assets) 
-                            ? ((financialData[0].total_equity / financialData[0].total_assets) * 100).toFixed(1) + '%'
-                            : '-'}
+                          {financialData[0].total_equity &&
+                          financialData[0].total_assets
+                            ? (
+                                (financialData[0].total_equity /
+                                  financialData[0].total_assets) *
+                                100
+                              ).toFixed(1) + "%"
+                            : "-"}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">EPS</span>
-                        <span className="font-mono text-gray-900 dark:text-white">{stockDetail.eps ? stockDetail.eps.toLocaleString() : '-'}</span>
+                        <span className="text-gray-700 dark:text-gray-300">
+                          EPS
+                        </span>
+                        <span className="font-mono text-gray-900 dark:text-white">
+                          {stockDetail.eps
+                            ? stockDetail.eps.toLocaleString()
+                            : "-"}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">BPS</span>
-                        <span className="font-mono text-gray-900 dark:text-white">{stockDetail.bps ? stockDetail.bps.toLocaleString() : '-'}</span>
-
+                        <span className="text-gray-700 dark:text-gray-300">
+                          BPS
+                        </span>
+                        <span className="font-mono text-gray-900 dark:text-white">
+                          {stockDetail.bps
+                            ? stockDetail.bps.toLocaleString()
+                            : "-"}
+                        </span>
                       </div>
                     </div>
                   ) : (
@@ -1075,16 +1274,24 @@ export default function StockDetailPage() {
                   {/* Sentiment Analysis */}
                   <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                     <CardHeader>
-                      <CardTitle className="text-gray-900 dark:text-white">감정 분석</CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-400">시장 심리 및 감정 지표</CardDescription>
+                      <CardTitle className="text-gray-900 dark:text-white">
+                        감정 분석
+                      </CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-400">
+                        시장 심리 및 감정 지표
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {sentimentData ? (
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-700 dark:text-gray-300">감정 점수</span>
+                            <span className="text-gray-700 dark:text-gray-300">
+                              감정 점수
+                            </span>
                             <div className="flex items-center space-x-2">
-                              <span className="font-mono text-lg text-gray-900 dark:text-white">{(sentimentData.score * 100).toFixed(0)}</span>
+                              <span className="font-mono text-lg text-gray-900 dark:text-white">
+                                {(sentimentData.score * 100).toFixed(0)}
+                              </span>
 
                               <Badge
                                 variant={
@@ -1104,17 +1311,28 @@ export default function StockDetailPage() {
                             </div>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">뉴스 건수</span>
-                            <span className="font-mono text-gray-900 dark:text-white">{sentimentData.newsCount}건</span>
+                            <span className="text-gray-700 dark:text-gray-300">
+                              뉴스 건수
+                            </span>
+                            <span className="font-mono text-gray-900 dark:text-white">
+                              {sentimentData.newsCount}건
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">긍정 비율</span>
-                            <span className="font-mono text-green-600 dark:text-green-400">{sentimentData.positiveRatio}%</span>
+                            <span className="text-gray-700 dark:text-gray-300">
+                              긍정 비율
+                            </span>
+                            <span className="font-mono text-green-600 dark:text-green-400">
+                              {sentimentData.positiveRatio}%
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-700 dark:text-gray-300">부정 비율</span>
-                            <span className="font-mono text-red-600 dark:text-red-400">{sentimentData.negativeRatio}%</span>
-
+                            <span className="text-gray-700 dark:text-gray-300">
+                              부정 비율
+                            </span>
+                            <span className="font-mono text-red-600 dark:text-red-400">
+                              {sentimentData.negativeRatio}%
+                            </span>
                           </div>
                         </div>
                       ) : (
@@ -1128,8 +1346,12 @@ export default function StockDetailPage() {
                   {/* Keywords */}
                   <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                     <CardHeader>
-                      <CardTitle className="text-gray-900 dark:text-white">주요 키워드</CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-400">연관 검색어 및 이슈</CardDescription>
+                      <CardTitle className="text-gray-900 dark:text-white">
+                        주요 키워드
+                      </CardTitle>
+                      <CardDescription className="text-gray-600 dark:text-gray-400">
+                        연관 검색어 및 이슈
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {sentimentData ? (
@@ -1148,10 +1370,9 @@ export default function StockDetailPage() {
                     </CardContent>
                   </Card>
                 </div>
-                
+
                 <Card className="p-6 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                   <div className="text-center text-gray-500 dark:text-gray-400">
-
                     <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-medium mb-2">
                       감정 분석 데이터 준비 중
@@ -1173,6 +1394,16 @@ export default function StockDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* AI 리포트 다이얼로그 */}
+      <AIReportDialog
+        open={isReportDialogOpen}
+        onOpenChange={setIsReportDialogOpen}
+        stockName={stockDetail.name}
+        report={aiReport}
+        loading={reportLoading}
+        error={reportError}
+      />
     </div>
   );
 }
