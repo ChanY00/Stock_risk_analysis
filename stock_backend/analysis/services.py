@@ -2,6 +2,8 @@ import logging
 from django.utils import timezone
 from .models import MarketIndex
 from kis_api.market_index_client import market_index_client
+from channels.layers import get_channel_layer
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +61,14 @@ class MarketIndexService:
                 
                 action = "생성" if created else "업데이트"
                 logger.info(f"✅ {market_index.name} 지수 {action}: {market_index.current_value:,.2f} ({market_index.change:+.2f}, {market_index.change_percent:+.2f}%)")
+            
+            # WS 브로드캐스트는 비활성화 (REST 폴링만 유지)
                 
         except Exception as e:
             logger.error(f"❌ 시장 지수 업데이트 오류: {e}")
+
+    async def _async_broadcast_indices(self, group_name: str, market_summary: dict):
+        return
     
     def stop(self):
         """실시간 업데이트 중지"""

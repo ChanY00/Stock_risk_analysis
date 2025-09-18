@@ -58,7 +58,13 @@ class TokenManager:
 
             # 이미 토큰 요청 중이면 빠르게 종료
             if self.token_requesting:
-                logger.info("Token request already in progress (in-process). Skipping.")
+                logger.info("Token request already in progress (in-process). Waiting for token...")
+                # brief wait for in-process issuance
+                end_time = time.time() + 5.0
+                while time.time() < end_time:
+                    if self.access_token and self.token_expired and datetime.now() < self.token_expired:
+                        return True
+                    time.sleep(0.2)
                 return False
 
             # 인메모리 캐시 유효성
@@ -84,7 +90,22 @@ class TokenManager:
             now = time.time()
             if self.last_token_request and (now - self.last_token_request) < 60:
                 wait_time = 60 - (now - self.last_token_request)
-                logger.warning(f"Token request rate limit (memory). Wait {wait_time:.1f}s")
+                logger.warning(f"Token request rate limit (memory). Waiting up to {wait_time:.1f}s for Redis token...")
+                # Poll Redis token briefly instead of failing hard
+                poll_end = time.time() + min(wait_time, 5.0)
+                while time.time() < poll_end:
+                    if self.redis_client is not None:
+                        try:
+                            cached_token = self.redis_client.get(self.redis_token_key)
+                            cached_expiry_ts = self.redis_client.get(self.redis_expiry_key)
+                            if cached_token and cached_expiry_ts and datetime.now() < datetime.fromtimestamp(float(cached_expiry_ts)):
+                                self.access_token = cached_token
+                                self.token_expired = datetime.fromtimestamp(float(cached_expiry_ts))
+                                logger.info("🔑 Using cached token from Redis (cooldown)")
+                                return True
+                        except Exception:
+                            pass
+                    time.sleep(0.25)
                 return False
 
             # Cross-process 락 시도 (SET NX PX)
@@ -93,7 +114,21 @@ class TokenManager:
                 try:
                     lock_acquired = bool(self.redis_client.set(self.redis_lock_key, str(now), nx=True, px=65000))
                     if not lock_acquired:
-                        logger.info("Token request locked by another process (Redis). Skipping.")
+                        logger.info("Token request locked by another process (Redis). Waiting for token...")
+                        # Wait up to 5s for the other process to issue and cache the token
+                        end_time = time.time() + 5.0
+                        while time.time() < end_time:
+                            try:
+                                cached_token = self.redis_client.get(self.redis_token_key)
+                                cached_expiry_ts = self.redis_client.get(self.redis_expiry_key)
+                                if cached_token and cached_expiry_ts and datetime.now() < datetime.fromtimestamp(float(cached_expiry_ts)):
+                                    self.access_token = cached_token
+                                    self.token_expired = datetime.fromtimestamp(float(cached_expiry_ts))
+                                    logger.info("🔑 Using cached token from Redis (lock-wait)")
+                                    return True
+                            except Exception:
+                                pass
+                            time.sleep(0.25)
                         return False
                 except Exception as e:
                     logger.warning(f"Redis lock failed: {e}")

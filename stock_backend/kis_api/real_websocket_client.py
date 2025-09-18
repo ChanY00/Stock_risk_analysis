@@ -358,7 +358,7 @@ class RealKISWebSocketClient:
             logger.info(f"📨 KIS 원본 메시지: {message}")
             
             # KIS WebSocket 프로토콜에 따른 메시지 파싱
-            # 서버 PINGPONG JSON 및 오류 JSON(OPSP9999) 무시 처리
+            # 서버 PINGPONG JSON 및 오류 JSON(OPSP9999) 무시 처리 + 구독 ACK 처리
             if message.startswith('{'):
                 try:
                     obj = json.loads(message)
@@ -366,8 +366,14 @@ class RealKISWebSocketClient:
                     if tr_id == 'PINGPONG':
                         logger.debug('🏓 서버 PINGPONG 수신 - 무시')
                         return
-                    if obj.get('body', {}).get('rt_cd') == '9' and obj.get('body', {}).get('msg_cd') == 'OPSP9999':
+                    body = obj.get('body', {})
+                    if body.get('rt_cd') == '9' and body.get('msg_cd') == 'OPSP9999':
                         logger.warning("⚠️ 서버 JSON 경고(OPSP9999): %s", obj.get('body', {}).get('msg1'))
+                        return
+                    # 실시간 체결(H0STCNT0) 구독 성공 ACK 메시지 처리
+                    if tr_id == 'H0STCNT0' and body.get('rt_cd') == '0' and body.get('msg_cd') == 'OPSP0000':
+                        stock_key = obj.get('header', {}).get('tr_key') or obj.get('body', {}).get('tr_key')
+                        logger.info(f"✅ 체결 실시간 구독 ACK: {tr_id} {stock_key} - {body.get('msg1')}")
                         return
                 except Exception:
                     # JSON 파싱 실패 시 무시

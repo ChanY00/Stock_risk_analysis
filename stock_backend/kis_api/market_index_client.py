@@ -28,8 +28,13 @@ class KISMarketIndexClient:
         self.running = False
         self.update_interval = 30  # 30초마다 업데이트
         self.callbacks = []  # 업데이트 콜백 리스트
-        # WebSocket 기반 실시간 구독 클라이언트 (지연 초기화)
-        self._ws_client: Optional[KISMarketIndexWSClient] = None  # type: ignore[name-defined]
+        # WS 경로 제거: REST 폴링만 사용
+        self._ws_client = None
+        self._snapshot: Dict[str, Dict] = {}
+        self._last_ws_update_ts: float = 0.0
+
+    def _emit_update(self, partial: Dict[str, Dict]):
+        return  # WS 비활성화
         
         # 시장 지수 코드 정의
         self.market_indices = {
@@ -59,17 +64,23 @@ class KISMarketIndexClient:
         """특정 시장 지수 데이터 조회"""
         try:
             if not self._ensure_token():
-                return None
+                # brief wait then retry once, to allow lock-holder to cache token
+                time.sleep(1.0)
+                if not self._ensure_token():
+                    return None
                 
             # KIS API 시장 지수 조회
             url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-index-price"
             
+            # 실계좌(F*) / 모의투자(V*) tr_id 분기
+            tr_id = 'VHPUP02100000' if self.is_paper_trading else 'FHPUP02100000'
+
             headers = {
                 'content-type': 'application/json',
                 'authorization': f'Bearer {self._client.token_manager.access_token}',
                 'appkey': self.app_key,
                 'appsecret': self.app_secret,
-                'tr_id': 'FHPUP02100000',  # 지수시세조회
+                'tr_id': tr_id,  # 지수시세조회 (모의투자: V*)
                 'custtype': 'P'
             }
             
@@ -190,23 +201,7 @@ class KISMarketIndexClient:
             self.callbacks.append(callback)
             self.running = True
             
-            # 1) WebSocket 실시간 구독 우선 시도
-            try:
-                if self._ws_client is None:
-                    self._ws_client = KISMarketIndexWSClient(
-                        app_key=self.app_key,
-                        app_secret=self.app_secret,
-                        base_url=self.base_url,
-                        ws_url=getattr(settings, 'KIS_WEBSOCKET_URL', 'ws://ops.koreainvestment.com:31000'),
-                        is_paper_trading=self.is_paper_trading,
-                        on_update=self._emit_update
-                    )
-                if not self._ws_client.is_connected:
-                    self._ws_client.connect_and_subscribe(['0001', '1001'])  # KOSPI, KOSDAQ
-                    if self._ws_client.is_connected:
-                        logger.info("📡 시장 지수 WebSocket 구독 시작(H0IXASP0)")
-            except Exception as e:
-                logger.warning(f"지수 WebSocket 시작 실패: {e}")
+            # WS 구독 제거: REST 폴링만 사용
 
             # 2) 별도 스레드에서 주기적 REST 폴백 업데이트 (WS 실패 시)
             update_thread = threading.Thread(
@@ -233,11 +228,21 @@ class KISMarketIndexClient:
                 is_open, reason = market_utils.is_market_open()
                 
                 if is_open:
-                    # WS가 연결되어 있으면 WS 이벤트에 의해 갱신되므로 폴백 주기만 유지
+                    # REST 폴링만 수행 (모의/실계좌 공통)
+                    indices_data = self.get_all_market_indices()
+                    if indices_data:
+                        for callback in self.callbacks:
+                            try:
+                                callback(indices_data)
+                            except Exception as e:
+                                logger.error(f"❌ 시장 지수 콜백 오류: {e}")
+                    time.sleep(self.update_interval)
+                    continue
+
+                    # 실계좌 환경: WS가 없다면 REST로 주기 갱신
                     if self._ws_client and self._ws_client.is_connected:
                         time.sleep(self.update_interval)
                         continue
-                    # 시장 개장 중: 실데이터 우선 조회 (REST 폴백)
                     indices_data = self.get_all_market_indices()
                     
                     if indices_data:
@@ -276,8 +281,8 @@ class KISMarketIndexClient:
         """실시간 업데이트 중지"""
         self.running = False
         try:
-            if self._ws_client:
-                self._ws_client.close()
+            # WS 클라이언트 제거
+            self._ws_client = None
         except Exception:
             pass
         logger.info("🛑 시장 지수 실시간 업데이트 중지")
@@ -309,6 +314,7 @@ class KISMarketIndexWSClient:
         self._subscribed: set[str] = set()
         self.timeout = 15
         self.ping_interval = getattr(settings, 'KIS_PING_INTERVAL', 30)
+        self._last_codes: List[str] = []
 
     def _get_approval_key(self) -> bool:
         try:
@@ -363,6 +369,7 @@ class KISMarketIndexWSClient:
             if not self.is_connected:
                 return False
 
+            self._last_codes = list(index_codes)
             for code in index_codes:
                 self._subscribe_index(code)
             return True
@@ -386,6 +393,13 @@ class KISMarketIndexWSClient:
     def _on_close(self, ws, code, msg):
         self.is_connected = False
         logger.warning(f"🟡 지수 WebSocket 종료: {code} {msg}")
+        # 간단한 재연결 시도
+        try:
+            time.sleep(2)
+            if self._last_codes:
+                self.connect_and_subscribe(self._last_codes)
+        except Exception:
+            pass
 
     def _subscribe_index(self, index_code: str):
         try:
@@ -400,8 +414,10 @@ class KISMarketIndexWSClient:
                     "content-type": "utf-8",
                 },
                 "body": {
-                    "tr_id": "H0IXASP0",
-                    "tr_key": index_code,
+                    "input": {
+                        "tr_id": "H0IXASP0",
+                        "tr_key": index_code,
+                    }
                 },
             }
             self.ws.send(json.dumps(msg))  # type: ignore[union-attr]

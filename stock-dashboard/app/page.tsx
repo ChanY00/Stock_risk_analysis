@@ -75,6 +75,7 @@ import { AlertCircle } from "lucide-react";
 
 // Phase 3 개선 컴포넌트들
 import { MarketOverviewWidget } from "@/components/widgets/market-overview-widget";
+import { TopMarketCapTicker } from "@/components/widgets/top-marketcap-ticker";
 import {
   AdvancedFilters,
   FilterCriteria,
@@ -103,6 +104,7 @@ import { sentimentStore, calculateSentimentScore } from "@/lib/sentiment-store";
 
 // 실시간 주가 Hook - WebSocket 기반으로 변경
 import { useGlobalWebSocket } from "@/hooks/use-global-websocket";
+// Index WS removed; rely on REST polling via MarketOverviewWidget/stocksApi
 
 // 인증 Hook 추가
 import { useAuth } from "@/contexts/AuthContext";
@@ -250,6 +252,7 @@ export default function Dashboard() {
   const [marketOverview, setMarketOverview] = useState<MarketOverview | null>(
     null
   );
+  const [topMcapItems, setTopMcapItems] = useState<{ code: string; name: string; marketCap: number | null }[]>([])
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
 
   // 최근 검색 관리 함수들
@@ -537,6 +540,14 @@ export default function Dashboard() {
             console.warn("감정 분석 데이터 배치 로드 실패:", error);
           });
 
+        // 상단 시총 상위 30용 데이터 준비
+        const mcapItems = stocksData.results
+          .map((s) => ({ code: s.stock_code, name: s.stock_name, marketCap: s.market_cap }))
+          .filter((s) => typeof s.marketCap === 'number' && (s.marketCap as number) > 0)
+          .sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0))
+          .slice(0, 30)
+        setTopMcapItems(mcapItems)
+
         // AI 점수 계산 (공통 유틸리티 사용)
 
         const convertedStocks = stocksData.results
@@ -651,6 +662,8 @@ export default function Dashboard() {
     // 최근 검색 데이터 로드
     loadRecentSearches();
   }, []);
+
+  // Index WS removed; MarketOverviewWidget will poll REST periodically
 
   // 필터링 로직 (기존 + 고급 필터)
   useEffect(() => {
@@ -945,6 +958,11 @@ export default function Dashboard() {
             stocks={filteredStocks}
             key={`ticker-${Math.floor(Date.now() / (10 * 60 * 1000))}`}
           />
+        </div>
+
+        {/* 시가총액 상위 30 실시간 티커 */}
+        <div className="mb-8">
+          <TopMarketCapTicker items={topMcapItems} realtime={realTimePrices} chunkSize={5} rotateMs={4000} />
         </div>
 
         {/* 인터렙티브 통계 카드 */}

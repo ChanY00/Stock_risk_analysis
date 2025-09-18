@@ -300,3 +300,12 @@ export class RealTimeStockClient {
 
 // 싱글톤 인스턴스
 export const realTimeClient = new RealTimeStockClient(); 
+
+// Market indices WebSocket client (KOSPI/KOSDAQ)
+export type MarketIndicesCallback = (data: {
+  market_summary: Record<string, {
+    current: number; change: number; change_percent: number; volume: number; high: number; low: number; trade_value: number;
+  }>;
+}) => void;
+
+// MarketIndicesClient removed: REST polling is used instead of WS

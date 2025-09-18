@@ -28,6 +28,8 @@ class StockPriceService:
                 if result is not None:
                     return result
                 logger.warning(f"API call returned None on attempt {attempt + 1}")
+                # brief wait to allow token issuance to complete in other process
+                time.sleep(1.0)
             except Exception as e:
                 error_msg = str(e)
                 logger.warning(f"API call failed on attempt {attempt + 1}: {error_msg}")
