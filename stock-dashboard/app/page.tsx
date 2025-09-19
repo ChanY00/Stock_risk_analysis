@@ -75,7 +75,7 @@ import { AlertCircle } from "lucide-react";
 
 // Phase 3 개선 컴포넌트들
 import { MarketOverviewWidget } from "@/components/widgets/market-overview-widget";
-import { TopMarketCapTicker } from "@/components/widgets/top-marketcap-ticker";
+// TopMarketCapTicker 제거: 상단 카드 그리드에 통합
 import {
   AdvancedFilters,
   FilterCriteria,
@@ -331,6 +331,11 @@ export default function Dashboard() {
     return currentPageStocks.map((stock) => stock.code);
   }, [currentPageStocks]);
 
+  // 상단 카드용: 시총 상위 30 종목 코드 (실시간 구독 포함)
+  const topMcapCodes = useMemo(() => {
+    return topMcapItems.map((s) => s.code);
+  }, [topMcapItems]);
+
   // 관심종목 코드들 (memoized)
   const favoriteStockCodes = useMemo(() => {
     return favorites.map((stock) => stock.code);
@@ -338,17 +343,18 @@ export default function Dashboard() {
 
   // 통합된 실시간 주가 Hook - 현재 페이지 + 관심종목 모두 포함
   const allStockCodes = useMemo(() => {
-    const combined = [...currentStockCodes, ...favoriteStockCodes];
+    const combined = [...currentStockCodes, ...favoriteStockCodes, ...topMcapCodes];
     // 중복 제거 및 안정화
     const unique = [...new Set(combined)].filter(Boolean).sort();
     console.log("🔍 All stock codes combined:", {
       currentPage: currentStockCodes.length,
       favorites: favoriteStockCodes.length,
+      topMcap: topMcapCodes.length,
       total: unique.length,
       codes: unique.slice(0, 5), // 처음 5개만 로그
     });
     return unique;
-  }, [currentStockCodes, favoriteStockCodes]);
+  }, [currentStockCodes, favoriteStockCodes, topMcapCodes]);
 
   const {
     data: realTimePrices = {},
@@ -540,7 +546,7 @@ export default function Dashboard() {
             console.warn("감정 분석 데이터 배치 로드 실패:", error);
           });
 
-        // 상단 시총 상위 30용 데이터 준비
+        // 상단 카드용 시총 상위 30 데이터 준비
         const mcapItems = stocksData.results
           .map((s) => ({ code: s.stock_code, name: s.stock_name, marketCap: s.market_cap }))
           .filter((s) => typeof s.marketCap === 'number' && (s.marketCap as number) > 0)
@@ -954,18 +960,44 @@ export default function Dashboard() {
             KOSPI 200 종목의 실시간 정보와 시장 동향을 확인하세요
           </p>
           {/* 상승률 상위 10개 마퀴 배너 */}
-          <RisingTicker
-            stocks={filteredStocks}
-            key={`ticker-${Math.floor(Date.now() / (10 * 60 * 1000))}`}
-          />
+        <RisingTicker
+          stocks={topMcapItems.map((item) => {
+            const base = stocks.find((s) => s.code === item.code);
+            const rt: any = (realTimePrices as any)[item.code];
+            const merged = base
+              ? { ...base }
+              : {
+                  id: item.code,
+                  code: item.code,
+                  name: item.name,
+                  price: 0,
+                  change: 0,
+                  changePercent: 0,
+                  volume: 0,
+                  marketCap: item.marketCap,
+                  per: null,
+                  pbr: null,
+                  sentiment: 0.5,
+                  aiScore: undefined,
+                  market: "KOSPI",
+                  sector: "기타",
+                };
+            if (rt) {
+              merged.price = rt.current_price ?? merged.price;
+              merged.change = rt.change_amount ?? merged.change;
+              merged.changePercent = rt.change_percent ?? merged.changePercent;
+              merged.volume = rt.volume ?? merged.volume;
+            }
+            return merged;
+          })}
+          mode="top_mcap"
+          max={30}
+          // 실시간 데이터가 갱신되면 컴포넌트를 재마운트하여 CSS 애니메이션 재시작
+          key={`ticker-${(favoriteLastUpdated || lastUpdated || 0) as any}`}
+        />
         </div>
 
-        {/* 시가총액 상위 30 실시간 티커 */}
-        <div className="mb-8">
-          <TopMarketCapTicker items={topMcapItems} realtime={realTimePrices} chunkSize={5} rotateMs={4000} />
-        </div>
-
-        {/* 인터렙티브 통계 카드 */}
+        {/* 인터렉티브 카드(시총 상위 30를 상단 카드로 노출) */}
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <Card
@@ -1801,15 +1833,10 @@ export default function Dashboard() {
               <MarketStatusIndicator variant="detailed" showDetails={true} />
             </div>
 
-            {/* Market Overview */}
-            {marketOverview && (
-              <div className="hover:shadow-md transition-shadow duration-200">
-                <MarketOverviewWidget
-                  marketData={marketOverview}
-                  loading={loading}
-                />
-              </div>
-            )}
+            {/* Market Overview: 항상 마운트하여 내부에서 자체적으로 폴링 */}
+            <div className="hover:shadow-md transition-shadow duration-200">
+              <MarketOverviewWidget marketData={marketOverview} loading={loading} />
+            </div>
           </div>
         </div>
       </div>
@@ -1818,70 +1845,58 @@ export default function Dashboard() {
 }
 
 // 상승률 상위 10개를 카드 형태로 오른쪽에서 왼쪽으로 흘러가게 표시하는 컴포넌트
-function RisingTicker({ stocks }: { stocks: Stock[] }) {
+function RisingTicker({ stocks, mode = "gainers", max = 10 }: { stocks: Stock[]; mode?: "gainers" | "top_mcap"; max?: number }) {
   const marqueeRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [repeat, setRepeat] = useState(2);
+  const [animKey, setAnimKey] = useState(0);
 
   // 10분마다 리셋: key로 강제 재마운트 (상위에서 전달)
   const top = useMemo(() => {
-    return stocks
-      .slice()
-      .sort((a, b) => (b.changePercent || 0) - (a.changePercent || 0))
-      .slice(0, 10);
-  }, [stocks]);
+    const base = stocks.slice();
+    if (mode === "gainers") {
+      base.sort((a, b) => (b.changePercent || 0) - (a.changePercent || 0));
+    } else {
+      // top_mcap 모드: 정렬 유지(이미 상위 30 전달됨) + 최대 max개만 표시
+    }
+    return base.slice(0, max);
+  }, [stocks, mode, max]);
 
-  // JavaScript 기반 애니메이션 (CSS 애니메이션이 작동하지 않을 경우 대비)
+  // 데이터가 바뀌면 CSS 애니메이션을 재시작하여 끊김 방지
   useEffect(() => {
-    const marquee = marqueeRef.current;
-    if (!marquee) return;
+    setAnimKey((k) => k + 1);
+  }, [top, repeat]);
 
-    let animationId: number;
-    let position = 0;
-    const speed = 0.8; // 픽셀 단위 이동 속도
-
-    const animate = () => {
-      position -= speed;
-      marquee.style.transform = `translateX(${position}px)`;
-
-      // 애니메이션이 끝나면 처음부터 다시 시작
-      if (Math.abs(position) >= marquee.scrollWidth / 2) {
-        position = 0;
-      }
-
-      animationId = requestAnimationFrame(animate);
+  // 콘텐츠 폭이 컨테이너보다 작을 때 반복 횟수를 늘려 빈 공간 방지
+  useEffect(() => {
+    const measure = () => {
+      const containerWidth = containerRef.current?.offsetWidth || 0;
+      const contentWidth = marqueeRef.current?.scrollWidth || 0;
+      if (containerWidth === 0 || contentWidth === 0) return;
+      const needed = Math.ceil((containerWidth * 2) / contentWidth);
+      setRepeat(Math.max(2, needed));
     };
-
-    // CSS 애니메이션이 작동하지 않는 경우에만 JavaScript 애니메이션 시작
-    const checkCSSAnimation = () => {
-      const computedStyle = window.getComputedStyle(marquee);
-      const animationName = computedStyle.animationName;
-
-      if (animationName === "none" || !animationName.includes("marquee")) {
-        console.log(
-          "CSS 애니메이션이 작동하지 않음, JavaScript 애니메이션 시작"
-        );
-        animate();
-      }
-    };
-
-    // 약간의 지연 후 CSS 애니메이션 상태 확인
-    const timeoutId = setTimeout(checkCSSAnimation, 1000);
-
+    // 최초 측정 + 리사이즈 대응
+    const t = setTimeout(measure, 100);
+    window.addEventListener('resize', measure);
     return () => {
-      clearTimeout(timeoutId);
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
+      clearTimeout(t);
+      window.removeEventListener('resize', measure);
     };
-  }, [top]);
+  }, [stocks, top]);
 
-  if (top.length === 0) return null;
+  // 빈 배열이어도 훅 순서를 유지하기 위해 반환하지 않고 빈 컨테이너를 렌더링
 
-  // 종목 데이터를 두 번 복사하여 연속적인 스크롤 효과 생성
-  const duplicatedStocks = [...top, ...top];
+  // 종목 데이터를 여러 번 복사하여 연속적인 스크롤 효과 생성(빈 공간 방지)
+  const duplicatedStocks = useMemo(() => {
+    const arr: Stock[] = [];
+    for (let i = 0; i < repeat; i++) arr.push(...top);
+    return arr;
+  }, [top, repeat]);
 
   return (
-    <div className="marquee-container w-full h-16 mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-2">
-      <div ref={marqueeRef} className="marquee h-full flex items-center">
+    <div ref={containerRef} className="marquee-container w-full h-16 mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-2 overflow-hidden">
+      <div key={animKey} ref={marqueeRef} className="marquee h-full flex items-center">
         {duplicatedStocks.map((s, idx) => {
           const sign = (s.changePercent || 0) >= 0 ? "+" : "";
           const isPositive = (s.changePercent || 0) >= 0;

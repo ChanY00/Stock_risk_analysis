@@ -1,5 +1,6 @@
 import logging
 from django.utils import timezone
+from .cache_utils import CacheManager
 from .models import MarketIndex
 from kis_api.market_index_client import market_index_client
 from channels.layers import get_channel_layer
@@ -35,6 +36,7 @@ class MarketIndexService:
         try:
             logger.info(f"📊 시장 지수 업데이트 수신: {list(indices_data.keys())}")
             
+            any_updated = False
             for index_name, data in indices_data.items():
                 # 데이터베이스에서 MarketIndex 객체 가져오기 또는 생성
                 market_index, created = MarketIndex.objects.get_or_create(
@@ -58,11 +60,15 @@ class MarketIndexService:
                 market_index.updated_at = timezone.now()
                 
                 market_index.save()
+                any_updated = True
                 
                 action = "생성" if created else "업데이트"
                 logger.info(f"✅ {market_index.name} 지수 {action}: {market_index.current_value:,.2f} ({market_index.change:+.2f}, {market_index.change_percent:+.2f}%)")
             
             # WS 브로드캐스트는 비활성화 (REST 폴링만 유지)
+            if any_updated:
+                # 시장 개요 캐시 무효화 → 다음 요청에서 즉시 최신 DB 반영
+                CacheManager.invalidate_market_cache()
                 
         except Exception as e:
             logger.error(f"❌ 시장 지수 업데이트 오류: {e}")

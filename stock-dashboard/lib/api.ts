@@ -709,7 +709,22 @@ class ApiClient {
   }
 
   async getMarketOverview(): Promise<MarketOverview> {
-    return this.request<MarketOverview>("/market-overview/", {}, false);
+    const data = await this.request<MarketOverview>("/market-overview/", {}, false);
+    // 숫자 필드가 문자열로 올 수 있어 정규화
+    if (data?.market_summary) {
+      Object.keys(data.market_summary).forEach((k) => {
+        const v = (data.market_summary as any)[k];
+        if (!v) return;
+        v.current = Number(v.current) || 0;
+        v.change = Number(v.change) || 0;
+        v.change_percent = Number(v.change_percent) || 0;
+        v.volume = Number(v.volume) || 0;
+        v.high = Number(v.high) || 0;
+        v.low = Number(v.low) || 0;
+        v.trade_value = Number(v.trade_value) || 0;
+      });
+    }
+    return data;
   }
 
   async getClusterData(code: string): Promise<ClusterData[]> {

@@ -1,14 +1,13 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, Activity, BarChart3, PieChart as PieChartIcon } from 'lucide-react'
+import { TrendingUp, TrendingDown, Activity } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import { MarketOverview, stocksApi } from '@/lib/api'
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 
 interface MarketOverviewWidgetProps {
   marketData: MarketOverview | null
@@ -16,7 +15,8 @@ interface MarketOverviewWidgetProps {
 }
 
 export function MarketOverviewWidget({ marketData: initialMarketData, loading = false }: MarketOverviewWidgetProps) {
-  const [activeTab, setActiveTab] = useState<'indices' | 'sectors' | 'movers'>('indices')
+  // 간소화: 지수 탭만 유지
+  const [activeTab, setActiveTab] = useState<'indices'>('indices')
   const [marketData, setMarketData] = useState<MarketOverview | null>(initialMarketData)
   const [isUpdating, setIsUpdating] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
@@ -26,9 +26,15 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
     const updateMarketData = async () => {
       try {
         setIsUpdating(true)
+        console.log('📈 Fetching market overview...')
         const updatedData = await stocksApi.getMarketOverview()
-        setMarketData(updatedData)
-        setLastUpdated(new Date())
+        // 백엔드가 비어있는 객체를 반환하는 경우 방어
+        if (updatedData && updatedData.market_summary) {
+          setMarketData(updatedData)
+          setLastUpdated(new Date())
+        } else {
+          console.warn('⚠️ Market overview returned empty payload')
+        }
       } catch (error) {
         console.error('시장 데이터 업데이트 실패:', error)
       } finally {
@@ -98,36 +104,22 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
     )
   }
 
-  // 시장 지수 데이터 준비
-  const marketIndices = Object.entries(marketData.market_summary).map(([key, data]) => ({
-    name: key.toUpperCase(),
-    current: data.current,
-    change: data.change,
-    changePercent: data.change_percent,
-    volume: data.volume,
-    high: data.high,
-    low: data.low,
-    isPositive: data.change_percent >= 0
-  }))
+  // 시장 지수 데이터 준비 - KOSPI/KOSDAQ만 표시
+  const entries = Object.entries(marketData.market_summary || {})
+  const marketIndices = entries
+    .filter(([key]) => ['kospi', 'kosdaq'].includes(key.toLowerCase()))
+    .map(([key, data]) => ({
+      name: key.toUpperCase(),
+      current: Number(data.current) || 0,
+      change: Number(data.change) || 0,
+      changePercent: Number(data.change_percent) || 0,
+      volume: Number(data.volume) || 0,
+      high: Number(data.high) || 0,
+      low: Number(data.low) || 0,
+      isPositive: data.change_percent >= 0
+    }))
 
-  // 섹터별 성과 데이터 (상위 5개)
-  const topSectors = marketData.sector_performance
-    .sort((a, b) => b.change_percent - a.change_percent)
-    .slice(0, 5)
-
-  const bottomSectors = marketData.sector_performance
-    .sort((a, b) => a.change_percent - b.change_percent)
-    .slice(0, 5)
-
-  // 차트용 데이터
-  const sectorChartData = marketData.sector_performance.map(sector => ({
-    name: sector.sector.length > 8 ? sector.sector.substring(0, 8) + '...' : sector.sector,
-    value: Math.abs(sector.change_percent),
-    change: sector.change_percent,
-    fill: sector.change_percent >= 0 ? '#10b981' : '#ef4444'
-  }))
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
+  // 섹터/등락 UI 제거
 
   const formatNumber = (num: number) => {
     if (num >= 1e12) return `${(num / 1e12).toFixed(1)}조`
@@ -165,10 +157,8 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-1">
             <TabsTrigger value="indices" className="text-xs">지수</TabsTrigger>
-            <TabsTrigger value="sectors" className="text-xs">섹터</TabsTrigger>
-            <TabsTrigger value="movers" className="text-xs">등락</TabsTrigger>
           </TabsList>
 
           <TabsContent value="indices" className="space-y-4 mt-4">
@@ -192,15 +182,15 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="font-mono font-medium">
-                    {index.current.toLocaleString()}
+                    {Number(index.current || 0).toLocaleString()}
                   </span>
                   <span className={`font-mono ${index.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    {index.isPositive ? '+' : ''}{index.change.toFixed(2)}
+                    {index.isPositive ? '+' : ''}{Number(index.change || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-gray-500">
-                  <span>거래량: {formatNumber(index.volume)}</span>
-                  <span>고가: {index.high.toLocaleString()}</span>
+                  <span>거래량: {formatNumber(Number(index.volume || 0))}</span>
+                  <span>고가: {Number(index.high || 0).toLocaleString()}</span>
                 </div>
                 <Progress 
                   value={Math.min(100, ((index.current - index.low) / (index.high - index.low)) * 100)} 
@@ -210,88 +200,7 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
             ))}
           </TabsContent>
 
-          <TabsContent value="sectors" className="space-y-4 mt-4">
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sectorChartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 10 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip 
-                    formatter={(value: number, name: string, props: any) => [
-                      `${props.payload.change >= 0 ? '+' : ''}${props.payload.change.toFixed(2)}%`,
-                      '변동률'
-                    ]}
-                    labelFormatter={(label) => `섹터: ${label}`}
-                  />
-                  <Bar dataKey="value" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="movers" className="space-y-4 mt-4">
-            <div className="space-y-3">
-              <div>
-                <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-1">
-                  <TrendingUp className="h-4 w-4" />
-                  상승 섹터
-                </h4>
-                <div className="space-y-2">
-                  {topSectors.map((sector, index) => (
-                    <div key={sector.sector} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded bg-green-100 text-green-800 text-xs flex items-center justify-center font-bold">
-                          {index + 1}
-                        </span>
-                        <span className="truncate max-w-24">{sector.sector}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600 font-mono">
-                          +{sector.change_percent.toFixed(2)}%
-                        </span>
-                        <Badge variant="outline" className="text-xs px-1">
-                          {sector.top_performer.name}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-1">
-                  <TrendingDown className="h-4 w-4" />
-                  하락 섹터
-                </h4>
-                <div className="space-y-2">
-                  {bottomSectors.map((sector, index) => (
-                    <div key={sector.sector} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded bg-red-100 text-red-800 text-xs flex items-center justify-center font-bold">
-                          {index + 1}
-                        </span>
-                        <span className="truncate max-w-24">{sector.sector}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-red-600 font-mono">
-                          {sector.change_percent.toFixed(2)}%
-                        </span>
-                        <Badge variant="outline" className="text-xs px-1">
-                          {sector.top_performer.name}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </TabsContent>
+          {/* 섹터 및 등락 탭 제거 */}
         </Tabs>
       </CardContent>
     </Card>

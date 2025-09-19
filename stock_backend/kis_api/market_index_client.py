@@ -33,10 +33,7 @@ class KISMarketIndexClient:
         self._snapshot: Dict[str, Dict] = {}
         self._last_ws_update_ts: float = 0.0
 
-    def _emit_update(self, partial: Dict[str, Dict]):
-        return  # WS 비활성화
-        
-        # 시장 지수 코드 정의
+        # 시장 지수 코드 정의 (초기화 시점에 설정되어야 함)
         self.market_indices = {
             'KOSPI': {
                 'code': '0001',  # KOSPI 지수 코드
@@ -44,11 +41,14 @@ class KISMarketIndexClient:
                 'market_div': 'J'
             },
             'KOSDAQ': {
-                'code': '1001',  # KOSDAQ 지수 코드  
+                'code': '1001',  # KOSDAQ 지수 코드 (업종지수시세: 2001)
                 'name': 'KOSDAQ',
                 'market_div': 'Q'
             }
         }
+
+    def _emit_update(self, partial: Dict[str, Dict]):
+        return  # WS 비활성화
         
         logger.info(f"🔧 KIS 시장 지수 클라이언트 초기화 ({'모의투자' if self.is_paper_trading else '실계좌'} 모드)")
 
@@ -72,54 +72,63 @@ class KISMarketIndexClient:
             # KIS API 시장 지수 조회
             url = f"{self.base_url}/uapi/domestic-stock/v1/quotations/inquire-index-price"
             
-            # 실계좌(F*) / 모의투자(V*) tr_id 분기
-            tr_id = 'VHPUP02100000' if self.is_paper_trading else 'FHPUP02100000'
+            # 문서 기준: inquire-index-price는 VTS에서도 FHPUP02100000 사용 사례가 확인됨
+            # 환경 변수로 재정의 가능
+            tr_id = os.getenv('KIS_INDEX_TR_ID') or 'FHPUP02100000'
 
             headers = {
-                'content-type': 'application/json',
+                'Content-Type': 'application/json',
                 'authorization': f'Bearer {self._client.token_manager.access_token}',
                 'appkey': self.app_key,
                 'appsecret': self.app_secret,
-                'tr_id': tr_id,  # 지수시세조회 (모의투자: V*)
+                'tr_id': tr_id,
                 'custtype': 'P'
             }
             
-            params = {
-                'fid_cond_mrkt_div_code': market_div,  # J: KOSPI, Q: KOSDAQ
-                'fid_input_iscd': index_code,          # 지수코드
-                'fid_input_date_1': '',                # 조회 시작일 (공백: 당일)
-                'fid_input_date_2': '',                # 조회 종료일 (공백: 당일)
-                'fid_period_div_code': 'D'             # 기간구분 (D: 일간)
-            }
-            
-            response = requests.get(url, headers=headers, params=params, timeout=10)
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            if result.get('rt_cd') == '0' and result.get('output'):
-                output = result['output']
-                
-                # KIS API 응답을 표준 형식으로 변환
-                index_data = {
-                    'code': index_code,
-                    'name': self._get_index_name(index_code),
-                    'current_value': float(output.get('bstp_nmix_prpr', 0)),      # 현재지수
-                    'change': float(output.get('bstp_nmix_prdy_vrss', 0)),        # 전일대비
-                    'change_percent': float(output.get('prdy_vrss_sign', 0)),     # 등락률
-                    'volume': int(output.get('acml_vol', 0)),                     # 누적거래량
-                    'trade_value': int(output.get('acml_tr_pbmn', 0)),            # 누적거래대금
-                    'high': float(output.get('bstp_nmix_hgpr', 0)),               # 최고지수
-                    'low': float(output.get('bstp_nmix_lwpr', 0)),                # 최저지수
-                    'timestamp': datetime.now().isoformat(),
-                    'source': 'kis_api'
-                }
-                
-                logger.info(f"📊 {index_data['name']} 지수 조회 성공: {index_data['current_value']:,.2f} ({index_data['change']:+.2f}, {index_data['change_percent']:+.2f}%)")
-                return index_data
-            else:
-                logger.error(f"❌ 지수 조회 실패: {result.get('msg1', 'Unknown error')}")
-                return None
+            # 일부 환경에서 U가 아닌 시장구분코드(J:KOSPI, Q:KOSDAQ)를 요구할 수 있어 순차 시도
+            param_variants = [
+                {'FID_COND_MRKT_DIV_CODE': 'U', 'FID_INPUT_ISCD': index_code},
+            ]
+            if market_div in ('J', 'Q'):
+                param_variants.append({'FID_COND_MRKT_DIV_CODE': market_div, 'FID_INPUT_ISCD': index_code})
+
+            last_error: Optional[str] = None
+            for params in param_variants:
+                try:
+                    response = requests.get(url, headers=headers, params=params, timeout=10)
+                    # 일부 VTS에서 잘못된 파라미터는 500을 던질 수 있으므로 상태 확인 후 계속 시도
+                    response.raise_for_status()
+                    result = response.json()
+                    if result.get('rt_cd') == '0' and result.get('output'):
+                        output = result['output']
+                        index_data = {
+                            'code': index_code,
+                            'name': self._get_index_name(index_code),
+                            'current_value': float(output.get('bstp_nmix_prpr', 0)),
+                            'change': float(output.get('bstp_nmix_prdy_vrss', 0)),
+                            'change_percent': float(output.get('prdy_ctrt', 0)),
+                            'volume': int(output.get('acml_vol', 0)),
+                            'trade_value': int(output.get('acml_tr_pbmn', 0)),
+                            'high': float(output.get('bstp_nmix_hgpr', 0)),
+                            'low': float(output.get('bstp_nmix_lwpr', 0)),
+                            'timestamp': datetime.now().isoformat(),
+                            'source': 'kis_api'
+                        }
+                        logger.info(
+                            f"📊 {index_data['name']} 지수 조회 성공: {index_data['current_value']:,.2f} ({index_data['change']:+.2f}, {index_data['change_percent']:+.2f}%) params={params}"
+                        )
+                        return index_data
+                    else:
+                        last_error = f"rt_cd={result.get('rt_cd')} msg_cd={result.get('msg_cd')} msg1={result.get('msg1')}"
+                        logger.warning(f"⚠️ 지수 조회 미성공: {last_error} params={params}")
+                except Exception as req_err:
+                    last_error = str(req_err)
+                    logger.warning(f"⚠️ 지수 조회 시도 실패 params={params} error={req_err}")
+
+            logger.error(
+                f"❌ 지수 조회 최종 실패 index={index_code} tr_id={tr_id} last_error={last_error}"
+            )
+            return None
                 
         except Exception as e:
             logger.error(f"❌ 지수 조회 오류 ({index_code}): {e}")
@@ -160,30 +169,34 @@ class KISMarketIndexClient:
                     'trade_value': kosdaq.get('trade_value', 0),
                 }
 
-            # 둘 다 실패 시 Mock 폴백
+            # 둘 다 실패 시 Mock 폴백 (명시적으로 허용되는 경우에만)
             if not indices:
-                mock_data = {
-                    'kospi': {
-                        'current': 2650.5 + random.uniform(-10, 10),
-                        'change': random.uniform(-20, 20),
-                        'change_percent': random.uniform(-1, 1),
-                        'volume': random.randint(400000000, 500000000),
-                        'high': 2665.0,
-                        'low': 2640.0,
-                        'trade_value': random.randint(8000000000000, 9000000000000)
-                    },
-                    'kosdaq': {
-                        'current': 850.2 + random.uniform(-5, 5),
-                        'change': random.uniform(-10, 10),
-                        'change_percent': random.uniform(-0.8, 0.8),
-                        'volume': random.randint(600000000, 700000000),
-                        'high': 855.0,
-                        'low': 845.0,
-                        'trade_value': random.randint(3000000000000, 4000000000000)
+                if getattr(settings, 'KIS_USE_MOCK', False):
+                    mock_data = {
+                        'kospi': {
+                            'current': 2650.5 + random.uniform(-10, 10),
+                            'change': random.uniform(-20, 20),
+                            'change_percent': random.uniform(-1, 1),
+                            'volume': random.randint(400000000, 500000000),
+                            'high': 2665.0,
+                            'low': 2640.0,
+                            'trade_value': random.randint(8000000000000, 9000000000000)
+                        },
+                        'kosdaq': {
+                            'current': 850.2 + random.uniform(-5, 5),
+                            'change': random.uniform(-10, 10),
+                            'change_percent': random.uniform(-0.8, 0.8),
+                            'volume': random.randint(600000000, 700000000),
+                            'high': 855.0,
+                            'low': 845.0,
+                            'trade_value': random.randint(3000000000000, 4000000000000)
+                        }
                     }
-                }
-                logger.info("📊 Mock 시장 지수 데이터 폴백 사용")
-                return mock_data
+                    logger.info("📊 Mock 시장 지수 데이터 폴백 사용")
+                    return mock_data
+                else:
+                    logger.error("❌ KIS 지수 데이터를 가져오지 못했으며 Mock 폴백이 비활성화되어 빈 결과를 반환합니다")
+                    return {}
 
             logger.info(f"📊 시장 지수 업데이트 완료 ({list(indices.keys())})")
             return indices

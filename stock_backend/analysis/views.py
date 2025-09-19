@@ -106,10 +106,18 @@ def stock_analysis_view(request, stock_code):
 @api_view(['GET'])
 def market_overview_view(request):
     """시장 개요 API (캐시 적용)"""
-    # 캐시에서 먼저 확인
-    cached_data = CacheManager.get_market_overview()
-    if cached_data:
-        return Response(cached_data)
+    # 개발/운영 진단용: 쿼리로 캐시 무효화/우회 지원
+    invalidate = request.query_params.get('invalidate_cache') in ['1', 'true', 'True']
+    no_cache = request.query_params.get('no_cache') in ['1', 'true', 'True']
+
+    if invalidate:
+        CacheManager.invalidate_market_cache()
+
+    # 캐시에서 먼저 확인(단, no_cache가 아닐 때)
+    if not no_cache:
+        cached_data = CacheManager.get_market_overview()
+        if cached_data:
+            return Response(cached_data)
     
     # 시장 지수 데이터
     market_indices = MarketIndex.objects.all()
@@ -153,8 +161,9 @@ def market_overview_view(request):
         'sector_performance': sector_performance
     }
     
-    # 캐시에 저장 (30초)
-    CacheManager.set_market_overview(response_data)
+    # 캐시에 저장 (30초) - no_cache인 경우 저장 생략
+    if not no_cache:
+        CacheManager.set_market_overview(response_data)
     
     return Response(response_data)
 
