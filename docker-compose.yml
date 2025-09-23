@@ -165,7 +165,7 @@ services:
       - STATIC_ROOT=/app/staticfiles
       - SKIP_COLLECTSTATIC=True
       - COLLECT_STATIC=False
-      - DJANGO_MODE=development
+      - DJANGO_MODE=production
 
     # 🚀 명령어 오버라이드 (ASGI 서버로 WebSocket 지원)
     command: ["./docker-entrypoint.sh", "asgi"]

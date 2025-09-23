@@ -24,6 +24,21 @@ from .ws_utils import get_group_name_for_stock
 logger = logging.getLogger(__name__)
 performance_logger = logging.getLogger('performance')
 
+# Debug-gated logging helpers (INFO/WARN only when DEBUG=True)
+from django.conf import settings as _settings
+def _dinfo(msg: str):
+    try:
+        if getattr(_settings, 'DEBUG', False):
+            logger.info(msg)
+    except Exception:
+        pass
+def _dwarn(msg: str):
+    try:
+        if getattr(_settings, 'DEBUG', False):
+            logger.warning(msg)
+    except Exception:
+        pass
+
 # 글로벌 구독 관리자
 class GlobalSubscriptionManager:
     """전역 구독 관리자 - 모든 클라이언트 간 공유 (성능 최적화)"""
@@ -49,13 +64,14 @@ class GlobalSubscriptionManager:
         """단일 브로드캐스트 스레드 초기화 - 성능 최적화"""
         # Delegate to reusable utility to manage loop/thread
         ws_loop.ensure_started()
-        performance_logger.info("Single broadcast thread ensured started")
+        if getattr(_settings, 'DEBUG', False):
+            performance_logger.info("Single broadcast thread ensured started")
         
     def add_client(self, client_id: str):
         """클라이언트 추가"""
         with self.lock:
             self.connected_clients[client_id] = set()
-            logger.info(f"📱 Client {client_id} added. Total clients: {len(self.connected_clients)}")
+            _dinfo(f"📱 Client {client_id} added. Total clients: {len(self.connected_clients)}")
             
             # 첫 번째 클라이언트일 때 KIS 연결
             if len(self.connected_clients) == 1:
@@ -68,7 +84,7 @@ class GlobalSubscriptionManager:
                 client_subscriptions = self.connected_clients[client_id]
                 del self.connected_clients[client_id]
                 
-                logger.info(f"📱 Client {client_id} removed. Remaining clients: {len(self.connected_clients)}")
+                _dinfo(f"📱 Client {client_id} removed. Remaining clients: {len(self.connected_clients)}")
                 
                 # 더 이상 구독하지 않는 종목들 찾기
                 still_subscribed = set()
@@ -105,7 +121,7 @@ class GlobalSubscriptionManager:
                     else:
                         new_subscriptions.append(stock_code)
             
-            logger.info(f"📊 Client {client_id} subscribed to {len(new_subscriptions)} new stocks")
+            _dinfo(f"📊 Client {client_id} subscribed to {len(new_subscriptions)} new stocks")
             return new_subscriptions
     
     def unsubscribe_stocks(self, client_id: str, stock_codes: list) -> list:
@@ -141,13 +157,13 @@ class GlobalSubscriptionManager:
     def _initialize_kis_client(self):
         """KIS 클라이언트 초기화 (실제 API 전용)"""
         try:
-            logger.info("🔌 Initializing Global KIS WebSocket client...")
+            _dinfo("🔌 Initializing Global KIS WebSocket client...")
             
             # 시장 상태 우선 확인
             is_open, reason = market_utils.is_market_open()
             
             if not is_open:
-                logger.info(f"🔴 시장 휴장 중 ({reason}) - API 연결 없이 휴장일 모드 활성화")
+                _dinfo(f"🔴 시장 휴장 중 ({reason}) - API 연결 없이 휴장일 모드 활성화")
                 self.kis_client = None
                 self.market_closed_mode = True
                 return
@@ -158,11 +174,11 @@ class GlobalSubscriptionManager:
             app_key = getattr(settings, 'KIS_APP_KEY', None)
             app_secret = getattr(settings, 'KIS_APP_SECRET', None)
             
-            logger.info(f"📋 KIS 설정 확인:")
-            logger.info(f"   - USE_MOCK: {use_mock}")
-            logger.info(f"   - PAPER_TRADING: {is_paper_trading} ({'모의투자' if is_paper_trading else '실계좌'})")
-            logger.info(f"   - APP_KEY: {'설정됨' if app_key else '없음'} ({app_key[:10] + '...' if app_key else 'None'})")
-            logger.info(f"   - APP_SECRET: {'설정됨' if app_secret else '없음'}")
+            _dinfo("📋 KIS 설정 확인:")
+            _dinfo(f"   - USE_MOCK: {use_mock}")
+            _dinfo(f"   - PAPER_TRADING: {is_paper_trading} ({'모의투자' if is_paper_trading else '실계좌'})")
+            _dinfo(f"   - APP_KEY: {'설정됨' if app_key else '없음'} ({app_key[:10] + '...' if app_key else 'None'})")
+            _dinfo(f"   - APP_SECRET: {'설정됨' if app_secret else '없음'}")
             
             # Wrapper 사용 강제
             try:
@@ -182,7 +198,7 @@ class GlobalSubscriptionManager:
             
             # 연결 시도
             if self.kis_client.connect():
-                logger.info("✅ 전역 KIS API 클라이언트 연결 성공!")
+                _dinfo("✅ 전역 KIS API 클라이언트 연결 성공!")
                 self.connection_status = "connected"
                 self.market_closed_mode = False
                 return
@@ -204,15 +220,16 @@ class GlobalSubscriptionManager:
             self.kis_client.close()
             self.kis_client = None
             self.subscribed_stocks.clear()
-            logger.info("🔌 Global KIS WebSocket client closed")
-            performance_logger.info("KIS WebSocket client closed")
+            _dinfo("🔌 Global KIS WebSocket client closed")
+            if getattr(_settings, 'DEBUG', False):
+                performance_logger.info("KIS WebSocket client closed")
     
     def _subscribe_to_kis(self, stock_code: str) -> bool:
         """KIS에 종목 구독 (휴장일 대응 포함)"""
         try:
             # 휴장일 모드일 때 처리
             if self.market_closed_mode or not self.kis_client:
-                logger.info(f"🔴 휴장일 모드 - {stock_code} 이전 거래일 종가 제공 시도")
+                _dinfo(f"🔴 휴장일 모드 - {stock_code} 이전 거래일 종가 제공 시도")
                 
                 # 이전 거래일 종가 데이터 생성 및 브로드캐스트
                 self._handle_market_closed_subscription(stock_code)
@@ -241,7 +258,7 @@ class GlobalSubscriptionManager:
                     self._broadcast_loop
                 )
             else:
-                logger.warning(f"⚠️ Broadcast loop not available for {stock_code}")
+                _dwarn(f"⚠️ Broadcast loop not available for {stock_code}")
                 
         except Exception as e:
             logger.error(f"❌ {stock_code} 휴장일 처리 오류: {e}")
@@ -264,7 +281,7 @@ class GlobalSubscriptionManager:
             stock_name, current_price = stock_info
             
             if stock_name is None:
-                logger.warning(f"❌ 종목 {stock_code}를 데이터베이스에서 찾을 수 없습니다")
+                _dwarn(f"❌ 종목 {stock_code}를 데이터베이스에서 찾을 수 없습니다")
                 return
             
             # 이전 거래일 기준 종가 데이터 생성
@@ -290,7 +307,7 @@ class GlobalSubscriptionManager:
             # 브로드캐스트를 위해 콜백 호출
             self._price_callback(mock_price_data)
             
-            logger.info(f"💾 {stock_code}({stock_name}) 휴장일 종가 데이터 제공: {mock_price_data['current_price']:,}원")
+            _dinfo(f"💾 {stock_code}({stock_name}) 휴장일 종가 데이터 제공: {mock_price_data['current_price']:,}원")
             
         except Exception as e:
             logger.error(f"❌ {stock_code} 휴장일 처리 오류: {e}")
@@ -303,7 +320,7 @@ class GlobalSubscriptionManager:
         try:
             success = self.kis_client.unsubscribe_stock(stock_code)
             if success:
-                logger.info(f"📊 Global subscription removed for {stock_code}")
+                _dinfo(f"📊 Global subscription removed for {stock_code}")
             return success
         except Exception as e:
             logger.error(f"KIS unsubscription error for {stock_code}: {e}")
@@ -321,15 +338,16 @@ class GlobalSubscriptionManager:
             # 성능 로그 (1분에 한 번)
             current_time = time.time()
             if current_time - self._last_performance_log >= 60:
-                performance_logger.info(
-                    f"Price callback performance: {self._callback_count} callbacks, "
-                    f"{len(self.connected_clients)} clients"
-                )
+                if getattr(_settings, 'DEBUG', False):
+                    performance_logger.info(
+                        f"Price callback performance: {self._callback_count} callbacks, "
+                        f"{len(self.connected_clients)} clients"
+                    )
                 self._last_performance_log = current_time
                 self._callback_count = 0
             
             # 정보 로그 빈도 줄이기 (100번에 1번)
-            if self._callback_count % 100 == 1:
+            if getattr(_settings, 'DEBUG', False) and self._callback_count % 100 == 1:
                 logger.info(f"💰 Received price data: {stock_code} = {price_data.get('current_price')}")
             
             # 🔧 실제 거래량 데이터 보강 (모의투자 모드에서만)
@@ -404,7 +422,7 @@ class GlobalSubscriptionManager:
             )
 
             # 성공 로그 빈도 줄이기 (200번에 1번)
-            if self._callback_count % 200 == 1:
+            if getattr(_settings, 'DEBUG', False) and self._callback_count % 200 == 1:
                 logger.info(f"✅ Price broadcasted to {group_name}")
 
         except Exception as e:
@@ -427,7 +445,7 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
             
             # 연결 수락
             await self.accept()
-            logger.info(f"📱 WebSocket connection accepted for {self.client_id}")
+            _dinfo(f"📱 WebSocket connection accepted for {self.client_id}")
             
             # 변경점(Step 1): 더 이상 단일 그룹("stock_prices")에 참가하지 않음
             # 각 종목 구독 시점에 종목별 그룹에 참가하도록 변경
@@ -462,7 +480,7 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
             # 글로벌 관리자에서 클라이언트 제거
             if hasattr(self, 'client_id'):
                 global_subscription_manager.remove_client(self.client_id)
-                logger.info(f"📱 Client {self.client_id} disconnected")
+                _dinfo(f"📱 Client {self.client_id} disconnected")
                 
         except Exception as e:
             logger.error(f"Disconnect error: {e}")

@@ -40,6 +40,12 @@ export class RealTimeStockClient {
   constructor(baseUrl: string = 'ws://localhost:8000') {
     this.url = `${baseUrl}/ws/stocks/realtime/`;
   }
+
+  // Debug logging helpers (gated by env flag)
+  private static readonly WS_DEBUG: boolean = process.env.NEXT_PUBLIC_WS_DEBUG === 'true';
+  private dlog(...args: any[]) { if (RealTimeStockClient.WS_DEBUG) console.log(...args); }
+  private dwarn(...args: any[]) { if (RealTimeStockClient.WS_DEBUG) console.warn(...args); }
+  private derr(...args: any[]) { console.error(...args); }
   
   /**
    * WebSocket 연결
@@ -52,7 +58,7 @@ export class RealTimeStockClient {
     this.isConnecting = true;
     
     try {
-      console.log('🔌 Connecting to real-time stock service...');
+      this.dlog('🔌 Connecting to real-time stock service...');
       
       this.ws = new WebSocket(this.url);
       
@@ -78,7 +84,7 @@ export class RealTimeStockClient {
       });
       
     } catch (error) {
-      console.error('WebSocket connection error:', error);
+      this.derr('WebSocket connection error:', error);
       this.isConnecting = false;
       return false;
     }
@@ -94,7 +100,7 @@ export class RealTimeStockClient {
     }
     this.subscriptions.clear();
     this.priceCallbacks.clear();
-    console.log('🔌 Disconnected from real-time stock service');
+    this.dlog('🔌 Disconnected from real-time stock service');
   }
   
   /**
@@ -114,7 +120,7 @@ export class RealTimeStockClient {
         stock_codes: stockCodes
       });
     } else {
-      console.warn('WebSocket not connected, queuing subscription...');
+      this.dwarn('WebSocket not connected, queuing subscription...');
       // 연결 후 자동으로 구독하도록 큐에 저장
       stockCodes.forEach(code => this.subscriptions.add(code));
     }
@@ -170,7 +176,7 @@ export class RealTimeStockClient {
   // Private methods
   
   private handleOpen(): void {
-    console.log('🟢 WebSocket connected successfully');
+    this.dlog('🟢 WebSocket connected successfully');
     this.isConnecting = false;
     this.reconnectAttempts = 0;
     
@@ -194,7 +200,7 @@ export class RealTimeStockClient {
       
       switch (message.type) {
         case 'connection_status':
-          console.log('📱 Connection status:', message.message);
+          this.dlog('📱 Connection status:', message.message);
           if (message.subscribed_stocks) {
             message.subscribed_stocks.forEach(code => 
               this.subscriptions.add(code)
@@ -209,7 +215,7 @@ export class RealTimeStockClient {
           break;
           
         case 'subscribe_response':
-          console.log('📊 Subscription response:', message.message);
+          this.dlog('📊 Subscription response:', message.message);
           if (message.subscribed) {
             message.subscribed.forEach(code => 
               this.subscriptions.add(code)
@@ -218,7 +224,7 @@ export class RealTimeStockClient {
           break;
           
         case 'unsubscribe_response':
-          console.log('📊 Unsubscription response:', message.message);
+          this.dlog('📊 Unsubscription response:', message.message);
           if (message.unsubscribed) {
             message.unsubscribed.forEach(code => 
               this.subscriptions.delete(code)
@@ -227,18 +233,18 @@ export class RealTimeStockClient {
           break;
           
         case 'error':
-          console.error('❌ WebSocket error:', message.message);
+          this.derr('❌ WebSocket error:', message.message);
           break;
           
         case 'subscriptions':
           if (message.subscribed_stocks) {
-            console.log('📋 Current subscriptions:', message.subscribed_stocks);
+            this.dlog('📋 Current subscriptions:', message.subscribed_stocks);
           }
           break;
       }
       
     } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
+      this.derr('Error parsing WebSocket message:', error);
     }
   }
   
@@ -249,14 +255,14 @@ export class RealTimeStockClient {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Error in price callback for ${data.stock_code}:`, error);
+          this.derr(`Error in price callback for ${data.stock_code}:`, error);
         }
       });
     }
   }
   
   private handleClose(event: CloseEvent): void {
-    console.log('🟡 WebSocket connection closed:', event.code, event.reason);
+    this.dlog('🟡 WebSocket connection closed:', event.code, event.reason);
     this.ws = null;
     this.isConnecting = false;
     
@@ -269,12 +275,12 @@ export class RealTimeStockClient {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnect();
     } else {
-      console.error('❌ Maximum reconnection attempts reached');
+      this.derr('❌ Maximum reconnection attempts reached');
     }
   }
   
   private handleError(error: Event): void {
-    console.error('🔴 WebSocket error:', error);
+    this.derr('🔴 WebSocket error:', error);
     this.isConnecting = false;
   }
   
@@ -282,7 +288,7 @@ export class RealTimeStockClient {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * this.reconnectAttempts;
     
-    console.log(`🔄 Reconnecting in ${delay}ms... (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    this.dlog(`🔄 Reconnecting in ${delay}ms... (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     
     setTimeout(() => {
       this.connect();
@@ -293,7 +299,7 @@ export class RealTimeStockClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn('Cannot send message: WebSocket not connected');
+      this.dwarn('Cannot send message: WebSocket not connected');
     }
   }
 }

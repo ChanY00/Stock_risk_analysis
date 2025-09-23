@@ -25,3 +25,27 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Logging: be quiet in production (only warnings/errors by default)
+try:
+    LOGGING['root']['level'] = 'WARNING'
+    # Reduce chatter from websocket/kis modules unless explicitly overridden by env
+    LOGGING['loggers'].update({
+        'stocks.consumers': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'kis_api.real_websocket_client': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'kis_api.market_index_client': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    })
+except Exception:
+    pass
+

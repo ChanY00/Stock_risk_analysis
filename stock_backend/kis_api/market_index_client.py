@@ -13,6 +13,21 @@ from .market_utils import market_utils
 from .client import KISApiClient
 
 logger = logging.getLogger(__name__)
+from django.conf import settings as _settings
+
+def _dinfo(msg: str):
+    try:
+        if getattr(_settings, 'DEBUG', False):
+            logger.info(msg)
+    except Exception:
+        pass
+
+def _dwarn(msg: str):
+    try:
+        if getattr(_settings, 'DEBUG', False):
+            logger.warning(msg)
+    except Exception:
+        pass
 
 class KISMarketIndexClient:
     """KIS API를 통한 시장 지수 실시간 조회 클라이언트"""
@@ -114,16 +129,16 @@ class KISMarketIndexClient:
                             'timestamp': datetime.now().isoformat(),
                             'source': 'kis_api'
                         }
-                        logger.info(
+                        _dinfo(
                             f"📊 {index_data['name']} 지수 조회 성공: {index_data['current_value']:,.2f} ({index_data['change']:+.2f}, {index_data['change_percent']:+.2f}%) params={params}"
                         )
                         return index_data
                     else:
                         last_error = f"rt_cd={result.get('rt_cd')} msg_cd={result.get('msg_cd')} msg1={result.get('msg1')}"
-                        logger.warning(f"⚠️ 지수 조회 미성공: {last_error} params={params}")
+                        _dwarn(f"⚠️ 지수 조회 미성공: {last_error} params={params}")
                 except Exception as req_err:
                     last_error = str(req_err)
-                    logger.warning(f"⚠️ 지수 조회 시도 실패 params={params} error={req_err}")
+                    _dwarn(f"⚠️ 지수 조회 시도 실패 params={params} error={req_err}")
 
             logger.error(
                 f"❌ 지수 조회 최종 실패 index={index_code} tr_id={tr_id} last_error={last_error}"
@@ -142,11 +157,43 @@ class KISMarketIndexClient:
         return f"INDEX_{index_code}"
 
     def get_all_market_indices(self) -> Dict[str, Dict]:
-        """실제 시장 지수 데이터 조회(가급적 실데이터, 실패 시 Mock 폴백)"""
+        """실제 시장 지수 데이터 조회(가급적 실데이터, 실패 시 Mock 폴백)
+
+        - VTS 환경에서 KOSDAQ 조회가 간헐적으로 500 또는 INVALID FID_COND_MRKT_DIV_CODE가 발생하는 사례가 있어
+          다음 순서로 강건하게 폴백 시도한다.
+            1) (1001, 'U')
+            2) (1001, 'Q')
+            3) (2001, 'U')  # 업종지수시세 코드 대체 시도
+            4) (2001, 'Q')
+        """
         try:
             indices: Dict[str, Dict] = {}
-            kospi = self.get_market_index_data(self.market_indices['KOSPI']['code'], self.market_indices['KOSPI']['market_div'])
-            kosdaq = self.get_market_index_data(self.market_indices['KOSDAQ']['code'], self.market_indices['KOSDAQ']['market_div'])
+            # KOSPI: 일반적으로 (0001, 'U')가 동작
+            kospi = self.get_market_index_data(
+                self.market_indices['KOSPI']['code'],
+                self.market_indices['KOSPI']['market_div']
+            )
+
+            # KOSDAQ: 다단계 폴백 시도
+            kosdaq = None
+            kosdaq_try: List[tuple] = [
+                ('1001', 'U'),
+                ('1001', 'Q'),
+                ('2001', 'U'),
+                ('2001', 'Q'),
+            ]
+            for code, div in kosdaq_try:
+                if kosdaq:
+                    break
+                try:
+                    result = self.get_market_index_data(code, div)
+                    if result:
+                        if code != self.market_indices['KOSDAQ']['code'] or div != self.market_indices['KOSDAQ']['market_div']:
+                            _dinfo(f"📦 KOSDAQ 폴백 성공: code={code} div={div}")
+                        kosdaq = result
+                        break
+                except Exception as e:
+                    _dwarn(f"KOSDAQ 폴백 시도 실패 code={code} div={div} err={e}")
 
             if kospi:
                 indices['kospi'] = {
@@ -192,13 +239,13 @@ class KISMarketIndexClient:
                             'trade_value': random.randint(3000000000000, 4000000000000)
                         }
                     }
-                    logger.info("📊 Mock 시장 지수 데이터 폴백 사용")
+                    _dinfo("📊 Mock 시장 지수 데이터 폴백 사용")
                     return mock_data
                 else:
                     logger.error("❌ KIS 지수 데이터를 가져오지 못했으며 Mock 폴백이 비활성화되어 빈 결과를 반환합니다")
                     return {}
 
-            logger.info(f"📊 시장 지수 업데이트 완료 ({list(indices.keys())})")
+            _dinfo(f"📊 시장 지수 업데이트 완료 ({list(indices.keys())})")
             return indices
         except Exception as e:
             logger.error(f"❌ 시장 지수 데이터 조회 오류: {e}")

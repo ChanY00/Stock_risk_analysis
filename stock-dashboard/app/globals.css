@@ -297,3 +297,41 @@
     image-rendering: optimizeSpeed;
   }
 }
+
+/* ===== Marquee animation (moved from styles/globals.css) ===== */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes marquee-slow {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee-content {
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  will-change: transform;
+}
+
+.marquee-content:hover {
+  animation-play-state: paused;
+}
+
+.marquee-container {
+  position: relative;
+  overflow: hidden;
+  background: transparent; /* transparent track - only cards visible */
+  border-radius: 0; /* no rounded background */
+  border: none; /* remove border */
+}
+
+.marquee-fallback {
+  animation: marquee-slow 60s linear infinite;
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  will-change: transform;
+}

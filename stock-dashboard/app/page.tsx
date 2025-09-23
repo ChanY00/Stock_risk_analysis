@@ -546,13 +546,29 @@ export default function Dashboard() {
             console.warn("감정 분석 데이터 배치 로드 실패:", error);
           });
 
-        // 상단 카드용 시총 상위 30 데이터 준비
-        const mcapItems = stocksData.results
-          .map((s) => ({ code: s.stock_code, name: s.stock_name, marketCap: s.market_cap }))
-          .filter((s) => typeof s.marketCap === 'number' && (s.marketCap as number) > 0)
+        // 상단 카드용 시총 상위 30 데이터 준비 (문자열/콤마 처리 포함)
+        let mcapItems = stocksData.results
+          .map((s) => {
+            const raw = (s.market_cap ?? 0) as any;
+            const cap = Number(String(raw).replace(/,/g, '')) || 0;
+            return { code: s.stock_code, name: s.stock_name, marketCap: cap };
+          })
+          .filter((s) => (s.marketCap || 0) > 0)
           .sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0))
-          .slice(0, 30)
-        setTopMcapItems(mcapItems)
+          .slice(0, 30);
+
+        // Fallback: 시가총액 데이터가 비어있을 때 초깃값으로 상위 30개 종목을 사용하여
+        // 실시간 구독을 활성화하고 비어있는 회색 영역이 보이지 않도록 함
+        if (!mcapItems || mcapItems.length === 0) {
+          mcapItems = stocksData.results
+            .slice(0, 30)
+            .map((s) => {
+              const raw = (s.market_cap ?? 0) as any;
+              const cap = Number(String(raw).replace(/,/g, '')) || 0;
+              return { code: s.stock_code, name: s.stock_name, marketCap: cap };
+            });
+        }
+        setTopMcapItems(mcapItems);
 
         // AI 점수 계산 (공통 유틸리티 사용)
 
@@ -992,8 +1008,6 @@ export default function Dashboard() {
           })}
           mode="top_mcap"
           max={30}
-          // 실시간 데이터가 갱신되면 컴포넌트를 재마운트하여 CSS 애니메이션 재시작
-          key={`ticker-${(favoriteLastUpdated || lastUpdated || 0) as any}`}
         />
         </div>
 
@@ -1845,103 +1859,130 @@ export default function Dashboard() {
 }
 
 // 상승률 상위 10개를 카드 형태로 오른쪽에서 왼쪽으로 흘러가게 표시하는 컴포넌트
-function RisingTicker({ stocks, mode = "gainers", max = 10 }: { stocks: Stock[]; mode?: "gainers" | "top_mcap"; max?: number }) {
-  const marqueeRef = useRef<HTMLDivElement>(null);
+function RisingTicker({ stocks, mode = "gainers", max = 10, rotateMs = 7000 }: { stocks: Stock[]; mode?: "gainers" | "top_mcap"; max?: number; rotateMs?: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [repeat, setRepeat] = useState(2);
-  const [animKey, setAnimKey] = useState(0);
+  const [visibleSlots, setVisibleSlots] = useState(6);
+  const [startIndex, setStartIndex] = useState(0);
+  const [hasMeasured, setHasMeasured] = useState(false);
+  const [slotWidth, setSlotWidth] = useState<number | null>(null);
 
-  // 10분마다 리셋: key로 강제 재마운트 (상위에서 전달)
   const top = useMemo(() => {
     const base = stocks.slice();
     if (mode === "gainers") {
       base.sort((a, b) => (b.changePercent || 0) - (a.changePercent || 0));
-    } else {
-      // top_mcap 모드: 정렬 유지(이미 상위 30 전달됨) + 최대 max개만 표시
     }
     return base.slice(0, max);
   }, [stocks, mode, max]);
 
-  // 데이터가 바뀌면 CSS 애니메이션을 재시작하여 끊김 방지
-  useEffect(() => {
-    setAnimKey((k) => k + 1);
-  }, [top, repeat]);
-
-  // 콘텐츠 폭이 컨테이너보다 작을 때 반복 횟수를 늘려 빈 공간 방지
+  // 컨테이너 폭을 기준으로 표시할 카드 슬롯 수 및 각 슬롯 너비 계산
   useEffect(() => {
     const measure = () => {
       const containerWidth = containerRef.current?.offsetWidth || 0;
-      const contentWidth = marqueeRef.current?.scrollWidth || 0;
-      if (containerWidth === 0 || contentWidth === 0) return;
-      const needed = Math.ceil((containerWidth * 2) / contentWidth);
-      setRepeat(Math.max(2, needed));
+      if (!containerWidth) return;
+      const minCardWidth = 240; // 카드 최소 폭 (내용 가독성 개선)
+      const gapPx = 16; // gap-4 (px)
+      const paddingX = 16; // px-2 => 8px * 2 (좌우)
+      const innerWidth = Math.max(0, containerWidth - paddingX);
+      const slots = Math.max(1, Math.min(10, Math.floor(innerWidth / (minCardWidth + gapPx))));
+      setVisibleSlots(slots);
+      const widthForEach = Math.max(
+        200,
+        Math.floor((innerWidth - (slots - 1) * gapPx) / slots)
+      );
+      setSlotWidth(widthForEach);
+      setHasMeasured(true);
     };
-    // 최초 측정 + 리사이즈 대응
     const t = setTimeout(measure, 100);
-    window.addEventListener('resize', measure);
+    window.addEventListener("resize", measure);
     return () => {
       clearTimeout(t);
-      window.removeEventListener('resize', measure);
+      window.removeEventListener("resize", measure);
     };
-  }, [stocks, top]);
+  }, [stocks]);
 
-  // 빈 배열이어도 훅 순서를 유지하기 위해 반환하지 않고 빈 컨테이너를 렌더링
+  // 일정 간격으로 콘텐츠만 회전
+  useEffect(() => {
+    if (top.length === 0) return;
+    const step = Math.max(1, visibleSlots);
+    const id = setInterval(() => {
+      setStartIndex((idx) => (idx + step) % top.length);
+    }, rotateMs);
+    return () => clearInterval(id);
+  }, [top.length, visibleSlots, rotateMs]);
 
-  // 종목 데이터를 여러 번 복사하여 연속적인 스크롤 효과 생성(빈 공간 방지)
-  const duplicatedStocks = useMemo(() => {
-    const arr: Stock[] = [];
-    for (let i = 0; i < repeat; i++) arr.push(...top);
+  // top 배열 변경 시 인덱스 초기화
+  useEffect(() => {
+    setStartIndex(0);
+  }, [top.length]);
+
+  const isEmpty = top.length === 0;
+
+  // 현재 표시할 종목들 계산 (고정 슬롯 수)
+  const windowStocks: (Stock | undefined)[] = useMemo(() => {
+    const arr: (Stock | undefined)[] = [];
+    for (let i = 0; i < visibleSlots; i++) {
+      arr.push(top.length ? top[(startIndex + i) % top.length] : undefined);
+    }
     return arr;
-  }, [top, repeat]);
+  }, [top, startIndex, visibleSlots]);
 
   return (
-    <div ref={containerRef} className="marquee-container w-full h-16 mt-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-2 overflow-hidden">
-      <div key={animKey} ref={marqueeRef} className="marquee h-full flex items-center">
-        {duplicatedStocks.map((s, idx) => {
-          const sign = (s.changePercent || 0) >= 0 ? "+" : "";
-          const isPositive = (s.changePercent || 0) >= 0;
-
-          return (
-            <div
-              key={`${s.code}-${idx}`}
-              className="flex-shrink-0 mx-4 bg-white dark:bg-gray-800 rounded-lg p-3 min-w-[200px] border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-200 shadow-sm dark:shadow-gray-900/20"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="text-gray-900 dark:text-white font-semibold text-sm truncate">
-                    {s.name}
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-400 text-xs">
-                    {s.code}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="text-right">
-                    <div
-                      className={`font-bold text-lg ${
-                        isPositive ? "text-red-400" : "text-blue-400"
-                      }`}
-                    >
-                      {sign}
-                      {(s.changePercent || 0).toFixed(2)}%
+    <div ref={containerRef} className="marquee-container w-full h-20 mt-3 overflow-hidden">
+      {isEmpty ? (
+        <div className="w-full h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+          {hasMeasured ? '표시할 시가총액 상위 종목이 없습니다' : '불러오는 중...'}
+        </div>
+      ) : (
+        <div className="flex h-full items-center gap-4 px-2">
+          {windowStocks.map((s, idx) => {
+            if (!s) {
+              return <div key={`empty-${idx}`} className="flex-shrink-0" style={{ width: slotWidth ?? 220 }} />;
+            }
+            const sign = (s.changePercent || 0) >= 0 ? "+" : "";
+            const isPositive = (s.changePercent || 0) >= 0;
+            return (
+              <div
+                key={`${s.code}-${idx}`}
+                className="flex-shrink-0 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors duration-200 shadow-sm dark:shadow-gray-900/20"
+                style={{ width: slotWidth ?? 240 }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-gray-900 dark:text-white font-semibold text-sm truncate">
+                      {s.name}
                     </div>
-                    <div className="text-gray-500 dark:text-gray-400 text-xs">
-                      AI: {s.aiScore || "-"}
+                    <div className="text-gray-600 dark:text-gray-400 text-xs">
+                      {s.code}
                     </div>
                   </div>
-                  <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                    <TrendingUp
-                      className={`w-4 h-4 ${
-                        isPositive ? "text-red-400" : "text-blue-400"
-                      }`}
-                    />
+                  <div className="flex items-center space-x-2">
+                    <div className="text-right">
+                      <div
+                        className={`font-bold text-lg ${
+                          isPositive ? "text-red-400" : "text-blue-400"
+                        }`}
+                      >
+                        {sign}
+                        {(s.changePercent || 0).toFixed(2)}%
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">
+                        AI: {s.aiScore || "-"}
+                      </div>
+                    </div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <TrendingUp
+                        className={`w-4 h-4 ${
+                          isPositive ? "text-red-400" : "text-blue-400"
+                        }`}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
