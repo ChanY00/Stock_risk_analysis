@@ -6,6 +6,7 @@ import {
   Star,
   Clock,
   TrendingUp,
+  TrendingDown,
   Filter,
   RefreshCw,
   BarChart3,
@@ -1970,11 +1971,11 @@ function RisingTicker({ stocks, mode = "gainers", max = 10, rotateMs = 7000 }: {
                       </div>
                     </div>
                     <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
-                      <TrendingUp
-                        className={`w-4 h-4 ${
-                          isPositive ? "text-red-400" : "text-blue-400"
-                        }`}
-                      />
+                      {isPositive ? (
+                        <TrendingUp className="w-4 h-4 text-red-400" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4 text-blue-400" />
+                      )}
                     </div>
                   </div>
                 </div>

@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import { MarketOverview, stocksApi } from '@/lib/api'
@@ -105,8 +103,18 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
   }
 
   // 시장 지수 데이터 준비 - KOSPI/KOSDAQ만 표시
-  const entries = Object.entries(marketData.market_summary || {})
-  const marketIndices = entries
+  type MarketSummaryItem = {
+    current: number
+    change: number
+    change_percent: number
+    volume: number
+    high: number
+    low: number
+    trade_value: number
+  }
+
+  const marketSummary = (marketData.market_summary || {}) as Record<string, MarketSummaryItem>
+  const marketIndices = Object.entries(marketSummary)
     .filter(([key]) => ['kospi', 'kosdaq'].includes(key.toLowerCase()))
     .map(([key, data]) => ({
       name: key.toUpperCase(),
@@ -133,6 +141,24 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
     return `${sign}${num.toFixed(2)}%`
   }
 
+  // 공통: 등락 스타일/아이콘/표시값 헬퍼 (중복 제거)
+  const getTrendMeta = (pct: number) => {
+    const isUp = (pct || 0) >= 0
+    return {
+      isUp,
+      colorClass: isUp ? 'text-red-600' : 'text-blue-600',
+      badgeClass: isUp ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800',
+      Icon: isUp ? TrendingUp : TrendingDown,
+      percentText: `${isUp ? '+' : ''}${(pct || 0).toFixed(2)}%`,
+    }
+  }
+
+  const formatSignedNumber = (num: number) => {
+    const n = Number(num) || 0
+    const sign = n >= 0 ? '+' : ''
+    return `${sign}${n.toFixed(2)}`
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -156,48 +182,51 @@ export function MarketOverviewWidget({ marketData: initialMarketData, loading = 
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+        <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'indices')}>
           <TabsList className="grid w-full grid-cols-1">
             <TabsTrigger value="indices" className="text-xs">지수</TabsTrigger>
           </TabsList>
 
           <TabsContent value="indices" className="space-y-4 mt-4">
-            {marketIndices.map((index) => (
-              <div key={index.name} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{index.name}</span>
-                    {index.isPositive ? (
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-red-600" />
-                    )}
+            {marketIndices.map((index) => {
+              // 등락 방향은 퍼센트가 0으로 오는 경우가 있어, 실제 증감액으로 판정
+              const meta = getTrendMeta(index.change)
+              const ProgressValue = (() => {
+                const high = Number(index.high || 0)
+                const low = Number(index.low || 0)
+                const cur = Number(index.current || 0)
+                const range = high - low
+                if (range <= 0) return 0
+                return Math.min(100, Math.max(0, ((cur - low) / range) * 100))
+              })()
+              const TrendIcon = meta.Icon
+              return (
+                <div key={index.name} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{index.name}</span>
+                      <TrendIcon className={`h-4 w-4 ${meta.colorClass}`} />
+                    </div>
                   </div>
-                  <Badge 
-                    variant={index.isPositive ? "default" : "destructive"}
-                    className={index.isPositive ? "bg-green-100 text-green-800" : ""}
-                  >
-                    {formatPercent(index.changePercent)}
-                  </Badge>
+                  <div className="flex justify-between text-sm">
+                    <span className="font-mono font-medium">
+                      {Number(index.current || 0).toLocaleString()}
+                    </span>
+                    <span className={`font-mono ${meta.colorClass}`}>
+                      {formatSignedNumber(index.change)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>거래량: {formatNumber(Number(index.volume || 0))}</span>
+                    <span>고가: {Number(index.high || 0).toLocaleString()}</span>
+                  </div>
+                  <Progress 
+                    value={ProgressValue} 
+                    className="h-2"
+                  />
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="font-mono font-medium">
-                    {Number(index.current || 0).toLocaleString()}
-                  </span>
-                  <span className={`font-mono ${index.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    {index.isPositive ? '+' : ''}{Number(index.change || 0).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>거래량: {formatNumber(Number(index.volume || 0))}</span>
-                  <span>고가: {Number(index.high || 0).toLocaleString()}</span>
-                </div>
-                <Progress 
-                  value={Math.min(100, ((index.current - index.low) / (index.high - index.low)) * 100)} 
-                  className="h-2"
-                />
-              </div>
-            ))}
+              )
+            })}
           </TabsContent>
 
           {/* 섹터 및 등락 탭 제거 */}
