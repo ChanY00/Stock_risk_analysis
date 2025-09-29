@@ -179,6 +179,11 @@ CORS_ALLOWED_ORIGINS = _split_csv('CORS_ALLOWED_ORIGINS')
 # CSRF
 CSRF_TRUSTED_ORIGINS = _split_csv('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 
+# Email settings (override via env in dev/prod)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@example.com')
+PASSWORD_RESET_FRONTEND_URL = os.getenv('PASSWORD_RESET_FRONTEND_URL', 'http://localhost:3000/password-reset/confirm')
+
 # ===== KIS API 설정 =====
 KIS_USE_MOCK = os.getenv('KIS_USE_MOCK', 'False').lower() == 'true'
 KIS_IS_PAPER_TRADING = os.getenv('KIS_IS_PAPER_TRADING', 'True').lower() == 'true'

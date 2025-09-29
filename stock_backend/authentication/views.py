@@ -11,6 +11,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from rest_framework.authentication import SessionAuthentication
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
+from .services import create_password_reset_token, send_password_reset_email
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -132,45 +133,52 @@ def check_username(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def request_password_reset(request):
-    """비밀번호 재설정 요청"""
+    """비밀번호 재설정 요청: 토큰 발급 후 이메일 발송 (항상 동일 메시지 반환)"""
     email = request.data.get('email')
     if not email:
         return Response({'error': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
-    
+
+    # 사용자 존재 여부와 무관하게 동일 응답으로 사용자 열거 방지
     try:
         user = User.objects.get(email=email)
-        # 실제 구현에서는 이메일 발송 로직이 들어가야 함
-        # 지금은 임시로 성공 메시지만 반환
-        return Response({
-            'message': f'{email}로 비밀번호 재설정 링크를 발송했습니다. (개발 모드: 임시 비밀번호는 temp123456)',
-            'temp_password': 'temp123456'  # 개발용 임시 비밀번호
-        })
+        token = create_password_reset_token(user)
+        send_password_reset_email(user, token)
     except User.DoesNotExist:
-        return Response({
-            'error': '해당 이메일로 등록된 계정을 찾을 수 없습니다.'
-        }, status=status.HTTP_404_NOT_FOUND)
+        pass
+
+    return Response({'message': '입력하신 이메일로 비밀번호 재설정 안내를 발송했습니다.'})
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def reset_password(request):
-    """비밀번호 재설정 (개발용 간단 버전)"""
+    """비밀번호 재설정: 토큰 + 이메일 + 새 비밀번호 검증"""
+    from .models import PasswordResetToken
+
     email = request.data.get('email')
+    token_str = request.data.get('token')
     new_password = request.data.get('new_password')
-    
-    if not email or not new_password:
-        return Response({
-            'error': '이메일과 새 비밀번호를 모두 입력해주세요.'
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
+
+    if not email or not token_str or not new_password:
+        return Response({'error': '이메일, 토큰, 새 비밀번호를 모두 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         user = User.objects.get(email=email)
-        user.set_password(new_password)
-        user.save()
-        return Response({
-            'message': '비밀번호가 성공적으로 변경되었습니다.'
-        })
     except User.DoesNotExist:
-        return Response({
-            'error': '해당 이메일로 등록된 계정을 찾을 수 없습니다.'
-        }, status=status.HTTP_404_NOT_FOUND)
+        # 사용자 열거 방지
+        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        prt = PasswordResetToken.objects.get(user=user, token=token_str)
+    except PasswordResetToken.DoesNotExist:
+        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not prt.is_valid():
+        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # change password
+    user.set_password(new_password)
+    user.save()
+    prt.mark_used()
+
+    return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'})

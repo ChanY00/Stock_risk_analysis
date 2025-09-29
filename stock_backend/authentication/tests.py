@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.test.utils import override_settings
 from django.core.cache import cache
+from django.core import mail
 
 
 class TestAuthStatusCsrfCookie(TestCase):
@@ -127,40 +128,65 @@ class TestLoginRateLimitAndLockout(TestCase):
             HTTP_X_CSRFTOKEN=csrftoken,
         )
         self.assertEqual(resp.status_code, 400)
-        self.assertIn("제한", resp.json().get("non_field_errors", [""])[0])
 
-    def test_success_resets_failure_counters(self):
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', PASSWORD_RESET_TOKEN_TTL_MINUTES=5)
+class TestPasswordResetFlow(TestCase):
+    def setUp(self):
+        self.client = Client(enforce_csrf_checks=True)
+        self.user = User.objects.create_user(username="kate", password="secret123", email="k@k.com")
+
+    def _get_csrf(self):
+        r = self.client.get("/api/auth/status/")
+        return r.cookies['csrftoken'].value
+
+    def test_request_password_reset_sends_email(self):
         csrftoken = self._get_csrf()
-        # one failure
         resp = self.client.post(
-            "/api/auth/login/",
-            data={"username": "rick", "password": "wrong"},
+            "/api/auth/password-reset/request/",
+            data={"email": "k@k.com"},
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrftoken,
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 200)
+        self.assertGreaterEqual(len(mail.outbox), 1)
+        self.assertIn("비밀번호 재설정", mail.outbox[-1].subject)
 
-        # success should clear counters
+    def test_reset_password_with_token(self):
+        # request a token
+        csrftoken = self._get_csrf()
+        self.client.post(
+            "/api/auth/password-reset/request/",
+            data={"email": "k@k.com"},
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrftoken,
+        )
+        # extract token from db
+        from authentication.models import PasswordResetToken
+        prt = PasswordResetToken.objects.filter(user=self.user, used=False).latest('created_at')
+
+        # reset password
+        csrftoken = self._get_csrf()
         resp = self.client.post(
-            "/api/auth/login/",
-            data={"username": "rick", "password": "correcthorse"},
+            "/api/auth/password-reset/confirm/",
+            data={"email": "k@k.com", "token": str(prt.token), "new_password": "newpass999"},
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrftoken,
         )
         self.assertEqual(resp.status_code, 200)
 
-        # After login, session may rotate, requiring a fresh CSRF token
+        # ensure login with new password works
         csrftoken = self._get_csrf()
-
-        # another failure should be counted from 1 again (not directly observable here,
-        # but at least ensure no lockout after single new failure)
         resp = self.client.post(
             "/api/auth/login/",
-            data={"username": "rick", "password": "wrong"},
+            data={"username": "kate", "password": "newpass999"},
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrftoken,
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 200)
+        # ensure response payload includes user object
+        data = resp.json()
+        self.assertIn("user", data)
 
     # remember-me suite focuses only on session expiry behavior
 

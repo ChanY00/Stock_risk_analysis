@@ -3,6 +3,10 @@ from __future__ import annotations
 from django.conf import settings
 from django.core.cache import cache
 from typing import Optional
+from datetime import timedelta
+from django.utils import timezone
+from django.core.mail import send_mail
+from .models import PasswordResetToken
 
 
 def get_client_ip(request) -> str:
@@ -52,5 +56,26 @@ def lock_account(username: str, ip: str) -> None:
 
 def reset_attempts(username: str, ip: str) -> None:
     cache.delete_many([_attempts_key(username, ip), _lock_key(username, ip)])
+
+
+# ===== Password reset token services =====
+def create_password_reset_token(user) -> PasswordResetToken:
+    ttl_minutes = int(getattr(settings, 'PASSWORD_RESET_TOKEN_TTL_MINUTES', 30))
+    expires_at = timezone.now() + timedelta(minutes=ttl_minutes)
+    return PasswordResetToken.objects.create(user=user, expires_at=expires_at)
+
+
+def send_password_reset_email(user, token: PasswordResetToken) -> None:
+    frontend_url = getattr(settings, 'PASSWORD_RESET_FRONTEND_URL', 'http://localhost:3000/password-reset/confirm')
+    reset_link = f"{frontend_url}?token={token.token}&email={user.email}"
+    subject = "비밀번호 재설정 안내"
+    message = f"다음 링크를 클릭하여 비밀번호를 재설정하세요:\n{reset_link}\n이 링크는 일정 시간 후 만료됩니다."
+    send_mail(
+        subject,
+        message,
+        getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@example.com'),
+        [user.email],
+        fail_silently=False,
+    )
 
 
