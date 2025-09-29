@@ -120,6 +120,12 @@ STOCK_CACHE_TIMEOUT = 60
 MARKET_CACHE_TIMEOUT = 30
 ANALYSIS_CACHE_TIMEOUT = 300
 
+# ===== Auth security controls =====
+# 로그인 실패 시도 제한 및 잠금(환경변수로 조절 가능)
+AUTH_MAX_LOGIN_ATTEMPTS = int(os.getenv('AUTH_MAX_LOGIN_ATTEMPTS', '5'))
+AUTH_LOCKOUT_SECONDS = int(os.getenv('AUTH_LOCKOUT_SECONDS', '300'))  # 5분
+AUTH_ATTEMPT_WINDOW_SECONDS = int(os.getenv('AUTH_ATTEMPT_WINDOW_SECONDS', '600'))  # 10분
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},

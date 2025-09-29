@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.conf import settings
+from . import services
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -41,9 +43,22 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
         
         if username and password:
+            request = self.context.get('request') if hasattr(self, 'context') else None
+            client_ip = services.get_client_ip(request) if request is not None else ''
+
+            # Lockout check
+            if services.is_locked(username, client_ip):
+                raise serializers.ValidationError('로그인 시도가 잠시 제한되었습니다. 잠시 후 다시 시도해주세요.')
+
             user = authenticate(username=username, password=password)
             if not user:
-                raise serializers.ValidationError('로그인 정보가 올바르지 않습니다.')
+                attempts = services.record_failed_attempt(username, client_ip)
+                max_attempts = int(getattr(settings, 'AUTH_MAX_LOGIN_ATTEMPTS', 5))
+                if attempts >= max_attempts:
+                    services.lock_account(username, client_ip)
+                raise serializers.ValidationError('아이디 또는 비밀번호가 올바르지 않습니다.')
+            # Success: reset counters
+            services.reset_attempts(username, client_ip)
             attrs['user'] = user
         else:
             raise serializers.ValidationError('아이디와 비밀번호를 모두 입력해주세요.')

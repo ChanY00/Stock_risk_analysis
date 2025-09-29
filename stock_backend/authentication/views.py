@@ -38,7 +38,7 @@ def register(request):
 @permission_classes([AllowAny])
 def user_login(request):
     """사용자 로그인"""
-    serializer = UserLoginSerializer(data=request.data)
+    serializer = UserLoginSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
         user = serializer.validated_data['user']
         login(request, user)

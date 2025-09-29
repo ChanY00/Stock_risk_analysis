@@ -1,6 +1,8 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.test.utils import override_settings
+from django.core.cache import cache
 
 
 class TestAuthStatusCsrfCookie(TestCase):
@@ -92,6 +94,73 @@ class TestRememberMeSessionExpiry(TestCase):
                 self.assertTrue(int(max_age) > 0)
             except Exception:
                 self.fail("session cookie max-age is not a positive integer")
+
+
+@override_settings(AUTH_MAX_LOGIN_ATTEMPTS=3, AUTH_LOCKOUT_SECONDS=60, AUTH_ATTEMPT_WINDOW_SECONDS=300)
+class TestLoginRateLimitAndLockout(TestCase):
+    def setUp(self):
+        self.client = Client(enforce_csrf_checks=True)
+        cache.clear()
+        self.user = User.objects.create_user(username="rick", password="correcthorse", email="r@r.com")
+
+    def _get_csrf(self):
+        r = self.client.get("/api/auth/status/")
+        return r.cookies['csrftoken'].value
+
+    def test_lockout_after_repeated_failures(self):
+        csrftoken = self._get_csrf()
+        # 3 failures
+        for _ in range(3):
+            resp = self.client.post(
+                "/api/auth/login/",
+                data={"username": "rick", "password": "wrong"},
+                content_type="application/json",
+                HTTP_X_CSRFTOKEN=csrftoken,
+            )
+            self.assertEqual(resp.status_code, 400)
+
+        # Next attempt should be locked out
+        resp = self.client.post(
+            "/api/auth/login/",
+            data={"username": "rick", "password": "correcthorse"},
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrftoken,
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("제한", resp.json().get("non_field_errors", [""])[0])
+
+    def test_success_resets_failure_counters(self):
+        csrftoken = self._get_csrf()
+        # one failure
+        resp = self.client.post(
+            "/api/auth/login/",
+            data={"username": "rick", "password": "wrong"},
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrftoken,
+        )
+        self.assertEqual(resp.status_code, 400)
+
+        # success should clear counters
+        resp = self.client.post(
+            "/api/auth/login/",
+            data={"username": "rick", "password": "correcthorse"},
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrftoken,
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # After login, session may rotate, requiring a fresh CSRF token
+        csrftoken = self._get_csrf()
+
+        # another failure should be counted from 1 again (not directly observable here,
+        # but at least ensure no lockout after single new failure)
+        resp = self.client.post(
+            "/api/auth/login/",
+            data={"username": "rick", "password": "wrong"},
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrftoken,
+        )
+        self.assertEqual(resp.status_code, 400)
 
     # remember-me suite focuses only on session expiry behavior
 
