@@ -1,4 +1,5 @@
 from django.shortcuts import render
+import os
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -41,6 +42,22 @@ def user_login(request):
     if serializer.is_valid():
         user = serializer.validated_data['user']
         login(request, user)
+        # Remember-me support: control session expiry based on client flag
+        remember_me = False
+        try:
+            # support both snake_case and camelCase from clients
+            body_flag = request.data.get('remember_me', request.data.get('rememberMe', False))
+            remember_me = bool(body_flag) in (True,)
+        except Exception:
+            remember_me = False
+
+        if remember_me:
+            # default 14 days unless overridden via env
+            max_age = int(os.getenv('SESSION_REMEMBER_ME_AGE', '1209600'))
+            request.session.set_expiry(max_age)
+        else:
+            # expire on browser close
+            request.session.set_expiry(0)
         return Response({
             'message': '로그인되었습니다.',
             'user': UserProfileSerializer(user).data
