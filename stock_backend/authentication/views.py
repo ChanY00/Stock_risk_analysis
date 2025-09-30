@@ -47,6 +47,11 @@ def register(request):
                 'user': UserProfileSerializer(user).data
             }, status=status.HTTP_201_CREATED)
         login(request, user)
+        # 감사 로깅: 로그인 성공
+        import logging
+        logging.getLogger('authentication').info(
+            'auth.login_success user=%s ip=%s', user.username, request.META.get('REMOTE_ADDR', '')
+        )
         return Response({
             'message': '회원가입이 완료되었습니다.',
             'user': UserProfileSerializer(user).data
@@ -91,6 +96,10 @@ class UserLogoutView(APIView):
     
     def post(self, request):
         logout(request)
+        import logging
+        logging.getLogger('authentication').info(
+            'auth.logout user=%s ip=%s', getattr(request.user, 'username', ''), request.META.get('REMOTE_ADDR', '')
+        )
         return Response({
             'message': '로그아웃되었습니다.'
         }, status=status.HTTP_200_OK)
@@ -199,6 +208,8 @@ def reset_password(request):
     user.set_password(new_password)
     user.save()
     prt.mark_used()
+    import logging
+    logging.getLogger('authentication').info('auth.password_reset user=%s', user.username)
 
     return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'})
 
