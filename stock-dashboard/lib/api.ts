@@ -59,6 +59,7 @@ export interface RegisterData {
 export interface LoginData {
   username: string;
   password: string;
+  remember_me?: boolean;
 }
 
 // Stock Types
@@ -616,13 +617,25 @@ class ApiClient {
 
   async resetPassword(
     email: string,
-    newPassword: string
+    newPassword: string,
+    token: string
   ): Promise<{ message: string }> {
     return this.request<{ message: string }>(
       "/auth/password-reset/confirm/",
       {
         method: "POST",
-        body: JSON.stringify({ email, new_password: newPassword }),
+        body: JSON.stringify({ email, new_password: newPassword, token }),
+      },
+      false
+    );
+  }
+
+  async verifyEmail(email: string, token: string): Promise<{ message: string }>{
+    return this.request<{ message: string }>(
+      "/auth/verify-email/",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, token }),
       },
       false
     );
@@ -1017,8 +1030,9 @@ export const authApi = {
   getProfile: () => apiClient.getProfile(),
   requestPasswordReset: (email: string) =>
     apiClient.requestPasswordReset(email),
-  resetPassword: (email: string, newPassword: string) =>
-    apiClient.resetPassword(email, newPassword),
+  resetPassword: (email: string, newPassword: string, token: string) =>
+    apiClient.resetPassword(email, newPassword, token),
+  verifyEmail: (email: string, token: string) => apiClient.verifyEmail(email, token),
 };
 
 // Stock API convenience functions (stocksApi - 기존 이름 유지)

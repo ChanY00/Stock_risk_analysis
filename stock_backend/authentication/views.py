@@ -149,7 +149,7 @@ def check_username(request):
     """사용자명 중복 확인"""
     username = (request.data.get('username') or '').strip()
     if not username:
-        return Response({'error': '아이디를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '아이디를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
     
     exists = User.objects.filter(username__iexact=username).exists()
     return Response({
@@ -164,7 +164,7 @@ def request_password_reset(request):
     """비밀번호 재설정 요청: 토큰 발급 후 이메일 발송 (항상 동일 메시지 반환)"""
     email = request.data.get('email')
     if not email:
-        return Response({'error': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '이메일을 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
     # 사용자 존재 여부와 무관하게 동일 응답으로 사용자 열거 방지
     try:
@@ -188,21 +188,21 @@ def reset_password(request):
     new_password = request.data.get('new_password')
 
     if not email or not token_str or not new_password:
-        return Response({'error': '이메일, 토큰, 새 비밀번호를 모두 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '이메일, 토큰, 새 비밀번호를 모두 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         # 사용자 열거 방지
-        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         prt = PasswordResetToken.objects.get(user=user, token=token_str)
     except PasswordResetToken.DoesNotExist:
-        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if not prt.is_valid():
-        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     # change password
     user.set_password(new_password)
@@ -223,16 +223,16 @@ def verify_email(request):
     email = request.data.get('email')
     token_str = request.data.get('token')
     if not email or not token_str:
-        return Response({'error': '이메일과 토큰을 모두 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '이메일과 토큰을 모두 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         user = User.objects.get(email=email)
         evt = EmailVerificationToken.objects.get(user=user, token=token_str)
     except (User.DoesNotExist, EmailVerificationToken.DoesNotExist):
-        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if not evt.is_valid():
-        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
 
     evt.mark_used()
     # 정책상 필요하다면 활성화

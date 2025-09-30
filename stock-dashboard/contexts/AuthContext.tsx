@@ -83,6 +83,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       const response = await authApi.register(userData);
+      // 백엔드가 이메일 인증이 필수인 경우 자동 로그인 없이 안내만 반환할 수 있음
       
       setUser(response.user);
       setIsAuthenticated(true);

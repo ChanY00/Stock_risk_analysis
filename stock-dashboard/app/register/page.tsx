@@ -173,6 +173,7 @@ export default function RegisterPage() {
 
     try {
       await register(formData);
+      // 이메일 인증이 필요한 환경에서는 안내 메시지를 표시하고 로그인으로 유도
       router.push('/');
     } catch (error) {
       const errorMessage = handleApiError(error);

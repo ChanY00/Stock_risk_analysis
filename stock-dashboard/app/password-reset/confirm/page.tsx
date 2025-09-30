@@ -74,7 +74,8 @@ export default function PasswordResetConfirmPage() {
     setErrors({});
 
     try {
-      await authApi.resetPassword(formData.email, formData.newPassword);
+      const token = new URLSearchParams(window.location.search).get('token') || '';
+      await authApi.resetPassword(formData.email, formData.newPassword, token);
       setSuccess(true);
     } catch (error) {
       const errorMessage = handleApiError(error);
