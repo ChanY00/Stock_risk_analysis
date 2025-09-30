@@ -34,6 +34,49 @@ class TestCookieSecurityFlags(TestCase):
         self.assertIn('SameSite=None', cookie_str)
 
 
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class TestEmailVerificationFlow(TestCase):
+    def setUp(self):
+        self.client = Client(enforce_csrf_checks=True)
+
+    def _get_csrf(self):
+        r = self.client.get("/api/auth/status/")
+        return r.cookies['csrftoken'].value
+
+    def test_register_sends_verification_email_and_verify(self):
+        csrftoken = self._get_csrf()
+        # register
+        resp = self.client.post(
+            "/api/auth/register/",
+            data={
+                "username": "neo",
+                "email": "neo@test.com",
+                "password": "matrix123",
+                "password_confirm": "matrix123",
+            },
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrftoken,
+        )
+        self.assertEqual(resp.status_code, 201)
+        # email sent
+        self.assertGreaterEqual(len(mail.outbox), 1)
+
+        # fetch token from db
+        from authentication.models import EmailVerificationToken, User
+        user = User.objects.get(username="neo")
+        token = EmailVerificationToken.objects.filter(user=user, used=False).latest('created_at')
+
+        # verify
+        csrftoken = self._get_csrf()
+        vresp = self.client.post(
+            "/api/auth/verify-email/",
+            data={"email": user.email, "token": str(token.token)},
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrftoken,
+        )
+        self.assertEqual(vresp.status_code, 200)
+
+
 class TestLogoutCsrfEnforcement(TestCase):
     def setUp(self):
         self.client = Client(enforce_csrf_checks=True)

@@ -211,6 +211,9 @@ else:
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@example.com')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 PASSWORD_RESET_FRONTEND_URL = os.getenv('PASSWORD_RESET_FRONTEND_URL', 'http://localhost:3000/password-reset/confirm')
+EMAIL_VERIFICATION_FRONTEND_URL = os.getenv('EMAIL_VERIFICATION_FRONTEND_URL', 'http://localhost:3000/verify-email')
+REQUIRE_EMAIL_VERIFICATION = os.getenv('REQUIRE_EMAIL_VERIFICATION', 'False').lower() == 'true'
+EMAIL_VERIFICATION_TOKEN_TTL_MINUTES = int(os.getenv('EMAIL_VERIFICATION_TOKEN_TTL_MINUTES', '60'))
 
 # ===== KIS API 설정 =====
 KIS_USE_MOCK = os.getenv('KIS_USE_MOCK', 'False').lower() == 'true'

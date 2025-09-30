@@ -6,7 +6,7 @@ from typing import Optional
 from datetime import timedelta
 from django.utils import timezone
 from django.core.mail import send_mail
-from .models import PasswordResetToken
+from .models import PasswordResetToken, EmailVerificationToken
 
 
 def get_client_ip(request) -> str:
@@ -70,6 +70,27 @@ def send_password_reset_email(user, token: PasswordResetToken) -> None:
     reset_link = f"{frontend_url}?token={token.token}&email={user.email}"
     subject = "비밀번호 재설정 안내"
     message = f"다음 링크를 클릭하여 비밀번호를 재설정하세요:\n{reset_link}\n이 링크는 일정 시간 후 만료됩니다."
+    send_mail(
+        subject,
+        message,
+        getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@example.com'),
+        [user.email],
+        fail_silently=False,
+    )
+
+
+# ===== Email verification services =====
+def create_email_verification_token(user) -> EmailVerificationToken:
+    ttl_minutes = int(getattr(settings, 'EMAIL_VERIFICATION_TOKEN_TTL_MINUTES', 60))
+    expires_at = timezone.now() + timedelta(minutes=ttl_minutes)
+    return EmailVerificationToken.objects.create(user=user, expires_at=expires_at)
+
+
+def send_email_verification(user, token: EmailVerificationToken) -> None:
+    frontend_url = getattr(settings, 'EMAIL_VERIFICATION_FRONTEND_URL', 'http://localhost:3000/verify-email')
+    verify_link = f"{frontend_url}?token={token.token}&email={user.email}"
+    subject = "이메일 주소 확인"
+    message = f"다음 링크를 클릭하여 이메일 주소를 확인하세요:\n{verify_link}\n이 링크는 일정 시간 후 만료됩니다."
     send_mail(
         subject,
         message,

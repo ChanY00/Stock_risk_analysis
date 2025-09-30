@@ -10,8 +10,14 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
 from rest_framework.authentication import SessionAuthentication
+from django.conf import settings
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer
-from .services import create_password_reset_token, send_password_reset_email
+from .services import (
+    create_password_reset_token,
+    send_password_reset_email,
+    create_email_verification_token,
+    send_email_verification,
+)
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -27,6 +33,19 @@ def register(request):
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        # 이메일 인증 토큰 발송 (존재하는 이메일에 한해)
+        if user.email:
+            try:
+                token = create_email_verification_token(user)
+                send_email_verification(user, token)
+            except Exception:
+                pass
+        # 이메일 인증이 필수인 경우: 자동 로그인 대신 안내만
+        if getattr(settings, 'REQUIRE_EMAIL_VERIFICATION', False):
+            return Response({
+                'message': '회원가입이 완료되었습니다. 이메일을 확인해 주세요.',
+                'user': UserProfileSerializer(user).data
+            }, status=status.HTTP_201_CREATED)
         login(request, user)
         return Response({
             'message': '회원가입이 완료되었습니다.',
@@ -182,3 +201,30 @@ def reset_password(request):
     prt.mark_used()
 
     return Response({'message': '비밀번호가 성공적으로 변경되었습니다.'})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_email(request):
+    """이메일 인증: 이메일 + 토큰 검증 후 사용자 활성화(선택)"""
+    from .models import EmailVerificationToken
+
+    email = request.data.get('email')
+    token_str = request.data.get('token')
+    if not email or not token_str:
+        return Response({'error': '이메일과 토큰을 모두 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+        evt = EmailVerificationToken.objects.get(user=user, token=token_str)
+    except (User.DoesNotExist, EmailVerificationToken.DoesNotExist):
+        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not evt.is_valid():
+        return Response({'error': '토큰이 유효하지 않거나 만료되었습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    evt.mark_used()
+    # 정책상 필요하다면 활성화
+    # user.is_active = True
+    # user.save(update_fields=['is_active'])
+    return Response({'message': '이메일 인증이 완료되었습니다.'})
