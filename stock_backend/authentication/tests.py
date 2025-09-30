@@ -4,6 +4,8 @@ from django.utils import timezone
 from django.test.utils import override_settings
 from django.core.cache import cache
 from django.core import mail
+from django.http import HttpResponse
+from django.test.utils import override_settings
 
 
 class TestAuthStatusCsrfCookie(TestCase):
@@ -13,6 +15,23 @@ class TestAuthStatusCsrfCookie(TestCase):
     def test_auth_status_sets_csrf_cookie(self):
         response = self.client.get("/api/auth/status/")
         self.assertIn('csrftoken', response.cookies)
+
+
+@override_settings(SESSION_COOKIE_SECURE=True, CSRF_COOKIE_SECURE=True,
+                   SESSION_COOKIE_SAMESITE='None', CSRF_COOKIE_SAMESITE='None')
+class TestCookieSecurityFlags(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_secure_and_samesite_flags_on_cookies(self):
+        # Trigger a response that sets csrftoken
+        resp = self.client.get("/api/auth/status/")
+        csrftoken = resp.cookies.get('csrftoken')
+        self.assertIsNotNone(csrftoken)
+        # Django uses key accessors for attributes; to_string contains flags
+        cookie_str = csrftoken.output()
+        self.assertIn('Secure', cookie_str)
+        self.assertIn('SameSite=None', cookie_str)
 
 
 class TestLogoutCsrfEnforcement(TestCase):

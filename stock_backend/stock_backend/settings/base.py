@@ -126,6 +126,19 @@ AUTH_MAX_LOGIN_ATTEMPTS = int(os.getenv('AUTH_MAX_LOGIN_ATTEMPTS', '5'))
 AUTH_LOCKOUT_SECONDS = int(os.getenv('AUTH_LOCKOUT_SECONDS', '300'))  # 5분
 AUTH_ATTEMPT_WINDOW_SECONDS = int(os.getenv('AUTH_ATTEMPT_WINDOW_SECONDS', '600'))  # 10분
 
+# ===== Cookie / Session security (env-driven) =====
+# NOTE: For cross-site cookies, set SameSite=None AND Secure=True in production (HTTPS)
+SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'false').lower() == 'true'
+CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'false').lower() == 'true'
+
+SESSION_COOKIE_SAMESITE = os.getenv('SESSION_COOKIE_SAMESITE', 'Lax')  # 'Lax' | 'Strict' | 'None'
+CSRF_COOKIE_SAMESITE = os.getenv('CSRF_COOKIE_SAMESITE', 'Lax')
+
+# Cookie age/domain (optional overrides)
+SESSION_COOKIE_AGE = int(os.getenv('SESSION_COOKIE_AGE', '1209600'))  # 2 weeks default
+SESSION_COOKIE_DOMAIN = os.getenv('SESSION_COOKIE_DOMAIN') or None
+CSRF_COOKIE_DOMAIN = os.getenv('CSRF_COOKIE_DOMAIN') or None
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -180,8 +193,23 @@ CORS_ALLOWED_ORIGINS = _split_csv('CORS_ALLOWED_ORIGINS')
 CSRF_TRUSTED_ORIGINS = _split_csv('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 
 # Email settings (override via env in dev/prod)
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+# Defaults to console backend for local development
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true'
+
+if os.getenv('EMAIL_BACKEND'):
+    EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+else:
+    EMAIL_BACKEND = (
+        'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST else 'django.core.mail.backends.console.EmailBackend'
+    )
+
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@example.com')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 PASSWORD_RESET_FRONTEND_URL = os.getenv('PASSWORD_RESET_FRONTEND_URL', 'http://localhost:3000/password-reset/confirm')
 
 # ===== KIS API 설정 =====
