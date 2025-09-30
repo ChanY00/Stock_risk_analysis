@@ -73,7 +73,7 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      await login(formData);
+      await login({ ...formData, remember_me: rememberMe });
       router.push('/');
     } catch (error) {
       const errorMessage = handleApiError(error);

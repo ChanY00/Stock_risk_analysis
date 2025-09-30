@@ -70,6 +70,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // 성공 메시지 표시 (선택사항)
       console.log('로그인 성공:', response.message);
+
+      // 로그인 이벤트 발생 (다른 탭에서 감지해 인증 상태 동기화)
+      window.dispatchEvent(new CustomEvent('login'));
+      localStorage.setItem('login-event', Date.now().toString());
+      localStorage.removeItem('login-event');
     } catch (error) {
       console.error('Login failed:', error);
       throw error; // 컴포넌트에서 에러 처리할 수 있도록
@@ -123,6 +128,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 컴포넌트 마운트 시 인증 상태 확인
   useEffect(() => {
     refreshAuth();
+  }, []);
+
+  // 탭 간 인증 상태 동기화 (login/logout 이벤트 및 storage 이벤트 처리)
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'logout-event') {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+      if (e.key === 'login-event') {
+        // 다른 탭에서 로그인됨 → 서버 세션 기준으로 동기화
+        refreshAuth();
+      }
+    };
+
+    const handleLogoutEvent = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
+    const handleLoginEvent = () => {
+      refreshAuth();
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('logout', handleLogoutEvent as EventListener);
+    window.addEventListener('login', handleLoginEvent as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('logout', handleLogoutEvent as EventListener);
+      window.removeEventListener('login', handleLoginEvent as EventListener);
+    };
   }, []);
 
   const value: AuthContextType = {
