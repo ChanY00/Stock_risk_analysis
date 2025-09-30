@@ -138,11 +138,11 @@ def auth_status(request):
 @permission_classes([AllowAny])
 def check_username(request):
     """사용자명 중복 확인"""
-    username = request.data.get('username')
+    username = (request.data.get('username') or '').strip()
     if not username:
         return Response({'error': '아이디를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
     
-    exists = User.objects.filter(username=username).exists()
+    exists = User.objects.filter(username__iexact=username).exists()
     return Response({
         'available': not exists,
         'message': '이미 사용 중인 아이디입니다.' if exists else '사용 가능한 아이디입니다.'

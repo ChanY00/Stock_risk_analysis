@@ -49,7 +49,7 @@ class TestEmailVerificationFlow(TestCase):
         resp = self.client.post(
             "/api/auth/register/",
             data={
-                "username": "neo",
+                "username": " Neo  ",
                 "email": "neo@test.com",
                 "password": "matrix123",
                 "password_confirm": "matrix123",
@@ -63,7 +63,7 @@ class TestEmailVerificationFlow(TestCase):
 
         # fetch token from db
         from authentication.models import EmailVerificationToken, User
-        user = User.objects.get(username="neo")
+        user = User.objects.get(username__iexact="neo")
         token = EmailVerificationToken.objects.filter(user=user, used=False).latest('created_at')
 
         # verify

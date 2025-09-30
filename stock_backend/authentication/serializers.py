@@ -14,11 +14,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'password', 'password_confirm', 'first_name', 'last_name')
     
     def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
+        value = (value or '').strip()
+        # 중복 체크는 대소문자 구분 없이 수행
+        if User.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError('이미 사용 중인 아이디입니다.')
         return value
     
     def validate_email(self, value):
+        value = (value or '').strip().lower()
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError('이미 사용 중인 이메일입니다.')
         return value
@@ -43,6 +46,8 @@ class UserLoginSerializer(serializers.Serializer):
         password = attrs.get('password')
         
         if username and password:
+            # 입력값 정규화
+            username = (username or '').strip()
             request = self.context.get('request') if hasattr(self, 'context') else None
             client_ip = services.get_client_ip(request) if request is not None else ''
 
