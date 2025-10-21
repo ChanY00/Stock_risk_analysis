@@ -631,3 +631,38 @@ def stock_similarity_detail_api(request, stock_code):
         
     except Stock.DoesNotExist:
         return Response({'error': 'Stock not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def watchlist_placeholder_view(request):
+    """
+    관심종목 placeholder API
+    프론트엔드 호환성을 위해 빈 응답 반환
+    TODO: 실제 watchlist 기능 구현 시 교체 필요
+    """
+    return Response([])
+
+@api_view(['POST'])
+def watchlist_add_stock_view(request, watchlist_id, stock_code):
+    """
+    관심종목에 종목 추가 placeholder
+    프론트엔드 호환성을 위해 성공 응답 반환
+    """
+    return Response({
+        'success': True,
+        'message': f'종목 {stock_code} 추가됨 (placeholder)',
+        'watchlist_id': watchlist_id,
+        'stock_code': stock_code
+    }, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+def watchlist_remove_stock_view(request, watchlist_id, stock_code):
+    """
+    관심종목에서 종목 제거 placeholder
+    프론트엔드 호환성을 위해 성공 응답 반환
+    """
+    return Response({
+        'success': True,
+        'message': f'종목 {stock_code} 제거됨 (placeholder)',
+        'watchlist_id': watchlist_id,
+        'stock_code': stock_code
+    }, status=status.HTTP_200_OK)

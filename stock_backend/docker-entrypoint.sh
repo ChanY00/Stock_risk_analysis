@@ -28,7 +28,7 @@ wait_for_db() {
         echo -e "${YELLOW}💤 데이터베이스 대기 중... (5초 후 재시도)${NC}"
         sleep 5
     done
-    
+     
     echo -e "${GREEN}✅ 데이터베이스 연결 성공!${NC}"
 }
 

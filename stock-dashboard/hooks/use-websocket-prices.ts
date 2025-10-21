@@ -42,10 +42,17 @@ export function useWebSocketPrices(options: UseWebSocketPricesOptions = {}): Use
   const { stockCodes = [], autoSubscribe = true } = options;
   
   // stockCodes 배열을 안정화 (useMemo로 메모이제이션)
+  // 주의: sort()는 원본 배열을 변형하므로 절대 직접 호출하지 않음
+  const stockCodesKey = useMemo(() => {
+    try { return [...stockCodes].filter(c => c && c.trim()).sort().join(',') } catch { return '' }
+  }, [stockCodes]);
+
   const stableStockCodes = useMemo(() => {
-    const filtered = stockCodes.filter(code => code && code.trim());
-    return [...new Set(filtered)]; // 중복 제거
-  }, [JSON.stringify(stockCodes.sort())]);
+    const filtered = [...stockCodes].filter(code => code && code.trim());
+    const unique = [...new Set(filtered)];
+    unique.sort();
+    return unique;
+  }, [stockCodesKey]);
   
   const [prices, setPrices] = useState<Record<string, StockPrice>>({});
   const [subscriptions, setSubscriptions] = useState<string[]>([]);
@@ -137,9 +144,38 @@ export function useWebSocketPrices(options: UseWebSocketPricesOptions = {}): Use
       const NODE_ENV: string = (() => {
         try { return ((globalThis as any).process?.env?.NODE_ENV) || 'development' } catch { return 'development' }
       })()
-      const wsUrl = NODE_ENV === 'production' 
+
+      // Prefer explicit WS URL
+      const envWsUrl = (() => {
+        try { return (globalThis as any).process?.env?.NEXT_PUBLIC_WS_URL as string | undefined } catch { return undefined }
+      })()
+
+      // Derive from API base if provided (http[s]://host:port/api → ws[s]://host:port/ws/stocks/realtime/)
+      const derivedFromApi = (() => {
+        try {
+          const api = (globalThis as any).process?.env?.NEXT_PUBLIC_API_URL as string | undefined
+          if (!api) return undefined
+          const url = new URL(api)
+          const wsProto = url.protocol === 'https:' ? 'wss:' : 'ws:'
+          const base = `${wsProto}//${url.host}`
+          return `${base}/ws/stocks/realtime/`
+        } catch { return undefined }
+      })()
+
+      // Fallback to window location (assume backend on same host, port 8000 in dev)
+      const derivedFromLocation = (() => {
+        try {
+          const loc = window.location
+          const wsProto = loc.protocol === 'https:' ? 'wss:' : 'ws:'
+          const host = loc.hostname
+          const port = loc.port && loc.port !== '3000' ? loc.port : '8000'
+          return `${wsProto}//${host}:${port}/ws/stocks/realtime/`
+        } catch { return undefined }
+      })()
+
+      const wsUrl = envWsUrl || derivedFromApi || derivedFromLocation || (NODE_ENV === 'production'
         ? 'wss://your-production-domain.com/ws/stocks/realtime/'
-        : 'ws://localhost:8000/ws/stocks/realtime/';
+        : 'ws://localhost:8000/ws/stocks/realtime/')
 
       if (WS_DEBUG) {
         console.log('🌐 WebSocket URL:', wsUrl);
@@ -329,9 +365,9 @@ export function useWebSocketPrices(options: UseWebSocketPricesOptions = {}): Use
         stock_codes: stockCodes,
       };
       ws.current.send(JSON.stringify(message));
-      console.log('📤 Sent subscription request:', stockCodes);
+      console.log('📤 Sent subscription request:', stockCodes.length, 'stocks', stockCodes.slice(0, 5));
     } else {
-      console.warn('⚠️ WebSocket is not connected. Cannot subscribe.');
+      console.warn('⚠️ WebSocket is not connected. Cannot subscribe. ReadyState:', ws.current?.readyState);
     }
   }, []);
 
@@ -419,13 +455,29 @@ export function useWebSocketPrices(options: UseWebSocketPricesOptions = {}): Use
         unsubscribe(toUnsubscribe);
       }
 
-      // 이전 코드 업데이트
-      previousStockCodes.current = currentCodes;
+      // 이전 코드 업데이트 (참조 공유 방지)
+      previousStockCodes.current = [...currentCodes];
       if (WS_DEBUG) console.log('📝 Updated previousStockCodes to:', currentCodes.length, 'stocks');
     }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [stableStockCodes, connectionStatus.connected, autoSubscribe, subscribe, unsubscribe]);
+
+  // 연결 직후 초기 구독 보장
+  useEffect(() => {
+    console.log('🔍 Initial subscribe check:', {
+      connected: connectionStatus.connected,
+      stockCodesLength: stableStockCodes.length,
+      previousLength: previousStockCodes.current.length,
+      willSubscribe: connectionStatus.connected && stableStockCodes.length > 0 && previousStockCodes.current.length === 0
+    });
+    
+    if (connectionStatus.connected && stableStockCodes.length > 0 && previousStockCodes.current.length === 0) {
+      console.log('🚀 Initial subscribe on connect:', stableStockCodes.length, 'stocks', stableStockCodes.slice(0, 5));
+      subscribe(stableStockCodes);
+      previousStockCodes.current = [...stableStockCodes];
+    }
+  }, [connectionStatus.connected, stableStockCodes, subscribe]);
 
   return {
     prices,

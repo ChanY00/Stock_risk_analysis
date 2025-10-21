@@ -45,13 +45,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # Must be before CommonMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'stock_backend.urls'
@@ -168,14 +168,23 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        'detailed': {
+            'format': '[{asctime}] {levelname} {name}:{lineno} {funcName}() - {message}',
+            'style': '{',
+        },
     },
     'handlers': {
-        'console': {'class': 'logging.StreamHandler', 'formatter': 'verbose'},
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'detailed'},
     },
-    'root': {'handlers': ['console'], 'level': 'INFO'},
+    'root': {'handlers': ['console'], 'level': 'DEBUG'},  # INFO → DEBUG로 변경
     'loggers': {
         'stocks.consumers': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False},
         'kis_api.mock_websocket_client': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False},
+        'kis_api.real_websocket_client': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False},  # 추가!
+        'kis_api.websocket_client': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False},  # 추가!
+        'kis_api.market_index_client': {'handlers': ['console'], 'level': 'DEBUG', 'propagate': False},  # 추가!
+        'django.channels': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},  # Channels 로그
+        'daphne': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},  # Daphne 로그
     },
 }
 

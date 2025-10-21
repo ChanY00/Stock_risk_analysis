@@ -138,7 +138,7 @@ services:
     build:
       context: ./stock_backend
       dockerfile: Dockerfile
-      target: development  # 멀티스테이지에서 development 스테이지 선택
+      target: production  # 운영 환경 스테이지 선택
     container_name: kospi-backend
     restart: unless-stopped
 
@@ -156,16 +156,23 @@ services:
       - REDIS_HOST=redis              # 💡 Docker 네트워크의 마법
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - USE_REDIS_CHANNELS=True       # 개발에서도 Redis Channels 사용
+      - USE_REDIS_CHANNELS=True       # 운영 환경에서 Redis Channels 필수
+      - KIS_USE_MOCK=False            # 실제 KIS WebSocket 사용 (운영 환경)
 
-      # 개발 환경 오버라이드
-      - USE_MOCK_DATA=True
+      # 운영 환경 설정
+      - USE_MOCK_DATA=False
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
 
       - STATIC_ROOT=/app/staticfiles
-      - SKIP_COLLECTSTATIC=True
-      - COLLECT_STATIC=False
+      - SKIP_COLLECTSTATIC=False
+      - COLLECT_STATIC=True
       - DJANGO_MODE=production
+      
+      # 디버깅 환경변수 제거 (Illegal instruction 오류 유발)
+      # DEBUG=True 사용 시 404 에러 처리 중 크래시 발생
+      
+      # WebSocket Origin 검증 (운영 환경에서는 활성화)
+      - ENABLE_WS_ORIGIN_CHECK=true
 
     # 🚀 명령어 오버라이드 (ASGI 서버로 WebSocket 지원)
     command: ["./docker-entrypoint.sh", "asgi"]
@@ -200,6 +207,7 @@ services:
         NEXT_PUBLIC_API_URL: http://localhost:8000/api
         NEXT_PUBLIC_SENTIMENT_URL: http://localhost:5001
         INTERNAL_API_URL: http://backend:8000/api
+        NEXT_PUBLIC_WS_URL: ws://localhost:8000/ws/stocks/realtime/
     container_name: kospi-frontend
     restart: unless-stopped
 
@@ -214,6 +222,8 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api     # 브라우저용(클라이언트 번들에 노출)
       - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001   # 브라우저용
       - INTERNAL_API_URL=http://backend:8000/api          # SSR용(컨테이너 내부 네트워킹)
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/stocks/realtime/
+      - NEXT_PUBLIC_WS_DEBUG=true
 
     
     # 🔗 의존성 설정

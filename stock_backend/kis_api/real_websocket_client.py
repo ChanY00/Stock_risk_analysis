@@ -295,40 +295,82 @@ class RealKISWebSocketClient:
             return False
     
     def _run_websocket(self):
-        """WebSocket 실행 (재연결 로직 포함)"""
-        while self.running and self.reconnect_count < self.max_reconnect_attempts:
-            try:
-                logger.info(f"🔄 WebSocket 실행 시도 (#{self.reconnect_count + 1})")
-                self.ws.run_forever(
-                    ping_interval=self.ping_interval,
-                    ping_timeout=10,
-                    ping_payload="ping"
-                )
-                
-                if not self.running:
-                    break
+        """WebSocket 실행 (재연결 로직 포함, 안전한 종료 처리)"""
+        logger.info("🚀 WebSocket 실행 루프 시작")
+        
+        try:
+            while self.running and self.reconnect_count < self.max_reconnect_attempts:
+                try:
+                    logger.info("=" * 80)
+                    logger.info(f"🔄 WebSocket 실행 시도 (#{self.reconnect_count + 1})")
+                    logger.info(f"   Running: {self.running}")
+                    logger.info(f"   Reconnect Count: {self.reconnect_count}/{self.max_reconnect_attempts}")
+                    logger.info("=" * 80)
                     
-                # 연결이 끊어진 경우 재연결 시도
-                self.reconnect_count += 1
-                if self.reconnect_count < self.max_reconnect_attempts:
-                    wait_time = min(5 * self.reconnect_count, 30)  # 지수적 백오프
-                    logger.warning(f"🔄 {wait_time}초 후 재연결 시도... ({self.reconnect_count}/{self.max_reconnect_attempts})")
-                    time.sleep(wait_time)
+                    self.ws.run_forever(
+                        ping_interval=self.ping_interval,
+                        ping_timeout=10,
+                        ping_payload="ping"
+                    )
                     
-                    # 토큰 재발급
-                    self._get_access_token()
-                    self._get_approval_key()
-                else:
-                    logger.error("❌ 최대 재연결 시도 횟수 초과")
-                    break
+                    logger.warning("⚠️ run_forever가 반환되었습니다 (연결 종료됨)")
                     
-            except Exception as e:
-                logger.error(f"❌ WebSocket 실행 오류: {e}")
-                self.reconnect_count += 1
-                if self.reconnect_count < self.max_reconnect_attempts:
-                    time.sleep(5)
-                else:
-                    break
+                    if not self.running:
+                        logger.info("✅ running=False: 정상 종료 요청")
+                        break
+                        
+                    # 연결이 끊어진 경우 재연결 시도
+                    self.reconnect_count += 1
+                    if self.reconnect_count < self.max_reconnect_attempts:
+                        wait_time = min(5 * self.reconnect_count, 30)  # 지수적 백오프
+                        logger.warning(f"🔄 {wait_time}초 후 재연결 시도... ({self.reconnect_count}/{self.max_reconnect_attempts})")
+                        time.sleep(wait_time)
+                        
+                        # 토큰 재발급
+                        logger.info("🔑 재연결을 위한 토큰 재발급 시작...")
+                        token_success = self._get_access_token()
+                        approval_success = self._get_approval_key()
+                        
+                        if not token_success or not approval_success:
+                            logger.error("❌ 토큰/접속키 재발급 실패")
+                            logger.warning(f"   재시도 {self.reconnect_count}/{self.max_reconnect_attempts}")
+                            continue
+                        
+                        logger.info("✅ 토큰/접속키 재발급 완료, 재연결 진행...")
+                    else:
+                        logger.error("❌ 최대 재연결 시도 횟수 초과")
+                        logger.error("   WebSocket 클라이언트가 종료됩니다")
+                        break
+                        
+                except Exception as e:
+                    logger.error("=" * 80)
+                    logger.error(f"❌ WebSocket 실행 중 예외 발생: {e}")
+                    import traceback
+                    logger.error(f"📋 Traceback:\n{traceback.format_exc()}")
+                    logger.error("=" * 80)
+                    
+                    self.reconnect_count += 1
+                    if self.reconnect_count < self.max_reconnect_attempts:
+                        wait_time = 5
+                        logger.warning(f"⏳ {wait_time}초 후 재시도... ({self.reconnect_count}/{self.max_reconnect_attempts})")
+                        time.sleep(wait_time)
+                    else:
+                        logger.error("❌ 예외 발생으로 인한 최대 재시도 횟수 초과")
+                        break
+            
+            logger.warning("🛑 WebSocket 실행 루프 종료")
+            logger.warning(f"   최종 상태: Running={self.running}, ReconnectCount={self.reconnect_count}")
+            
+        except Exception as outer_e:
+            logger.error("=" * 80)
+            logger.error(f"❌ _run_websocket 외부 예외 (치명적): {outer_e}")
+            import traceback
+            logger.error(f"📋 Traceback:\n{traceback.format_exc()}")
+            logger.error("=" * 80)
+        finally:
+            logger.info("🏁 _run_websocket 메서드 완전 종료")
+            self.running = False
+            self.is_connected = False
     
     def _start_ping_thread(self):
         """연결 유지용 ping 스레드 시작"""
@@ -653,9 +695,59 @@ class RealKISWebSocketClient:
         logger.error(f"🔴 KIS WebSocket 오류: {error}")
     
     def _on_close(self, ws, close_status_code, close_msg):
-        """WebSocket 연결 종료 시 호출"""
-        logger.warning(f"🟡 KIS WebSocket 연결 종료: {close_status_code}, {close_msg}")
-        self.is_connected = False
+        """WebSocket 연결 종료 시 호출 (상세 로깅 및 안전한 처리)"""
+        try:
+            logger.warning("=" * 80)
+            logger.warning("🟡 KIS WebSocket 연결 종료 이벤트 발생")
+            logger.warning("=" * 80)
+            logger.warning(f"   Close Status Code: {close_status_code} (type: {type(close_status_code)})")
+            logger.warning(f"   Close Message: {close_msg} (type: {type(close_msg)})")
+            logger.warning(f"   Running: {self.running}")
+            logger.warning(f"   Reconnect Count: {self.reconnect_count}/{self.max_reconnect_attempts}")
+            logger.warning(f"   Subscriptions: {len(self.subscriptions)} stocks")
+            
+            # 연결 상태 변경
+            self.is_connected = False
+            
+            # Close Code 분석 및 로깅
+            if close_status_code is None:
+                logger.warning("⚠️ Close status code가 None입니다 - 비정상 종료 가능성")
+                logger.warning("   이것은 네트워크 문제, 서버 강제 종료 또는 타임아웃을 의미할 수 있습니다")
+            elif close_status_code == 1000:
+                logger.info("✅ 정상 종료 (1000: Normal Closure)")
+            elif close_status_code == 1001:
+                logger.warning("⚠️ 1001: Going Away (서버 종료 또는 브라우저 탭 닫힘)")
+            elif close_status_code == 1002:
+                logger.error("❌ 1002: Protocol Error")
+            elif close_status_code == 1003:
+                logger.error("❌ 1003: Unsupported Data")
+            elif close_status_code == 1006:
+                logger.error("❌ 1006: Abnormal Closure (연결이 제대로 닫히지 않음)")
+                logger.error("   → 네트워크 문제, 서버 크래시 또는 방화벽 차단 가능성")
+            elif close_status_code == 1011:
+                logger.error("❌ 1011: Internal Server Error")
+            else:
+                logger.warning(f"⚠️ 알 수 없는 close code: {close_status_code}")
+            
+            # 재연결 여부 결정 및 로깅
+            if self.running:
+                if self.reconnect_count < self.max_reconnect_attempts:
+                    logger.warning(f"🔄 재연결 가능: {self.reconnect_count + 1}/{self.max_reconnect_attempts}번째 시도 예정")
+                    logger.warning("   ℹ️ _run_websocket 메서드가 자동으로 재연결을 시도합니다")
+                else:
+                    logger.error(f"❌ 재연결 불가: 최대 시도 횟수({self.max_reconnect_attempts})에 도달")
+                    logger.error("   ℹ️ WebSocket 클라이언트가 종료됩니다")
+            else:
+                logger.info("ℹ️ running=False: 정상적인 종료 프로세스")
+            
+            logger.warning("=" * 80)
+            
+        except Exception as e:
+            logger.error(f"❌ _on_close 핸들러 내부 예외: {e}")
+            import traceback
+            logger.error(f"📋 Traceback:\n{traceback.format_exc()}")
+            # 예외가 발생해도 연결 상태는 반드시 변경
+            self.is_connected = False
     
     def subscribe_stock(self, stock_code: str, callback: Callable[[Dict], None]) -> bool:
         """종목 구독 (시장 휴장일 대응 개선)"""

@@ -43,6 +43,18 @@ def ensure_started() -> None:
         logger.info("Broadcast thread started")
 
 
+def get_loop() -> Optional[asyncio.AbstractEventLoop]:
+    """Get the current broadcast event loop, ensuring it's started."""
+    ensure_started()
+    # Wait briefly for loop initialization
+    import time
+    for _ in range(10):  # Wait up to 100ms
+        if _loop is not None:
+            return _loop
+        time.sleep(0.01)
+    return _loop
+
+
 def submit_coroutine(coro) -> Optional[Future]:
     """Submit a coroutine to the background loop, starting it if needed."""
     ensure_started()
@@ -68,7 +80,7 @@ def stop() -> None:
     _thread = None
 
 
-__all__ = ["ensure_started", "submit_coroutine", "stop"]
+__all__ = ["ensure_started", "get_loop", "submit_coroutine", "stop"]
 
 
 

@@ -48,6 +48,11 @@ class KISMarketIndexClient:
         self._snapshot: Dict[str, Dict] = {}
         self._last_ws_update_ts: float = 0.0
 
+        # 에러 로그 빈도 제한을 위한 카운터
+        self._error_log_count = 0
+        self._last_error_log_time = 0.0
+        self._error_log_interval = 60  # 1분에 한 번만 에러 로그 출력
+
         # 시장 지수 코드 정의 (초기화 시점에 설정되어야 함)
         self.market_indices = {
             'KOSPI': {
@@ -140,9 +145,19 @@ class KISMarketIndexClient:
                     last_error = str(req_err)
                     _dwarn(f"⚠️ 지수 조회 시도 실패 params={params} error={req_err}")
 
-            logger.error(
-                f"❌ 지수 조회 최종 실패 index={index_code} tr_id={tr_id} last_error={last_error}"
-            )
+            # 에러 로그 빈도 제한 (1분에 한 번만)
+            current_time = time.time()
+            if current_time - self._last_error_log_time >= self._error_log_interval:
+                logger.error(
+                    f"❌ 지수 조회 최종 실패 index={index_code} tr_id={tr_id} last_error={last_error}"
+                )
+                self._last_error_log_time = current_time
+                self._error_log_count = 0
+            else:
+                self._error_log_count += 1
+                # 처음 3번만 로그 출력
+                if self._error_log_count <= 3:
+                    logger.warning(f"⚠️ 지수 조회 실패 (로그 생략 중) index={index_code}")
             return None
                 
         except Exception as e:
@@ -282,20 +297,40 @@ class KISMarketIndexClient:
         """실시간 업데이트 루프"""
         logger.info("🔄 시장 지수 업데이트 루프 시작")
         
+        # 연속 실패 카운터 추가
+        consecutive_failures = 0
+        max_consecutive_failures = 5  # 5번 연속 실패 시 일시 중지
+        
         while self.running:
             try:
                 # 시장 개장 여부 확인
                 is_open, reason = market_utils.is_market_open()
                 
                 if is_open:
+                    # 연속 실패가 너무 많으면 더 긴 대기
+                    if consecutive_failures >= max_consecutive_failures:
+                        logger.warning(f"⚠️ 시장 지수 조회 {consecutive_failures}번 연속 실패 - 5분 대기")
+                        time.sleep(300)  # 5분 대기
+                        consecutive_failures = 0  # 카운터 리셋
+                        continue
+                    
                     # REST 폴링만 수행 (모의/실계좌 공통)
-                    indices_data = self.get_all_market_indices()
-                    if indices_data:
-                        for callback in self.callbacks:
-                            try:
-                                callback(indices_data)
-                            except Exception as e:
-                                logger.error(f"❌ 시장 지수 콜백 오류: {e}")
+                    try:
+                        indices_data = self.get_all_market_indices()
+                        if indices_data:
+                            consecutive_failures = 0  # 성공 시 카운터 리셋
+                            for callback in self.callbacks:
+                                try:
+                                    callback(indices_data)
+                                except Exception as e:
+                                    logger.error(f"❌ 시장 지수 콜백 오류: {e}")
+                        else:
+                            consecutive_failures += 1
+                            logger.warning(f"⚠️ 시장 지수 조회 실패 ({consecutive_failures}/{max_consecutive_failures})")
+                    except Exception as fetch_err:
+                        consecutive_failures += 1
+                        logger.error(f"❌ 시장 지수 조회 예외 ({consecutive_failures}/{max_consecutive_failures}): {fetch_err}")
+                    
                     time.sleep(self.update_interval)
                     continue
 
@@ -323,9 +358,16 @@ class KISMarketIndexClient:
                 # 다음 업데이트까지 대기
                 time.sleep(self.update_interval)
                 
+            except KeyboardInterrupt:
+                logger.info("⚠️ 시장 지수 업데이트 루프 중단 (KeyboardInterrupt)")
+                break
             except Exception as e:
-                logger.error(f"❌ 시장 지수 업데이트 루프 오류: {e}")
-                time.sleep(60)  # 오류 시 1분 대기
+                logger.error(f"❌ 시장 지수 업데이트 루프 오류: {e}", exc_info=False)
+                consecutive_failures += 1
+                # 예외 발생 시 더 긴 대기
+                wait_time = min(60 * consecutive_failures, 300)  # 최대 5분
+                logger.warning(f"⚠️ {wait_time}초 대기 후 재시도... ({consecutive_failures}번째 실패)")
+                time.sleep(wait_time)
 
     def add_callback(self, callback: Callable[[Dict], None]):
         """콜백 추가"""

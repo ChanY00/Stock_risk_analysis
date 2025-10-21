@@ -64,8 +64,10 @@ class GlobalSubscriptionManager:
         """단일 브로드캐스트 스레드 초기화 - 성능 최적화"""
         # Delegate to reusable utility to manage loop/thread
         ws_loop.ensure_started()
+        # Get reference to the broadcast loop
+        self._broadcast_loop = ws_loop.get_loop()
         if getattr(_settings, 'DEBUG', False):
-            performance_logger.info("Single broadcast thread ensured started")
+            performance_logger.info(f"Single broadcast thread ensured started (loop: {self._broadcast_loop})")
         
     def add_client(self, client_id: str):
         """클라이언트 추가"""
@@ -215,14 +217,46 @@ class GlobalSubscriptionManager:
             self.connection_status = "error"
     
     def _cleanup_kis_client(self):
-        """KIS 클라이언트 정리"""
-        if self.kis_client:
-            self.kis_client.close()
-            self.kis_client = None
-            self.subscribed_stocks.clear()
-            _dinfo("🔌 Global KIS WebSocket client closed")
-            if getattr(_settings, 'DEBUG', False):
-                performance_logger.info("KIS WebSocket client closed")
+        """KIS 클라이언트 정리 (타임아웃 및 안전장치 포함)"""
+        try:
+            if self.kis_client:
+                try:
+                    # 타임아웃을 두고 종료 시도
+                    import signal
+                    
+                    def timeout_handler(signum, frame):
+                        raise TimeoutError("KIS 클라이언트 종료 타임아웃")
+                    
+                    # 5초 타임아웃 설정 (Unix 시스템만 지원)
+                    try:
+                        signal.signal(signal.SIGALRM, timeout_handler)
+                        signal.alarm(5)
+                    except (AttributeError, ValueError):
+                        # Windows 환경에서는 signal.SIGALRM 미지원
+                        pass
+                    
+                    try:
+                        self.kis_client.close()
+                        _dinfo("✅ KIS WebSocket 정상 종료")
+                        if getattr(_settings, 'DEBUG', False):
+                            performance_logger.info("KIS WebSocket client closed successfully")
+                    finally:
+                        try:
+                            signal.alarm(0)  # 타임아웃 해제
+                        except (AttributeError, ValueError):
+                            pass
+                        
+                except TimeoutError:
+                    logger.warning("⏱️ KIS WebSocket 종료 타임아웃 (강제 종료)")
+                except Exception as e:
+                    logger.warning(f"⚠️ KIS WebSocket 종료 중 오류 (무시됨): {e}")
+                finally:
+                    # 항상 리소스 정리 보장
+                    self.kis_client = None
+                    self.subscribed_stocks.clear()
+                    _dinfo("🔌 Global KIS WebSocket client closed")
+        except Exception as e:
+            logger.error(f"❌ _cleanup_kis_client 예외: {e}", exc_info=True)
     
     def _subscribe_to_kis(self, stock_code: str) -> bool:
         """KIS에 종목 구독 (휴장일 대응 포함)"""
@@ -287,6 +321,11 @@ class GlobalSubscriptionManager:
             # 이전 거래일 기준 종가 데이터 생성
             last_trading_day = market_utils.get_last_trading_day()
             
+            # current_price가 None이면 기본값 사용
+            if current_price is None:
+                current_price = 50000
+                _dwarn(f"⚠️ {stock_code} 가격 정보 없음, 기본값 사용: {current_price}")
+            
             # Mock 데이터 생성 (실제로는 DB에서 마지막 종가를 가져와야 함)
             mock_price_data = {
                 'stock_code': stock_code,
@@ -307,7 +346,7 @@ class GlobalSubscriptionManager:
             # 브로드캐스트를 위해 콜백 호출
             self._price_callback(mock_price_data)
             
-            _dinfo(f"💾 {stock_code}({stock_name}) 휴장일 종가 데이터 제공: {mock_price_data['current_price']:,}원")
+            _dinfo(f"💾 {stock_code}({stock_name}) 휴장일 종가 데이터 제공: {current_price:,}원")
             
         except Exception as e:
             logger.error(f"❌ {stock_code} 휴장일 처리 오류: {e}")
@@ -445,7 +484,9 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
             
             # 연결 수락
             await self.accept()
-            _dinfo(f"📱 WebSocket connection accepted for {self.client_id}")
+            
+            # WebSocket 연결은 항상 로그 (컨테이너 시작과 구분하기 위해)
+            logger.info(f"🔌 [WS] Client connected: {self.client_id}")
             
             # 변경점(Step 1): 더 이상 단일 그룹("stock_prices")에 참가하지 않음
             # 각 종목 구독 시점에 종목별 그룹에 참가하도록 변경
@@ -462,7 +503,7 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
             }))
             
         except Exception as e:
-            logger.error(f"Connection error: {e}")
+            logger.error(f"❌ [WS] Connection error: {e}")
             await self.close()
 
     async def disconnect(self, close_code):
@@ -480,10 +521,11 @@ class StockPriceConsumer(AsyncWebsocketConsumer):
             # 글로벌 관리자에서 클라이언트 제거
             if hasattr(self, 'client_id'):
                 global_subscription_manager.remove_client(self.client_id)
-                _dinfo(f"📱 Client {self.client_id} disconnected")
+                # WebSocket 해제도 항상 로그
+                logger.info(f"🔌 [WS] Client disconnected: {self.client_id} (code: {close_code})")
                 
         except Exception as e:
-            logger.error(f"Disconnect error: {e}")
+            logger.error(f"❌ [WS] Disconnect error: {e}")
 
     async def receive(self, text_data):
         """클라이언트로부터 메시지 수신"""

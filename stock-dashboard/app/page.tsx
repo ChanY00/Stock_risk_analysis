@@ -82,7 +82,6 @@ import {
   FilterCriteria,
 } from "@/components/filters/advanced-filters";
 
-import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketStatusIndicator } from "@/components/ui/market-status-indicator";
 import {
   StockPriceCell,
@@ -343,11 +342,19 @@ export default function Dashboard() {
   }, [favorites]);
 
   // 통합된 실시간 주가 Hook - 현재 페이지 + 관심종목 모두 포함
+  // 데이터 로딩이 완료된 후에만 구독 시작 (타이밍 문제 해결)
   const allStockCodes = useMemo(() => {
+    // 로딩 중이면 빈 배열 반환 (WebSocket 구독 방지)
+    if (loading) {
+      console.log("🔕 Skipping stock codes - still loading data");
+      return [];
+    }
+    
     const combined = [...currentStockCodes, ...favoriteStockCodes, ...topMcapCodes];
     // 중복 제거 및 안정화
     const unique = [...new Set(combined)].filter(Boolean).sort();
     console.log("🔍 All stock codes combined:", {
+      loading,
       currentPage: currentStockCodes.length,
       favorites: favoriteStockCodes.length,
       topMcap: topMcapCodes.length,
@@ -355,7 +362,7 @@ export default function Dashboard() {
       codes: unique.slice(0, 5), // 처음 5개만 로그
     });
     return unique;
-  }, [currentStockCodes, favoriteStockCodes, topMcapCodes]);
+  }, [currentStockCodes, favoriteStockCodes, topMcapCodes, loading]);
 
   const {
     data: realTimePrices = {},
@@ -558,9 +565,12 @@ export default function Dashboard() {
           .sort((a, b) => (b.marketCap || 0) - (a.marketCap || 0))
           .slice(0, 30);
 
+        console.log("📊 Top market cap items (before fallback):", mcapItems.length, mcapItems.slice(0, 3));
+
         // Fallback: 시가총액 데이터가 비어있을 때 초깃값으로 상위 30개 종목을 사용하여
         // 실시간 구독을 활성화하고 비어있는 회색 영역이 보이지 않도록 함
         if (!mcapItems || mcapItems.length === 0) {
+          console.warn("⚠️ No market cap data, using fallback (first 30 stocks)");
           mcapItems = stocksData.results
             .slice(0, 30)
             .map((s) => {
@@ -569,6 +579,8 @@ export default function Dashboard() {
               return { code: s.stock_code, name: s.stock_name, marketCap: cap };
             });
         }
+        
+        console.log("✅ Final top mcap items:", mcapItems.length, "stocks", mcapItems.slice(0, 3).map(s => s.code));
         setTopMcapItems(mcapItems);
 
         // AI 점수 계산 (공통 유틸리티 사용)
@@ -913,7 +925,6 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               {/* 시장 상태 표시기 추가 */}
               <MarketStatusIndicator variant="badge" />
-              <NotificationCenter />
 
               {/* 인증 상태에 따른 버튼 표시 */}
               {isAuthenticated ? (
