@@ -462,6 +462,9 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
         roe: item.stock.roe,
         targetX: targetX,
         targetY: targetY,
+        // 초기 렌더 순간에도 퍼진 상태가 보이도록 초기 좌표 시드
+        x: targetX,
+        y: targetY,
         metricDistance: item.distance,
         angle: angle, // 각도 정보 저장
         radius: radius // 반지름 정보 저장
@@ -717,34 +720,32 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
       setGraphData(newGraphData)
     }, [stableData, clusterId, localAxis]) // createNetworkGraphData, stockCode 의존성 제거
 
-    // 방사형 배치를 위한 물리엔진 설정
+    // 방사형 배치를 위한 물리엔진 설정 (지연 없이 즉시 적용)
     useEffect(() => {
       if (forceGraphRef.current && graphData.nodes.length > 0) {
         console.log('물리 엔진 설정 시작:', graphData.nodes.length, '개 노드')
         const fg = forceGraphRef.current
-        
-        // 약간의 지연 후 물리 엔진 설정 (ForceGraph2D 초기화 대기)
-        const timeoutId = setTimeout(() => {
-          // 방사형 배치 유지를 위한 물리 엔진 설정
-          fg.d3Force('x', d3.forceX((d: any) => d.targetX || 0).strength(0.8))
-          fg.d3Force('y', d3.forceY((d: any) => d.targetY || 0).strength(0.8))
-          fg.d3Force('charge').strength(-50)
-          fg.d3Force('link').strength(0.01).distance((d: any) => {
-            return Math.min(50, Math.max(20, (d.distance || 0) * 0.5))
-          })
-          fg.d3Force('center', d3.forceCenter(0, 0).strength(0.05))
-          
-          // 중심 노드 위치 완전 고정
-          fg.d3Force('radial', d3.forceRadial((d: any) => {
-            if (d.isCurrentStock) return 0
-            return d.radius || 100
-          }, 0, 0).strength(0.5))
-          
-          fg.d3ReheatSimulation()
-          console.log('물리 엔진 설정 완료')
-        }, 300)
-        
-        return () => clearTimeout(timeoutId)
+
+        // 방사형 배치를 위한 물리 엔진 설정
+        fg.d3Force('x', d3.forceX((d: any) => d.targetX || 0).strength(0.8))
+        fg.d3Force('y', d3.forceY((d: any) => d.targetY || 0).strength(0.8))
+        // 더 넓게 퍼지도록 반발/링크 거리 조정
+        fg.d3Force('charge').strength(-120)
+        fg.d3Force('link').strength(0.02).distance((d: any) => {
+          // 거리 기반, 과도한 클램프 제거
+          return Math.min(200, Math.max(40, (d.distance || 0) * 1.0))
+        })
+        fg.d3Force('center', d3.forceCenter(0, 0).strength(0.05))
+
+        // 중심 노드 위치 완전 고정
+        fg.d3Force('radial', d3.forceRadial((d: any) => {
+          if (d.isCurrentStock) return 0
+          return d.radius || 100
+        }, 0, 0).strength(0.5))
+
+        // 설정 후 즉시 재가열하여 수동으로 시뮬레이션 시작
+        fg.d3ReheatSimulation()
+        console.log('물리 엔진 설정 완료')
       }
     }, [graphData.nodes])
 
@@ -887,13 +888,11 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
         </div>
         
         <ForceGraph2D
-          key={`network-${clusterId}-${localAxis}-${graphData.nodes.length}`}
+          key={`network-${clusterId}-${localAxis}`}
           ref={forceGraphRef}
           graphData={graphData}
-          width={1400}
-          height={800}
-          warmupTicks={120}
-          cooldownTicks={60}
+          warmupTicks={0}
+          cooldownTicks={0}
           nodeCanvasObject={nodeCanvasObject}
           linkCanvasObject={linkCanvasObject}
           nodeId="id"
@@ -905,10 +904,25 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
           d3AlphaDecay={0.02}
           d3VelocityDecay={0.4}
           onEngineStop={() => {
-            console.log('네트워크 그래프 물리 시뮬레이션 완료')
-            setTimeout(() => {
-              forceGraphRef.current?.zoomToFit(400, 100)
-            }, 500)
+            // 레이아웃이 충분히 퍼진 이후에만 자동 줌 실행
+            try {
+              const bbox = forceGraphRef.current?.getGraphBbox?.()
+              const width = bbox?.w ?? 0
+              const height = bbox?.h ?? 0
+              console.log('엔진 스톱 - BBox:', width, height)
+              if (width > 200 && height > 200) {
+                setTimeout(() => {
+                  forceGraphRef.current?.zoomToFit(400, 100)
+                }, 200)
+              } else {
+                // 너무 작게 모여 있으면 한 번 더 가열 후 재시도
+                setTimeout(() => {
+                  forceGraphRef.current?.d3ReheatSimulation()
+                }, 200)
+              }
+            } catch (e) {
+              // 실패 시 무시
+            }
           }}
         />
       </div>
@@ -1354,50 +1368,7 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                 </CardContent>
               </Card>
 
-              {/* 유사 종목 목록 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>유사 종목 (재무제표 기반)</CardTitle>
-                  <CardDescription>
-                    동일한 재무제표 기반 클러스터에 속하는 종목들입니다.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-3">
-                    {spectralSimilarStocks.similar_stocks.slice(0, 10).map((stock, index) => (
-                      <div key={stock.stock_code} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-md">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                            {index + 1}
-                          </div>
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: getSectorColor(translateSectorToKorean(stock.sector)) }}
-                          />
-                          <div>
-                            <div className="font-medium">{stock.stock_name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {stock.stock_code} • {translateSectorToKorean(stock.sector)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium">
-                            {stock.current_price ? stock.current_price.toLocaleString() : 'N/A'}원
-                          </div>
-                          <div className="text-xs text-muted-foreground flex gap-2">
-                            <span>PER: {stock.per ? stock.per.toFixed(1) : 'N/A'}</span>
-                            <span>PBR: {stock.pbr ? stock.pbr.toFixed(1) : 'N/A'}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            시총: {stock.market_cap ? `${(stock.market_cap / 1000000000000).toFixed(1)}조` : 'N/A'}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* 유사 종목 목록 카드 제거 */}
             </>
           )}
         </TabsContent>
@@ -1671,50 +1642,7 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
                 </CardContent>
               </Card>
 
-              {/* 유사 종목 목록 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>유사 종목 (수익 변동성 기반)</CardTitle>
-                  <CardDescription>
-                    동일한 수익 변동성 기반 클러스터에 속하는 종목들입니다.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-3">
-                    {agglomerativeSimilarStocks.similar_stocks.slice(0, 10).map((stock, index) => (
-                      <div key={stock.stock_code} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200 hover:shadow-md">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-6 h-6 bg-red-100 text-red-700 rounded-full text-xs font-medium">
-                            {index + 1}
-                          </div>
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: getSectorColor(translateSectorToKorean(stock.sector)) }}
-                          />
-                          <div>
-                            <div className="font-medium">{stock.stock_name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {stock.stock_code} • {translateSectorToKorean(stock.sector)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium">
-                            {stock.current_price ? stock.current_price.toLocaleString() : 'N/A'}원
-                          </div>
-                          <div className="text-xs text-muted-foreground flex gap-2">
-                            <span>PER: {stock.per ? stock.per.toFixed(1) : 'N/A'}</span>
-                            <span>PBR: {stock.pbr ? stock.pbr.toFixed(1) : 'N/A'}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            시총: {stock.market_cap ? `${(stock.market_cap / 1000000000000).toFixed(1)}조` : 'N/A'}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* 유사 종목 목록 카드 제거 */}
             </>
           )}
         </TabsContent>

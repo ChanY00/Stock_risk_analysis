@@ -969,7 +969,7 @@ class ApiClient {
     type: "spectral" | "agglomerative" = "spectral"
   ): Promise<ClusterOverview> {
     return this.request<ClusterOverview>(
-      `/analysis/clusters/?type=${type}`,
+      `/analysis/cluster/overview/?type=${type}`,
       {},
       false
     );
@@ -980,7 +980,7 @@ class ApiClient {
     clusterId: number
   ): Promise<ClusterStocks> {
     return this.request<ClusterStocks>(
-      `/analysis/clusters/${clusterType}/${clusterId}/`,
+      `/analysis/cluster/stocks/${clusterType}/${clusterId}/`,
       {},
       false
     );
@@ -988,7 +988,7 @@ class ApiClient {
 
   async getStockClusterInfo(stockCode: string): Promise<StockClusterInfo> {
     return this.request<StockClusterInfo>(
-      `/analysis/stocks/${stockCode}/cluster/`,
+      `/analysis/cluster/info/${stockCode}/`,
       {},
       false
     );
@@ -1000,7 +1000,7 @@ class ApiClient {
     limit: number = 10
   ): Promise<SimilarStocks> {
     return this.request<SimilarStocks>(
-      `/analysis/stocks/${stockCode}/similar/?type=${type}&limit=${limit}`,
+      `/analysis/similar-stocks/${stockCode}/?type=${type}&limit=${limit}`,
       {},
       false
     );
