@@ -25,17 +25,17 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     )
   }
 
-  // 재무 데이터를 차트용으로 변환 (백엔드에서 이미 백만원 단위로 저장됨)
+  // 재무 데이터를 차트용으로 변환 (DB에 원 단위로 저장됨)
   const financialData = Object.entries(financial.financials)
     .map(([year, data]) => ({
       year: parseInt(year),
-      revenue: data.revenue, // 백만원 단위 그대로 사용
-      operating_income: data.operating_income,
-      net_income: data.net_income,
-      eps: data.eps,
-      total_assets: data.total_assets || 0,
-      total_liabilities: data.total_liabilities || 0,
-      total_equity: data.total_equity || 0
+      revenue: data.revenue, // 원 단위
+      operating_income: data.operating_income, // 원 단위
+      net_income: data.net_income, // 원 단위
+      eps: data.eps, // 원 단위
+      total_assets: data.total_assets || 0, // 원 단위
+      total_liabilities: data.total_liabilities || 0, // 원 단위
+      total_equity: data.total_equity || 0 // 원 단위
     }))
     .sort((a, b) => a.year - b.year)
 
@@ -80,9 +80,13 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                   {typeof entry.value === 'number' 
                     ? entry.dataKey === 'eps' 
                       ? `${entry.value.toLocaleString()}원`
-                      : entry.value >= 100000
-                      ? `${(entry.value / 100000).toFixed(0)}억원`
-                      : `${entry.value.toLocaleString()}백만원`
+                      : entry.value >= 1e12
+                      ? `${(entry.value / 1e12).toFixed(1)}조원`
+                      : entry.value >= 1e8
+                      ? `${(entry.value / 1e8).toFixed(1)}억원`
+                      : entry.value >= 1e4
+                      ? `${(entry.value / 1e4).toFixed(1)}만원`
+                      : `${entry.value.toLocaleString()}원`
                     : entry.value}
                 </span>
               </p>
@@ -145,7 +149,7 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     return issues;
   };
 
-  // 안전한 값 표시 함수 (백만원 단위 데이터용)
+  // 안전한 값 표시 함수 (원 단위 데이터용)
   const formatSafeValue = (value: number | null | undefined, unit: string = '조원', issues: any[] = []) => {
     if (value === null || value === undefined) return 'N/A';
     if (value === 0) return '0';
@@ -157,14 +161,23 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       issue.type === 'ABNORMAL_EPS'
     );
     
-    // 백만원 단위로 저장된 데이터를 적절한 단위로 변환
-    const formattedValue = Math.abs(value) >= 1000000 
-      ? `${(value / 1000000).toFixed(1)}조원`
-      : Math.abs(value) >= 100000
-      ? `${(value / 100000).toFixed(0)}억원`
-      : Math.abs(value) >= 1000
-      ? `${(value / 1000).toFixed(1)}십억원`
-      : `${value.toLocaleString()}백만원`;
+    // 원 단위로 저장된 데이터를 적절한 단위로 변환
+    const absValue = Math.abs(value);
+    let formattedValue: string;
+    
+    if (absValue >= 1e12) {
+      // 1조원 이상
+      formattedValue = `${(value / 1e12).toFixed(1)}조원`;
+    } else if (absValue >= 1e8) {
+      // 1억원 이상
+      formattedValue = `${(value / 1e8).toFixed(1)}억원`;
+    } else if (absValue >= 1e4) {
+      // 1만원 이상
+      formattedValue = `${(value / 1e4).toFixed(1)}만원`;
+    } else {
+      // 1만원 미만
+      formattedValue = `${value.toLocaleString()}원`;
+    }
     
     if (hasDataIssue) {
       return `${formattedValue} ⚠️`;
@@ -350,13 +363,14 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                <CardContent>
                  <div className={`text-2xl font-bold text-gray-900 dark:text-white ${latestDataWithIssues.net_income < 0 ? 'text-red-600 dark:text-red-400' : latestDataWithIssues.net_income === 0 ? 'text-gray-500 dark:text-gray-400' : ''}`}>
                    {latestDataWithIssues.net_income === 0 
-                     ? (latestDataWithIssues.year === 2024 ? '미공시' : '손실없음')
-                     : formatSafeValue(latestDataWithIssues.net_income, '조')
+                     ? (latestDataWithIssues.year === 2024 ? '미공시' : '0')
+                     : formatSafeValue(latestDataWithIssues.net_income, '조', latestDataWithIssues.issues || [])
                    }
                  </div>
                  <p className="text-xs text-muted-foreground dark:text-gray-400">
                    {latestDataWithIssues.net_income < 0 ? '순손실' : ''}
                    {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year === 2024 ? '2024년 실적 대기 중' : ''}
+                   {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year !== 2024 && latestDataWithIssues.eps && latestDataWithIssues.eps !== 0 ? ' (EPS는 존재, 데이터 확인 필요)' : ''}
                  </p>
                </CardContent>
              </Card>
@@ -367,10 +381,8 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                </CardHeader>
                <CardContent>
                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                   {latestDataWithIssues.eps === 0 
+                   {latestDataWithIssues.eps === null || latestDataWithIssues.eps === undefined || latestDataWithIssues.eps === 0
                      ? 'N/A'
-                     : latestDataWithIssues.eps > 100000
-                     ? `${formatSafeValue(latestDataWithIssues.eps, '원', latestDataWithIssues.issues || [])}`
                      : `${latestDataWithIssues.eps.toLocaleString()}원`
                    }
                  </div>
@@ -453,7 +465,12 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                       
                       return [centeredMin, centeredMax]
                     })()}
-                    tickFormatter={(value) => value >= 100000 ? `${(value / 100000).toFixed(0)}억` : `${value.toLocaleString()}백만`}
+                    tickFormatter={(value) => {
+                      if (value >= 1e12) return `${(value / 1e12).toFixed(1)}조`;
+                      if (value >= 1e8) return `${(value / 1e8).toFixed(0)}억`;
+                      if (value >= 1e4) return `${(value / 1e4).toFixed(1)}만`;
+                      return `${value.toLocaleString()}`;
+                    }}
                     tick={{ fontSize: 12, fill: '#6b7280' }}
                   />
                   <Tooltip content={<CustomTooltip />} />
@@ -564,12 +581,12 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => [
-                      value >= 100000 
-                        ? `${(value / 100000).toFixed(0)}억원` 
-                        : `${value.toLocaleString()}백만원`, 
-                      ''
-                    ]}
+                    formatter={(value: number) => {
+                      if (value >= 1e12) return `${(value / 1e12).toFixed(1)}조원`;
+                      if (value >= 1e8) return `${(value / 1e8).toFixed(1)}억원`;
+                      if (value >= 1e4) return `${(value / 1e4).toFixed(1)}만원`;
+                      return `${value.toLocaleString()}원`;
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -583,9 +600,13 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="text-sm text-gray-600">
-                    {item.name} ({item.value >= 100000 
-                      ? `${(item.value / 100000).toFixed(0)}억원` 
-                      : `${item.value.toLocaleString()}백만원`})
+                    {item.name} ({item.value >= 1e12
+                      ? `${(item.value / 1e12).toFixed(1)}조원`
+                      : item.value >= 1e8
+                      ? `${(item.value / 1e8).toFixed(1)}억원`
+                      : item.value >= 1e4
+                      ? `${(item.value / 1e4).toFixed(1)}만원`
+                      : `${item.value.toLocaleString()}원`})
                   </span>
                 </div>
               ))}
@@ -599,25 +620,31 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
               <div className="border-b pb-4">
                 <div className="text-sm text-gray-600 mb-2">총자산</div>
                 <div className="text-2xl font-bold text-gray-800">
-                  {latestData.total_assets >= 100000 
-                    ? `${(latestData.total_assets / 100000).toFixed(0)}억원`
-                    : `${latestData.total_assets.toLocaleString()}백만원`}
+                  {latestData.total_assets >= 1e12
+                    ? `${(latestData.total_assets / 1e12).toFixed(1)}조원`
+                    : latestData.total_assets >= 1e8
+                    ? `${(latestData.total_assets / 1e8).toFixed(1)}억원`
+                    : `${latestData.total_assets.toLocaleString()}원`}
                 </div>
               </div>
               <div className="border-b pb-4">
                 <div className="text-sm text-gray-600 mb-2">부채</div>
                 <div className="text-xl font-semibold text-red-600">
-                  {latestData.total_liabilities >= 100000 
-                    ? `${(latestData.total_liabilities / 100000).toFixed(0)}억원`
-                    : `${latestData.total_liabilities.toLocaleString()}백만원`}
+                  {latestData.total_liabilities >= 1e12
+                    ? `${(latestData.total_liabilities / 1e12).toFixed(1)}조원`
+                    : latestData.total_liabilities >= 1e8
+                    ? `${(latestData.total_liabilities / 1e8).toFixed(1)}억원`
+                    : `${latestData.total_liabilities.toLocaleString()}원`}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600 mb-2">자본</div>
                 <div className="text-xl font-semibold text-green-600">
-                  {latestData.total_equity >= 100000 
-                    ? `${(latestData.total_equity / 100000).toFixed(0)}억원`
-                    : `${latestData.total_equity.toLocaleString()}백만원`}
+                  {latestData.total_equity >= 1e12
+                    ? `${(latestData.total_equity / 1e12).toFixed(1)}조원`
+                    : latestData.total_equity >= 1e8
+                    ? `${(latestData.total_equity / 1e8).toFixed(1)}억원`
+                    : `${latestData.total_equity.toLocaleString()}원`}
                 </div>
               </div>
             </div>
