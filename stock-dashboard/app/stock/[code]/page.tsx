@@ -171,14 +171,21 @@ const convertApiStockToDetail = (
     sentiment = Math.random() * 0.4 + 0.3; // 0.3-0.7
   }
 
+  // 실시간 주가를 기준으로 시가총액 계산 (발행주식수가 있는 경우)
+  const currentPrice = realTime?.current_price || apiStock.current_price;
+  const sharesOutstanding = (apiStock as any).shares_outstanding; // 발행주식수
+  const marketCap = sharesOutstanding && currentPrice
+    ? currentPrice * sharesOutstanding  // 실시간 주가 기준으로 계산
+    : apiStock.market_cap;  // 발행주식수 없으면 DB 값 사용
+
   const stockDetail: StockDetail = {
     code: apiStock.stock_code,
     name: apiStock.stock_name,
-    price: realTime?.current_price || apiStock.current_price,
+    price: currentPrice,
     change: realTime?.change_amount || 0,
     changePercent: realTime?.change_percent || 0,
     volume: realTime?.volume || 0,
-    marketCap: apiStock.market_cap,
+    marketCap: marketCap,  // 실시간 계산된 시가총액 사용
     per: apiStock.per,
     pbr: apiStock.pbr,
     roe: apiStock.roe,
