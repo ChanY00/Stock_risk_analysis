@@ -311,9 +311,6 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
         </Alert>
       )}
 
-      {/* 데이터 품질 경고 */}
-      <DataQualityAlert issues={allIssues} />
-
       {/* 재무 개요 */}
       {viewType === 'overview' && latestData && (
         <div className="space-y-6">

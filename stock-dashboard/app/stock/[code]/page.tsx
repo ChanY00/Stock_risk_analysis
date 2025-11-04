@@ -55,7 +55,6 @@ import {
   handleApiError,
   type FinancialData as ApiFinancialData,
   type SentimentAnalysis,
-  type SentimentTrendData,
   type FinancialAnalysis,
   type AIReport,
 } from "@/lib/api";
@@ -222,9 +221,6 @@ export default function StockDetailPage() {
     useState<SentimentAnalysis | null>(null);
   const [financialAnalysis, setFinancialAnalysis] =
     useState<FinancialAnalysis | null>(null);
-  const [sentimentTrend, setSentimentTrend] = useState<SentimentTrendData[]>(
-    []
-  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -573,16 +569,6 @@ export default function StockDetailPage() {
             positiveRatio: 60,
             negativeRatio: 40,
           });
-        }
-
-        // 감정 추이 데이터 로드 (14일)
-        try {
-          const trend = await stocksApi.getSentimentTrend(code, 14);
-          console.log("📈 감정 추이 데이터:", trend);
-          setSentimentTrend(trend);
-        } catch (trendErr) {
-          console.log("⚠️ 감정 추이 API 호출 실패:", trendErr);
-          setSentimentTrend([]);
         }
 
         // 추가 데이터 로드 (선택적) - 기존 기술지표가 없을 때만
@@ -1284,7 +1270,6 @@ export default function StockDetailPage() {
             {sentimentAnalysis ? (
               <SentimentChart
                 sentiment={sentimentAnalysis}
-                sentimentTrend={sentimentTrend}
                 title="네이버 종목토론방 감정 분석"
               />
             ) : (
