@@ -24,12 +24,90 @@ echo -e "${YELLOW}📋 실행 모드: ${MODE}${NC}"
 wait_for_db() {
     echo -e "${YELLOW}⏳ 데이터베이스 연결 대기 중...${NC}"
     
-    while ! python manage.py dbshell --command="SELECT 1;" >/dev/null 2>&1; do
-        echo -e "${YELLOW}💤 데이터베이스 대기 중... (5초 후 재시도)${NC}"
+    # 최대 재시도 횟수 설정 (기본 60회 = 5분)
+    MAX_RETRIES=${DB_MAX_RETRIES:-60}
+    RETRY_COUNT=0
+    
+    # 데이터베이스 연결 정보 확인
+    DB_HOST=${DB_HOST:-postgres}
+    DB_PORT=${DB_PORT:-5432}
+    DB_NAME=${DB_NAME:-}
+    DB_USER=${DB_USER:-}
+    
+    echo -e "${BLUE}📊 데이터베이스 연결 정보:${NC}"
+    echo -e "  Host: ${DB_HOST}"
+    echo -e "  Port: ${DB_PORT}"
+    echo -e "  Database: ${DB_NAME:-'(설정되지 않음)'}"
+    echo -e "  User: ${DB_USER:-'(설정되지 않음)'}"
+    
+    # Step 1: PostgreSQL 서버가 준비되었는지 확인 (pg_isready 사용)
+    echo -e "${YELLOW}🔍 Step 1: PostgreSQL 서버 준비 상태 확인 중...${NC}"
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        if PGPASSWORD="${DB_PASSWORD}" pg_isready -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" >/dev/null 2>&1; then
+            echo -e "${GREEN}✅ PostgreSQL 서버 준비 완료!${NC}"
+            break
+        fi
+        
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        echo -e "${YELLOW}💤 PostgreSQL 서버 대기 중... (${RETRY_COUNT}/${MAX_RETRIES}, 5초 후 재시도)${NC}"
         sleep 5
     done
-     
-    echo -e "${GREEN}✅ 데이터베이스 연결 성공!${NC}"
+    
+    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+        echo -e "${RED}❌ PostgreSQL 서버 준비 실패: 최대 재시도 횟수(${MAX_RETRIES}) 초과${NC}"
+        exit 1
+    fi
+    
+    # Step 2: Django를 통한 데이터베이스 연결 확인
+    echo -e "${YELLOW}🔍 Step 2: Django 데이터베이스 연결 확인 중...${NC}"
+    RETRY_COUNT=0
+    
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        # Python 스크립트를 사용하여 Django 데이터베이스 연결 확인
+        DB_CHECK_OUTPUT=$(python << 'PYTHON_EOF'
+import os
+import sys
+import django
+
+try:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'stock_backend.settings')
+    django.setup()
+    
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT 1')
+        cursor.fetchone()
+    print("SUCCESS", file=sys.stdout)
+    sys.exit(0)
+except Exception as e:
+    print(f"ERROR: {e}", file=sys.stderr)
+    sys.exit(1)
+PYTHON_EOF
+        2>&1)
+        
+        DB_CHECK_EXIT_CODE=$?
+        
+        if [ $DB_CHECK_EXIT_CODE -eq 0 ] && echo "$DB_CHECK_OUTPUT" | grep -q "SUCCESS"; then
+            echo -e "${GREEN}✅ Django 데이터베이스 연결 성공!${NC}"
+            return 0
+        else
+            # 첫 번째 시도가 아니면 에러 메시지를 출력하지 않음 (너무 많은 로그 방지)
+            if [ $RETRY_COUNT -eq 0 ]; then
+                echo -e "${YELLOW}⚠️  연결 시도 실패: $(echo "$DB_CHECK_OUTPUT" | grep "ERROR:" || echo "알 수 없는 오류")${NC}"
+            fi
+        fi
+        
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        echo -e "${YELLOW}💤 Django 데이터베이스 연결 대기 중... (${RETRY_COUNT}/${MAX_RETRIES}, 5초 후 재시도)${NC}"
+        sleep 5
+    done
+    
+    echo -e "${RED}❌ Django 데이터베이스 연결 실패: 최대 재시도 횟수(${MAX_RETRIES}) 초과${NC}"
+    echo -e "${YELLOW}💡 디버깅 팁:${NC}"
+    echo -e "  1. PostgreSQL 서비스가 실행 중인지 확인: docker-compose ps postgres"
+    echo -e "  2. 환경 변수가 올바르게 설정되었는지 확인"
+    echo -e "  3. 네트워크 연결 확인: docker-compose exec backend ping -c 3 postgres"
+    exit 1
 }
 
 # 개발 환경 설정
