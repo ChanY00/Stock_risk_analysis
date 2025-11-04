@@ -197,6 +197,103 @@ services:
       start_period: 120s # Django는 시작이 오래 걸림
 
   # ==========================================
+  # ⚙️ Celery Worker (비동기 작업 실행)
+  # ==========================================
+  celery-worker:
+    build:
+      context: ./stock_backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: kospi-celery-worker
+    restart: unless-stopped
+
+    # 🔧 환경변수 (backend와 동일)
+    env_file:
+      - ./stock_backend/.env
+      - ./Stock_risk_analysis/.env
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - USE_REDIS_CHANNELS=True
+      - KIS_USE_MOCK=False
+      - USE_MOCK_DATA=False
+      - DJANGO_MODE=production
+
+    # 🚀 Celery Worker 실행 명령어
+    command: celery -A stock_backend worker --loglevel=info --logfile=/var/log/celery-worker.log --concurrency=2
+
+    # 🔗 의존성 설정
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+    # 🌐 네트워크 연결
+    networks:
+      - kospi-network
+
+    # 💾 로그 파일 저장을 위한 볼륨
+    volumes:
+      - ./stock_backend/logs:/var/log
+
+  # ==========================================
+  # ⏰ Celery Beat (주기적 작업 스케줄러)
+  # ==========================================
+  celery-beat:
+    build:
+      context: ./stock_backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: kospi-celery-beat
+    restart: unless-stopped
+
+    # 🔧 환경변수 (backend와 동일)
+    env_file:
+      - ./stock_backend/.env
+      - ./Stock_risk_analysis/.env
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - USE_REDIS_CHANNELS=True
+      - KIS_USE_MOCK=False
+      - USE_MOCK_DATA=False
+      - DJANGO_MODE=production
+
+    # 🚀 Celery Beat 실행 명령어
+    # pidfile을 사용하지 않고 실행 (컨테이너 내부에서만 실행되므로 불필요)
+    # Python으로 직접 실행하여 오류를 더 명확히 확인
+    command: sh -c "mkdir -p /var/celerybeat-schedule /var/log && python -m celery -A stock_backend beat --loglevel=info --schedule=/var/celerybeat-schedule/celerybeat-schedule"
+
+    # 🔗 의존성 설정
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      celery-worker:
+        condition: service_started  # Worker가 시작되면 Beat도 시작
+
+    # 🌐 네트워크 연결
+    networks:
+      - kospi-network
+
+    # 💾 로그 파일 및 스케줄 파일 저장을 위한 볼륨
+    volumes:
+      - ./stock_backend/logs:/var/log
+      - ./stock_backend/celerybeat-schedule:/var/celerybeat-schedule
+
+  # ==========================================
   # ⚛️ Next.js 프론트엔드
   # ==========================================
   frontend:
