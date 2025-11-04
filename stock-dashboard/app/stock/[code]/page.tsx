@@ -239,6 +239,7 @@ export default function StockDetailPage() {
   // 실시간 데이터 업데이트 추적을 위한 ref
   const lastRealTimePriceRef = useRef<any>(null);
   const stockDetailRef = useRef<StockDetail | null>(null);
+  const sharesOutstandingRef = useRef<number | null>(null); // 발행주식수 저장 (시가총액 재계산용)
 
   // WebSocket 구독을 위한 종목 코드 메모이제이션
   const subscriptionCodes = useMemo(() => {
@@ -293,12 +294,19 @@ export default function StockDetailPage() {
           }
 
           // 실제 변경된 필드만 업데이트
+          // 시가총액 재계산 (실시간 주가가 업데이트되었으므로)
+          const sharesOutstanding = sharesOutstandingRef.current;
+          const newMarketCap = sharesOutstanding && realTimeData.current_price
+            ? realTimeData.current_price * sharesOutstanding
+            : prevDetail.marketCap; // 발행주식수가 없으면 기존 값 유지
+
           const updatedDetail = {
             ...prevDetail,
             price: realTimeData.current_price,
             change: realTimeData.change_amount,
             changePercent: realTimeData.change_percent,
             volume: realTimeData.volume,
+            marketCap: newMarketCap, // 실시간 주가 기준으로 재계산된 시가총액
           };
 
           // AI 점수 재계산 (변동률이 변경되었으므로)
@@ -466,6 +474,11 @@ export default function StockDetailPage() {
           undefined,
           sentimentData
         );
+        
+        // 발행주식수 저장 (실시간 주가 업데이트 시 시가총액 재계산용)
+        const sharesOutstanding = (stockData as any).shares_outstanding;
+        sharesOutstandingRef.current = sharesOutstanding || null;
+        
         setStockDetail(convertedStock);
         stockDetailRef.current = convertedStock;
 
