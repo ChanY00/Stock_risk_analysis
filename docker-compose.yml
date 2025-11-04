@@ -1,5 +1,5 @@
 # KOSPI 200 실시간 주식 대시보드 - Docker Compose 설정
-# 
+#
 # 🎯 목표: 5개 서비스를 하나의 시스템으로 통합
 # 📊 서비스: Flask + Django + Next.js + PostgreSQL + Redis
 
@@ -10,29 +10,28 @@
 # =============================================
 networks:
   kospi-network:
-    driver: bridge  # 기본 Docker 네트워크 드라이버
+    driver: bridge # 기본 Docker 네트워크 드라이버
     # 💡 이 네트워크 안의 모든 서비스들이 서로 통신 가능!
 
 # =============================================
 # 💾 볼륨 정의 (데이터 영속성)
 # =============================================
 volumes:
-  postgres_data:    # PostgreSQL 데이터 영구 저장
-  redis_data:       # Redis 데이터 영구 저장
+  postgres_data: # PostgreSQL 데이터 영구 저장
+  redis_data: # Redis 데이터 영구 저장
 
 # =============================================
 # 🚀 서비스 정의 (메인 섹션!)
 # =============================================
 services:
-  
   # ==========================================
   # 🗄️ PostgreSQL 데이터베이스
   # ==========================================
   postgres:
-    image: postgres:15-alpine  # 공식 PostgreSQL 이미지 (경량 버전)
+    image: postgres:15-alpine # 공식 PostgreSQL 이미지 (경량 버전)
     container_name: kospi-postgres
-    restart: unless-stopped    # 컨테이너 자동 재시작 (실수로 종료되어도 안전)
-    
+    restart: unless-stopped # 컨테이너 자동 재시작 (실수로 종료되어도 안전)
+
     # 🔧 환경변수 (데이터베이스 설정) - stock_backend/.env에서 로드
     env_file:
       - ./stock_backend/.env
@@ -52,7 +51,7 @@ services:
 
     # 🌐 포트 매핑
     ports:
-      - "5432:5432"  # 호스트:컨테이너
+      - "5432:5432" # 호스트:컨테이너
 
     # 🌐 네트워크 연결
     networks:
@@ -70,7 +69,7 @@ services:
   # 🔄 Redis 캐시 서버
   # ==========================================
   redis:
-    image: redis:7-alpine  # 공식 Redis 이미지 (경량 버전)
+    image: redis:7-alpine # 공식 Redis 이미지 (경량 버전)
     container_name: kospi-redis
     restart: unless-stopped
 
@@ -84,7 +83,7 @@ services:
 
     # 🌐 포트 매핑
     ports:
-      - "6379:6379"  # 호스트:컨테이너
+      - "6379:6379" # 호스트:컨테이너
 
     # 🌐 네트워크 연결
     networks:
@@ -103,7 +102,7 @@ services:
   # ==========================================
   sentiment:
     build:
-      context: ./Stock_risk_analysis  # Dockerfile 위치
+      context: ./Stock_risk_analysis # Dockerfile 위치
       dockerfile: Dockerfile
     container_name: kospi-sentiment
     restart: unless-stopped
@@ -114,7 +113,7 @@ services:
 
     # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - ./Stock_risk_analysis/.env    # 서비스별 API 키 및 설정 파일
+      - ./Stock_risk_analysis/.env # 서비스별 API 키 및 설정 파일
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
@@ -138,7 +137,7 @@ services:
     build:
       context: ./stock_backend
       dockerfile: Dockerfile
-      target: production  # 운영 환경 스테이지 선택
+      target: production # 운영 환경 스테이지 선택
     container_name: kospi-backend
     restart: unless-stopped
 
@@ -148,16 +147,17 @@ services:
 
     # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - ./stock_backend/.env          # Django 설정 및 API 키
+      - ./stock_backend/.env # Django 설정 및 API 키
+      - ./Stock_risk_analysis/.env # Gemini API 키 등
     environment:
       # Docker Compose 전용 설정 (인프라 관련)
-      - DB_HOST=postgres              # 💡 서비스명으로 접근!
+      - DB_HOST=postgres # 💡 서비스명으로 접근!
       - DB_PORT=5432
-      - REDIS_HOST=redis              # 💡 Docker 네트워크의 마법
+      - REDIS_HOST=redis # 💡 Docker 네트워크의 마법
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - USE_REDIS_CHANNELS=True       # 운영 환경에서 Redis Channels 필수
-      - KIS_USE_MOCK=False            # 실제 KIS WebSocket 사용 (운영 환경)
+      - USE_REDIS_CHANNELS=True # 운영 환경에서 Redis Channels 필수
+      - KIS_USE_MOCK=False # 실제 KIS WebSocket 사용 (운영 환경)
 
       # 운영 환경 설정
       - USE_MOCK_DATA=False
@@ -167,10 +167,10 @@ services:
       - SKIP_COLLECTSTATIC=False
       - COLLECT_STATIC=True
       - DJANGO_MODE=production
-      
+
       # 디버깅 환경변수 제거 (Illegal instruction 오류 유발)
       # DEBUG=True 사용 시 404 에러 처리 중 크래시 발생
-      
+
       # WebSocket Origin 검증 (운영 환경에서는 활성화)
       - ENABLE_WS_ORIGIN_CHECK=true
 
@@ -180,9 +180,9 @@ services:
     # 🔗 의존성 설정 (중요!)
     depends_on:
       postgres:
-        condition: service_healthy  # PostgreSQL이 준비될 때까지 대기
+        condition: service_healthy # PostgreSQL이 준비될 때까지 대기
       redis:
-        condition: service_healthy  # Redis가 준비될 때까지 대기
+        condition: service_healthy # Redis가 준비될 때까지 대기
 
     # 🌐 네트워크 연결
     networks:
@@ -194,7 +194,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s  # Django는 시작이 오래 걸림
+      start_period: 120s # Django는 시작이 오래 걸림
 
   # ==========================================
   # ⚛️ Next.js 프론트엔드
@@ -216,35 +216,34 @@ services:
       - "3000:3000"
     # 🔧 환경변수 (서비스별 설정)
     env_file:
-      - ./stock-dashboard/.env.local  # Next.js 로컬 환경변수
+      - ./stock-dashboard/.env.local # Next.js 로컬 환경변수
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api     # 브라우저용(클라이언트 번들에 노출)
-      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001   # 브라우저용
-      - INTERNAL_API_URL=http://backend:8000/api          # SSR용(컨테이너 내부 네트워킹)
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api # 브라우저용(클라이언트 번들에 노출)
+      - NEXT_PUBLIC_SENTIMENT_URL=http://localhost:5001 # 브라우저용
+      - INTERNAL_API_URL=http://backend:8000/api # SSR용(컨테이너 내부 네트워킹)
       - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/stocks/realtime/
       - NEXT_PUBLIC_WS_DEBUG=true
 
-    
     # 🔗 의존성 설정
     depends_on:
       backend:
-        condition: service_healthy  # Django가 준비될 때까지 대기
+        condition: service_healthy # Django가 준비될 때까지 대기
       # sentiment:
       #   condition: service_healthy  # Flask가 준비될 때까지 대기 (테스트 중 비활성화)
-    
+
     # 🌐 네트워크 연결
     networks:
       - kospi-network
-    
+
     # 🔧 호스트 매핑 (Linux 환경에서 host.docker.internal 지원)
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    
+
     # 🏥 헬스체크
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s 
+      start_period: 60s
