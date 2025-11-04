@@ -439,12 +439,13 @@ def generate_report_view(request, stock_code):
             excluded_sections.append('감정 분석')
             stock_data['sentiment'] = None
 
-        similar_stocks = StockSimilarity.get_most_similar_stocks(stock=stock, limit=5)
+        # StockSimilarity 기준으로 유사도 순위 3까지만 조회
+        similar_stocks = StockSimilarity.get_most_similar_stocks(stock=stock, limit=3)
         if similar_stocks.exists():
             stock_data['similar_stocks'] = SimilarStockSerializer(similar_stocks, many=True).data
         else:
-            excluded_sections.append('유사 그룹 내 주식 추천')
-            stock_data['similar_stocks'] = None
+            # 유사한 주식이 없으면 빈 리스트로 설정 (gemini_utils에서 처리)
+            stock_data['similar_stocks'] = []
             
         stock_data['excluded_sections'] = excluded_sections
 
