@@ -5,13 +5,14 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg, Count
 from stocks.models import Stock
-from .models import ClusteringCriterion, ClusteringResult, TechnicalIndicator, MarketIndex, Watchlist, Alert, SpectralCluster, AgglomerativeCluster, ClusterAnalysis, StockSimilarity
+from .models import ClusteringCriterion, ClusteringResult, TechnicalIndicator, MarketIndex, Watchlist, Alert, SpectralCluster, AgglomerativeCluster, ClusterAnalysis, StockSimilarity, SharesVerification
 from .serializers import (
     ClusteringResultSerializer, TechnicalIndicatorSerializer, MarketIndexSerializer,
     WatchlistSerializer, WatchlistCreateSerializer, AlertSerializer, AlertCreateSerializer,
     StockAnalysisSerializer, MarketOverviewSerializer, StockSummarySerializer,
     ClusterAnalysisSerializer, ClusterStockListSerializer,
-    SpectralClusterSerializer, AgglomerativeClusterSerializer, SimilarStockSerializer, StockSimilaritySerializer
+    SpectralClusterSerializer, AgglomerativeClusterSerializer, SimilarStockSerializer, StockSimilaritySerializer,
+    SharesVerificationSerializer
 )
 from sentiment.models import SentimentAnalysis
 from stocks.serializers import StockListSerializer
@@ -666,3 +667,51 @@ def watchlist_remove_stock_view(request, watchlist_id, stock_code):
         'watchlist_id': watchlist_id,
         'stock_code': stock_code
     }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def shares_verification_list_api(request):
+    """발행주식수 검증 결과 목록 API"""
+    status_filter = request.query_params.get('status')
+    match_filter = request.query_params.get('match')
+    
+    queryset = SharesVerification.objects.select_related('stock').all()
+    
+    if status_filter:
+        queryset = queryset.filter(status=status_filter)
+    
+    if match_filter is not None:
+        match_bool = match_filter.lower() == 'true'
+        queryset = queryset.filter(match=match_bool)
+    
+    # 통계 계산
+    total = queryset.count()
+    matches = queryset.filter(match=True).count()
+    minor_diffs = queryset.filter(status='MINOR_DIFF').count()
+    major_diffs = queryset.filter(status='MAJOR_DIFF').count()
+    errors = queryset.filter(status='DART_API_ERROR').count()
+    
+    serializer = SharesVerificationSerializer(queryset, many=True)
+    
+    return Response({
+        'results': serializer.data,
+        'summary': {
+            'total': total,
+            'matches': matches,
+            'minor_diffs': minor_diffs,
+            'major_diffs': major_diffs,
+            'errors': errors,
+        }
+    })
+
+@api_view(['GET'])
+def shares_verification_detail_api(request, stock_code):
+    """특정 종목의 발행주식수 검증 결과 조회 API"""
+    try:
+        stock = Stock.objects.get(stock_code=stock_code)
+        verification = SharesVerification.objects.get(stock=stock)
+        serializer = SharesVerificationSerializer(verification)
+        return Response(serializer.data)
+    except Stock.DoesNotExist:
+        return Response({'error': 'Stock not found'}, status=status.HTTP_404_NOT_FOUND)
+    except SharesVerification.DoesNotExist:
+        return Response({'error': 'Verification not found'}, status=status.HTTP_404_NOT_FOUND)

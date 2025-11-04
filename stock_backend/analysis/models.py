@@ -246,4 +246,41 @@ class StockSimilarity(models.Model):
         ).select_related('source_stock', 'target_stock')
         
         return similarities
+
+class SharesVerification(models.Model):
+    """발행주식수 검증 결과 모델"""
+    STATUS_CHOICES = [
+        ('MATCH', '일치'),
+        ('MINOR_DIFF', '경미한 차이 (1% 미만)'),
+        ('MAJOR_DIFF', '불일치 (1% 이상)'),
+        ('DART_API_ERROR', 'DART API 오류'),
+    ]
+    
+    stock = models.OneToOneField(Stock, on_delete=models.CASCADE, related_name='shares_verification')
+    db_shares = models.BigIntegerField(null=True, blank=True, help_text='DB에 저장된 발행주식수')
+    dart_shares = models.BigIntegerField(null=True, blank=True, help_text='DART API에서 가져온 발행주식수')
+    match = models.BooleanField(default=False, help_text='DB와 DART 값이 일치하는지')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, help_text='검증 상태')
+    diff_percent = models.FloatField(null=True, blank=True, help_text='차이율 (%)')
+    dart_year = models.IntegerField(null=True, blank=True, help_text='DART API 조회 연도')
+    dart_account_nm = models.CharField(max_length=200, blank=True, help_text='DART API 계정명')
+    verified_at = models.DateTimeField(auto_now=True, help_text='검증 시각')
+    
+    class Meta:
+        ordering = ['-verified_at']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['match']),
+            models.Index(fields=['-verified_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.stock.stock_name} 발행주식수 검증 ({self.status})"
+    
+    @property
+    def diff_amount(self):
+        """차이량 (절대값)"""
+        if self.db_shares and self.dart_shares:
+            return abs(self.dart_shares - self.db_shares)
+        return None
     

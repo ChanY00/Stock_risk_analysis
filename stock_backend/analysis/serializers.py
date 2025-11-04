@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ClusteringCriterion, ClusteringResult, SpectralCluster, AgglomerativeCluster, ClusterAnalysis, StockSimilarity
+from .models import ClusteringCriterion, ClusteringResult, SpectralCluster, AgglomerativeCluster, ClusterAnalysis, StockSimilarity, SharesVerification
 from stocks.models import Stock
 from .models import TechnicalIndicator, MarketIndex, Watchlist, Alert
 from stocks.serializers import StockListSerializer
@@ -177,3 +177,32 @@ class SimilarityNetworkSerializer(serializers.Serializer):
     nodes = serializers.ListField()
     edges = serializers.ListField()
     cluster_info = serializers.DictField()
+
+class SharesVerificationSerializer(serializers.ModelSerializer):
+    """발행주식수 검증 결과 시리얼라이저"""
+    stock_code = serializers.CharField(source='stock.stock_code', read_only=True)
+    stock_name = serializers.CharField(source='stock.stock_name', read_only=True)
+    diff_amount = serializers.IntegerField(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    naver_search_url = serializers.SerializerMethodField()
+    google_search_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SharesVerification
+        fields = [
+            'id', 'stock_code', 'stock_name',
+            'db_shares', 'dart_shares', 'match', 'status', 'status_display',
+            'diff_percent', 'diff_amount',
+            'dart_year', 'dart_account_nm', 'verified_at',
+            'naver_search_url', 'google_search_url'
+        ]
+    
+    def get_naver_search_url(self, obj):
+        """네이버 검색 URL 생성"""
+        search_query = f"{obj.stock.stock_name} 발행주식수"
+        return f"https://search.naver.com/search.naver?query={search_query.replace(' ', '+')}"
+    
+    def get_google_search_url(self, obj):
+        """구글 검색 URL 생성"""
+        search_query = f"{obj.stock.stock_name} 발행주식수"
+        return f"https://www.google.com/search?q={search_query.replace(' ', '+')}"
