@@ -153,6 +153,8 @@ class SimilarStockSerializer(serializers.ModelSerializer):
     market_cap = serializers.IntegerField(source='target_stock.market_cap', allow_null=True)
     per = serializers.FloatField(source='target_stock.per', allow_null=True)
     pbr = serializers.FloatField(source='target_stock.pbr', allow_null=True)
+    roe = serializers.FloatField(source='target_stock.roe', allow_null=True)
+    dividend_yield = serializers.FloatField(source='target_stock.dividend_yield', allow_null=True)
     
     # 유사도 관련 필드가 비어있을 수 있어 null 허용
     distance = serializers.FloatField(allow_null=True)
@@ -162,7 +164,8 @@ class SimilarStockSerializer(serializers.ModelSerializer):
         model = StockSimilarity
         fields = [
             'stock_code', 'stock_name', 'sector', 'current_price',
-            'market_cap', 'per', 'pbr', 'neighbor_rank', 'distance', 'similarity_score'
+            'market_cap', 'per', 'pbr', 'roe', 'dividend_yield',
+            'neighbor_rank', 'distance', 'similarity_score'
         ]
 
 class SimilarStocksResponseSerializer(serializers.Serializer):

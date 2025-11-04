@@ -8,13 +8,19 @@ from dotenv import load_dotenv
 import logging
 
 # Load environment variables
+# 1. Django 프로젝트의 .env 파일 (stock_backend/.env)
 load_dotenv()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 2. 프로젝트 루트의 .env 파일 (프로젝트 루트/.env)
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR.parent.parent / '.env', override=False)
+# 3. Stock_risk_analysis/.env 파일 (Gemini API 키 등)
+load_dotenv(BASE_DIR.parent.parent / 'Stock_risk_analysis' / '.env', override=False)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
+
+# Gemini API Key
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Defaults are conservative here; dev/prod override as needed
 DEBUG = False

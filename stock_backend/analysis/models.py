@@ -230,9 +230,20 @@ class StockSimilarity(models.Model):
     
     @classmethod
     def get_most_similar_stocks(cls, stock, cluster_type='spectral', limit=5):
-        """특정 종목과 가장 유사한 종목들 반환"""
+        """특정 종목과 가장 유사한 종목들 반환 (같은 클러스터 내에서만)"""
+        # source_stock의 클러스터 정보를 통해 같은 cluster_id를 가진 종목만 조회
+        try:
+            if cluster_type == 'spectral':
+                cluster_id = stock.spectral_cluster.cluster_id
+            else:
+                cluster_id = stock.agglomerative_cluster.cluster_id
+        except (AttributeError, Exception):
+            # 클러스터 정보가 없으면 빈 쿼리셋 반환
+            return cls.objects.none()
+        
         return cls.objects.filter(
             cluster_type=cluster_type,
+            cluster_id=cluster_id,  # 같은 클러스터 내에서만
             source_stock=stock
         ).order_by('neighbor_rank')[:limit]
     
