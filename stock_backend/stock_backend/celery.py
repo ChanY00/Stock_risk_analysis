@@ -23,3 +23,4 @@ def debug_task(self):
     """Celery 디버깅용 태스크"""
     print(f'Request: {self.request!r}')
 
+

@@ -67,3 +67,4 @@ def update_daily_prices_task():
             'time': kst_now.strftime('%H:%M:%S')
         }
 
+
