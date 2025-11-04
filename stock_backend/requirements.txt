@@ -21,6 +21,7 @@ numpy>=1.24.0,<2.0.0  # Illegal instruction 방지를 위해 NumPy 1.x 사용
 finance-datareader>=0.9.50
 requests>=2.31.0
 websocket-client>=1.6.0
+opendartreader>=0.1.6  # DART API 편리한 접근을 위한 라이브러리
 
 # 환경변수 관리
 python-dotenv>=1.0.0
