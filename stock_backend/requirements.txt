@@ -27,4 +27,8 @@ opendartreader>=0.1.6  # DART API 편리한 접근을 위한 라이브러리
 python-dotenv>=1.0.0
 
 # 프로덕션 서버
-gunicorn>=21.0.0 
+gunicorn>=21.0.0
+
+# Celery (비동기 작업 및 스케줄링)
+celery>=5.3.0
+django-celery-beat>=2.5.0  # Django 관리 인터페이스를 통한 스케줄 관리 (선택사항) 
