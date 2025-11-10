@@ -1246,26 +1246,6 @@ export default function StockDetailPage() {
                             : "-"}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          EPS
-                        </span>
-                        <span className="font-mono text-gray-900 dark:text-white">
-                          {stockDetail.eps
-                            ? stockDetail.eps.toLocaleString()
-                            : "-"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          BPS
-                        </span>
-                        <span className="font-mono text-gray-900 dark:text-white">
-                          {stockDetail.bps
-                            ? stockDetail.bps.toLocaleString()
-                            : "-"}
-                        </span>
-                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">

@@ -79,24 +79,36 @@ export const FinancialChart = memo(function FinancialChart({ financial, title = 
         <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900 dark:text-white">{label}년</p>
           <div className="mt-2 space-y-1">
-            {payload.map((entry: any, index: number) => (
-              <p key={index} className="text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{entry.name}: </span>
-                <span className="font-mono font-medium" style={{ color: entry.color }}>
-                  {typeof entry.value === 'number' 
-                    ? entry.dataKey === 'eps' 
-                      ? `${entry.value.toLocaleString()}원`
-                      : entry.value >= 1e12
-                      ? `${(entry.value / 1e12).toFixed(1)}조원`
-                      : entry.value >= 1e8
-                      ? `${(entry.value / 1e8).toFixed(1)}억원`
-                      : entry.value >= 1e4
-                      ? `${(entry.value / 1e4).toFixed(1)}만원`
-                      : `${entry.value.toLocaleString()}원`
-                    : entry.value}
-                </span>
-              </p>
-            ))}
+            {payload.map((entry: any, index: number) => {
+              const value = entry.value;
+              const absValue = Math.abs(value);
+              let formatted = '';
+              
+              if (typeof value === 'number') {
+                if (entry.dataKey === 'eps') {
+                  formatted = `${value.toLocaleString()}원`;
+                } else if (absValue >= 1e12) {
+                  formatted = `${(value / 1e12).toFixed(1)}조원`;
+                } else if (absValue >= 1e8) {
+                  formatted = `${(value / 1e8).toFixed(1)}억원`;
+                } else if (absValue >= 1e4) {
+                  formatted = `${(value / 1e4).toFixed(1)}만원`;
+                } else {
+                  formatted = `${value.toLocaleString()}원`;
+                }
+              } else {
+                formatted = value;
+              }
+              
+              return (
+                <p key={index} className="text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">{entry.name}: </span>
+                  <span className="font-mono font-medium" style={{ color: entry.color }}>
+                    {formatted}
+                  </span>
+                </p>
+              );
+            })}
           </div>
         </div>
       )
@@ -374,26 +386,10 @@ export const FinancialChart = memo(function FinancialChart({ financial, title = 
                      : formatSafeValue(latestDataWithIssues.net_income, '조', latestDataWithIssues.issues || [])
                    }
                  </div>
-                 <p className="text-xs text-muted-foreground dark:text-gray-400">
-                   {latestDataWithIssues.net_income < 0 ? '순손실' : ''}
-                   {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year === 2024 ? '2024년 실적 대기 중' : ''}
-                   {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year !== 2024 && latestDataWithIssues.eps && latestDataWithIssues.eps !== 0 ? ' (EPS는 존재, 데이터 확인 필요)' : ''}
-                 </p>
-               </CardContent>
-             </Card>
-             <Card className={`bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${latestDataWithIssues.issues?.some((i: any) => i.type === 'ABNORMAL_EPS') ? 'border-yellow-200 dark:border-yellow-800' : ''}`}>
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">EPS</CardTitle>
-                 <PieIcon className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                   {latestDataWithIssues.eps === null || latestDataWithIssues.eps === undefined || latestDataWithIssues.eps === 0
-                     ? 'N/A'
-                     : `${latestDataWithIssues.eps.toLocaleString()}원`
-                   }
-                 </div>
-                 <p className="text-xs text-muted-foreground dark:text-gray-400">주당순이익</p>
+                <p className="text-xs text-muted-foreground dark:text-gray-400">
+                  {latestDataWithIssues.net_income < 0 ? '순손실' : ''}
+                  {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year === 2024 ? '2024년 실적 대기 중' : ''}
+                </p>
                </CardContent>
              </Card>
           </div>
@@ -473,9 +469,10 @@ export const FinancialChart = memo(function FinancialChart({ financial, title = 
                       return [centeredMin, centeredMax]
                     })()}
                     tickFormatter={(value) => {
-                      if (value >= 1e12) return `${(value / 1e12).toFixed(1)}조`;
-                      if (value >= 1e8) return `${(value / 1e8).toFixed(0)}억`;
-                      if (value >= 1e4) return `${(value / 1e4).toFixed(1)}만`;
+                      const absValue = Math.abs(value);
+                      if (absValue >= 1e12) return `${(value / 1e12).toFixed(1)}조`;
+                      if (absValue >= 1e8) return `${(value / 1e8).toFixed(0)}억`;
+                      if (absValue >= 1e4) return `${(value / 1e4).toFixed(1)}만`;
                       return `${value.toLocaleString()}`;
                     }}
                     tick={{ fontSize: 12, fill: '#6b7280' }}
@@ -502,7 +499,10 @@ export const FinancialChart = memo(function FinancialChart({ financial, title = 
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="year" />
                 <YAxis 
-                  tickFormatter={(value) => value >= 100000 ? `${(value / 100000).toFixed(0)}억` : `${value.toLocaleString()}백만`}
+                  tickFormatter={(value) => {
+                    const absValue = Math.abs(value);
+                    return absValue >= 100000 ? `${(value / 100000).toFixed(0)}억` : `${value.toLocaleString()}백만`;
+                  }}
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                 />
                 <Tooltip content={<CustomTooltip />} />
@@ -589,9 +589,10 @@ export const FinancialChart = memo(function FinancialChart({ financial, title = 
                   </Pie>
                   <Tooltip 
                     formatter={(value: number) => {
-                      if (value >= 1e12) return `${(value / 1e12).toFixed(1)}조원`;
-                      if (value >= 1e8) return `${(value / 1e8).toFixed(1)}억원`;
-                      if (value >= 1e4) return `${(value / 1e4).toFixed(1)}만원`;
+                      const absValue = Math.abs(value);
+                      if (absValue >= 1e12) return `${(value / 1e12).toFixed(1)}조원`;
+                      if (absValue >= 1e8) return `${(value / 1e8).toFixed(1)}억원`;
+                      if (absValue >= 1e4) return `${(value / 1e4).toFixed(1)}만원`;
                       return `${value.toLocaleString()}원`;
                     }}
                   />
@@ -607,13 +608,13 @@ export const FinancialChart = memo(function FinancialChart({ financial, title = 
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="text-sm text-gray-600">
-                    {item.name} ({item.value >= 1e12
-                      ? `${(item.value / 1e12).toFixed(1)}조원`
-                      : item.value >= 1e8
-                      ? `${(item.value / 1e8).toFixed(1)}억원`
-                      : item.value >= 1e4
-                      ? `${(item.value / 1e4).toFixed(1)}만원`
-                      : `${item.value.toLocaleString()}원`})
+                    {item.name} ({(() => {
+                      const absValue = Math.abs(item.value);
+                      if (absValue >= 1e12) return `${(item.value / 1e12).toFixed(1)}조원`;
+                      if (absValue >= 1e8) return `${(item.value / 1e8).toFixed(1)}억원`;
+                      if (absValue >= 1e4) return `${(item.value / 1e4).toFixed(1)}만원`;
+                      return `${item.value.toLocaleString()}원`;
+                    })()})
                   </span>
                 </div>
               ))}
@@ -627,31 +628,34 @@ export const FinancialChart = memo(function FinancialChart({ financial, title = 
               <div className="border-b pb-4">
                 <div className="text-sm text-gray-600 mb-2">총자산</div>
                 <div className="text-2xl font-bold text-gray-800">
-                  {latestData.total_assets >= 1e12
-                    ? `${(latestData.total_assets / 1e12).toFixed(1)}조원`
-                    : latestData.total_assets >= 1e8
-                    ? `${(latestData.total_assets / 1e8).toFixed(1)}억원`
-                    : `${latestData.total_assets.toLocaleString()}원`}
+                  {(() => {
+                    const absValue = Math.abs(latestData.total_assets);
+                    if (absValue >= 1e12) return `${(latestData.total_assets / 1e12).toFixed(1)}조원`;
+                    if (absValue >= 1e8) return `${(latestData.total_assets / 1e8).toFixed(1)}억원`;
+                    return `${latestData.total_assets.toLocaleString()}원`;
+                  })()}
                 </div>
               </div>
               <div className="border-b pb-4">
                 <div className="text-sm text-gray-600 mb-2">부채</div>
                 <div className="text-xl font-semibold text-red-600">
-                  {latestData.total_liabilities >= 1e12
-                    ? `${(latestData.total_liabilities / 1e12).toFixed(1)}조원`
-                    : latestData.total_liabilities >= 1e8
-                    ? `${(latestData.total_liabilities / 1e8).toFixed(1)}억원`
-                    : `${latestData.total_liabilities.toLocaleString()}원`}
+                  {(() => {
+                    const absValue = Math.abs(latestData.total_liabilities);
+                    if (absValue >= 1e12) return `${(latestData.total_liabilities / 1e12).toFixed(1)}조원`;
+                    if (absValue >= 1e8) return `${(latestData.total_liabilities / 1e8).toFixed(1)}억원`;
+                    return `${latestData.total_liabilities.toLocaleString()}원`;
+                  })()}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600 mb-2">자본</div>
                 <div className="text-xl font-semibold text-green-600">
-                  {latestData.total_equity >= 1e12
-                    ? `${(latestData.total_equity / 1e12).toFixed(1)}조원`
-                    : latestData.total_equity >= 1e8
-                    ? `${(latestData.total_equity / 1e8).toFixed(1)}억원`
-                    : `${latestData.total_equity.toLocaleString()}원`}
+                  {(() => {
+                    const absValue = Math.abs(latestData.total_equity);
+                    if (absValue >= 1e12) return `${(latestData.total_equity / 1e12).toFixed(1)}조원`;
+                    if (absValue >= 1e8) return `${(latestData.total_equity / 1e8).toFixed(1)}억원`;
+                    return `${latestData.total_equity.toLocaleString()}원`;
+                  })()}
                 </div>
               </div>
             </div>
