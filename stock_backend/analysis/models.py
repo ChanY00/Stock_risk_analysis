@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from stocks.models import Stock
 
 class ClusteringCriterion(models.Model):
@@ -88,12 +89,20 @@ class MarketIndex(models.Model):
 
 class Watchlist(models.Model):
     """관심종목 리스트"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlists', null=True, blank=True)
     name = models.CharField(max_length=100)
     stocks = models.ManyToManyField(Stock, related_name='watchlists', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        # 사용자별로 고유한 이름의 관심종목 리스트를 가질 수 있도록
+        unique_together = [['user', 'name']]
+        ordering = ['-updated_at']
+    
     def __str__(self):
+        if self.user:
+            return f"{self.user.username}의 {self.name}"
         return self.name
 
 class Alert(models.Model):

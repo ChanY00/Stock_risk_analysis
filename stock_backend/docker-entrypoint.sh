@@ -119,7 +119,8 @@ setup_development() {
     
     # 마이그레이션 실행
     echo -e "${YELLOW}📊 데이터베이스 마이그레이션 실행 중...${NC}"
-    python manage.py makemigrations --noinput
+    # makemigrations는 개발 중에만 실행 (프로덕션에서는 이미 만들어진 파일 사용)
+    # python manage.py makemigrations --noinput
     python manage.py migrate --noinput
     
     # 정적 파일 수집 (개발 환경에서는 선택적)
@@ -166,7 +167,8 @@ setup_asgi() {
     
     # 마이그레이션 실행 (중요!)
     echo -e "${YELLOW}📊 데이터베이스 마이그레이션 실행 중...${NC}"
-    python manage.py makemigrations --noinput
+    # makemigrations는 개발 중에만 실행 (프로덕션에서는 이미 만들어진 파일 사용)
+    # python manage.py makemigrations --noinput
     python manage.py migrate --noinput
     
     # WebSocket 전용 ASGI 서버 실행
