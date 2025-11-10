@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Clock, Calendar, Info, TrendingUp, Pause } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { stocksApi } from "@/lib/api"
 
 export interface MarketStatus {
   isOpen: boolean
@@ -26,63 +27,53 @@ interface MarketStatusIndicatorProps {
   className?: string
 }
 
-// 시장 상태를 가져오는 함수 (실제로는 API 호출)
-const getMarketStatus = (): MarketStatus => {
+// 마지막 거래일 계산 헬퍼 함수 (주말 제외, 공휴일은 백엔드에서 처리)
+const getLastTradingDay = (): string => {
   const now = new Date()
   const koreanTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }))
-  const currentHour = koreanTime.getHours()
-  const currentMinute = koreanTime.getMinutes()
-  const dayOfWeek = koreanTime.getDay() // 0: 일요일, 1-5: 평일, 6: 토요일
+  let checkDate = new Date(koreanTime)
   
-  // 평일 9:00-15:30 체크
-  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
-  const isMarketHours = currentHour >= 9 && (currentHour < 15 || (currentHour === 15 && currentMinute <= 30))
-  const isOpen = isWeekday && isMarketHours
+  // 오늘이 평일이고 15:30 이후면 오늘이 마지막 거래일
+  const currentHour = checkDate.getHours()
+  const currentMinute = checkDate.getMinutes()
+  const dayOfWeek = checkDate.getDay()
   
-  let status = ""
-  let reason = ""
-  
-  if (isOpen) {
-    status = "개장"
-    reason = "정규장 시간"
-  } else if (isWeekday) {
-    if (currentHour < 9) {
-      status = "장 시작 전"
-      reason = `장 시작까지 ${9 - currentHour}시간 ${60 - currentMinute}분`
-    } else {
-      status = "장 마감"
-      reason = "정규장 종료"
-    }
-  } else if (dayOfWeek === 6) {
-    status = "휴장"
-    reason = "토요일"
-  } else if (dayOfWeek === 0) {
-    status = "휴장"
-    reason = "일요일"
-  } else {
-    status = "휴장"
-    reason = "공휴일"
+  if (dayOfWeek >= 1 && dayOfWeek <= 5 && (currentHour > 15 || (currentHour === 15 && currentMinute >= 30))) {
+    return checkDate.toISOString().split('T')[0]
   }
   
-  return {
-    isOpen,
-    status,
-    reason,
-    currentTime: koreanTime.toLocaleString("ko-KR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    }),
-    lastTradingDay: "2025-01-06",
-    nextTradingDay: "2025-01-07",
-    marketHours: {
-      open: "09:00",
-      close: "15:30"
+  // 그 외의 경우 이전 평일 찾기
+  for (let i = 0; i < 10; i++) {
+    checkDate.setDate(checkDate.getDate() - 1)
+    const dayOfWeek = checkDate.getDay()
+    
+    // 주말이 아니면 거래일로 가정
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      return checkDate.toISOString().split('T')[0]
     }
   }
+  
+  return koreanTime.toISOString().split('T')[0]
+}
+
+// 다음 거래일 계산 헬퍼 함수 (주말 제외, 공휴일은 백엔드에서 처리)
+const getNextTradingDay = (): string => {
+  const now = new Date()
+  const koreanTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }))
+  let checkDate = new Date(koreanTime)
+  
+  // 최대 10일 후까지 확인
+  for (let i = 0; i < 10; i++) {
+    checkDate.setDate(checkDate.getDate() + 1)
+    const dayOfWeek = checkDate.getDay()
+    
+    // 주말이 아니면 거래일로 가정
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      return checkDate.toISOString().split('T')[0]
+    }
+  }
+  
+  return koreanTime.toISOString().split('T')[0]
 }
 
 export function MarketStatusIndicator({ 
@@ -92,19 +83,102 @@ export function MarketStatusIndicator({
   className = "" 
 }: MarketStatusIndicatorProps) {
   const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(status || null)
+  const [loading, setLoading] = useState(false)
   
   useEffect(() => {
-    // 초기 상태 설정
-    if (!status) {
-      setMarketStatus(getMarketStatus())
+    // 백엔드에서 실제 시장 상태 가져오기
+    const fetchMarketStatus = async () => {
+      if (status) return // prop으로 전달된 상태가 있으면 사용
+      
+      try {
+        setLoading(true)
+        const response = await stocksApi.getMarketStatus()
+        
+        // 백엔드 응답을 컴포넌트 인터페이스에 맞게 변환
+        const lastTradingDay = response.is_open 
+          ? undefined 
+          : getLastTradingDay()
+        
+        const nextTradingDay = !response.is_open && response.next_open
+          ? new Date(response.next_open).toISOString().split('T')[0]
+          : getNextTradingDay()
+        
+        setMarketStatus({
+          isOpen: response.is_open,
+          status: response.status,
+          reason: response.message,
+          currentTime: response.current_time_str,
+          lastTradingDay,
+          nextTradingDay,
+          marketHours: {
+            open: "09:00",
+            close: "15:30"
+          }
+        })
+      } catch (error) {
+        console.error("시장 상태 조회 실패:", error)
+        // 폴백: 클라이언트 측 계산
+        const now = new Date()
+        const koreanTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }))
+        const currentHour = koreanTime.getHours()
+        const currentMinute = koreanTime.getMinutes()
+        const dayOfWeek = koreanTime.getDay()
+        
+        const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
+        const isMarketHours = currentHour >= 9 && (currentHour < 15 || (currentHour === 15 && currentMinute <= 30))
+        const isOpen = isWeekday && isMarketHours
+        
+        let statusText = ""
+        let reason = ""
+        
+        if (isOpen) {
+          statusText = "개장"
+          reason = "정규장 시간"
+        } else if (isWeekday) {
+          if (currentHour < 9) {
+            statusText = "장 시작 전"
+            reason = `장 시작까지 ${9 - currentHour}시간 ${60 - currentMinute}분`
+          } else {
+            statusText = "장 마감"
+            reason = "정규장 종료"
+          }
+        } else if (dayOfWeek === 6) {
+          statusText = "휴장"
+          reason = "토요일"
+        } else if (dayOfWeek === 0) {
+          statusText = "휴장"
+          reason = "일요일"
+        }
+        
+        setMarketStatus({
+          isOpen,
+          status: statusText,
+          reason,
+          currentTime: koreanTime.toLocaleString("ko-KR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          }),
+          lastTradingDay: getLastTradingDay(),
+          nextTradingDay: getNextTradingDay(),
+          marketHours: {
+            open: "09:00",
+            close: "15:30"
+          }
+        })
+      } finally {
+        setLoading(false)
+      }
     }
     
+    // 초기 로드
+    fetchMarketStatus()
+    
     // 1분마다 시장 상태 업데이트
-    const interval = setInterval(() => {
-      if (!status) {
-        setMarketStatus(getMarketStatus())
-      }
-    }, 60000)
+    const interval = setInterval(fetchMarketStatus, 60000)
     
     return () => clearInterval(interval)
   }, [status])
@@ -163,7 +237,7 @@ export function MarketStatusIndicator({
             <div className="text-sm">
               <div className="font-medium text-gray-900 dark:text-gray-100">{currentStatus.reason}</div>
               <div className="text-gray-600 dark:text-gray-400 mt-1">
-                현재 시간: {currentStatus.currentTime}
+                현재 시간: {currentStatus.currentTime.replace(/\s*UTC\+09:00/g, '').trim()}
               </div>
               <div className="text-gray-600 dark:text-gray-400">
                 운영시간: {currentStatus.marketHours.open} - {currentStatus.marketHours.close}
@@ -171,6 +245,11 @@ export function MarketStatusIndicator({
               {!currentStatus.isOpen && currentStatus.lastTradingDay && (
                 <div className="text-gray-600 dark:text-gray-400">
                   마지막 거래일: {currentStatus.lastTradingDay}
+                </div>
+              )}
+              {!currentStatus.isOpen && currentStatus.nextTradingDay && (
+                <div className="text-gray-600 dark:text-gray-400">
+                  다음 거래일: {currentStatus.nextTradingDay}
                 </div>
               )}
             </div>
@@ -218,30 +297,13 @@ export function MarketStatusIndicator({
           
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            <span className="text-gray-700 dark:text-gray-300">현재 시간: {currentStatus.currentTime}</span>
+            <span className="text-gray-700 dark:text-gray-300">현재 시간: {currentStatus.currentTime.replace(/\s*UTC\+09:00/g, '').trim()}</span>
           </div>
           
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             <span className="text-gray-700 dark:text-gray-300">운영시간: {currentStatus.marketHours.open} - {currentStatus.marketHours.close}</span>
           </div>
-          
-          {!currentStatus.isOpen && currentStatus.lastTradingDay && showDetails && (
-            <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
-                <Info className="h-4 w-4" />
-                <span className="font-medium">휴장일 안내</span>
-              </div>
-              <div className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                현재 표시되는 주가는 마지막 거래일({currentStatus.lastTradingDay})의 종가입니다.
-              </div>
-              {currentStatus.nextTradingDay && (
-                <div className="text-sm text-yellow-700 dark:text-yellow-300">
-                  다음 거래일: {currentStatus.nextTradingDay}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

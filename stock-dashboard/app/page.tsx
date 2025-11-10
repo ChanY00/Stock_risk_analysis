@@ -318,6 +318,10 @@ export default function Dashboard() {
   // 탭 상태 관리
   const [activeTab, setActiveTab] = useState("stocks");
 
+  // 시장 상태 관리
+  const [isMarketOpen, setIsMarketOpen] = useState<boolean>(true);
+  const [lastTradingDay, setLastTradingDay] = useState<string>("");
+
   // 실시간 주가 Hook - 현재 화면의 종목들만 조회 (memoized)
   const currentPageStocks = useMemo(() => {
     return filteredStocks.slice(
@@ -343,10 +347,16 @@ export default function Dashboard() {
 
   // 통합된 실시간 주가 Hook - 현재 페이지 + 관심종목 모두 포함
   // 데이터 로딩이 완료된 후에만 구독 시작 (타이밍 문제 해결)
+  // 휴장일에는 웹소켓 구독하지 않음
   const allStockCodes = useMemo(() => {
-    // 로딩 중이면 빈 배열 반환 (WebSocket 구독 방지)
+    // 로딩 중이거나 시장이 휴장 중이면 빈 배열 반환 (WebSocket 구독 방지)
     if (loading) {
       console.log("🔕 Skipping stock codes - still loading data");
+      return [];
+    }
+    
+    if (!isMarketOpen) {
+      console.log("🔕 Skipping stock codes - market is closed");
       return [];
     }
     
@@ -355,6 +365,7 @@ export default function Dashboard() {
     const unique = [...new Set(combined)].filter(Boolean).sort();
     console.log("🔍 All stock codes combined:", {
       loading,
+      isMarketOpen,
       currentPage: currentStockCodes.length,
       favorites: favoriteStockCodes.length,
       topMcap: topMcapCodes.length,
@@ -362,7 +373,7 @@ export default function Dashboard() {
       codes: unique.slice(0, 5), // 처음 5개만 로그
     });
     return unique;
-  }, [currentStockCodes, favoriteStockCodes, topMcapCodes, loading]);
+  }, [currentStockCodes, favoriteStockCodes, topMcapCodes, loading, isMarketOpen]);
 
   const {
     data: realTimePrices = {},
@@ -513,8 +524,8 @@ export default function Dashboard() {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
         );
 
-        // 병렬로 데이터 로드
-        const [stocksData, marketData, watchlistData] = await Promise.all([
+        // 병렬로 데이터 로드 (시장 상태 포함)
+        const [stocksData, marketData, watchlistData, marketStatusData] = await Promise.all([
           stocksApi.getStocks().catch((error) => {
             console.error("❌ 주식 데이터 로드 실패:", error);
             throw error; // 주식 데이터는 필수이므로 에러를 다시 던짐
@@ -527,7 +538,39 @@ export default function Dashboard() {
             console.warn("⚠️ 관심종목 로드 실패:", error.message);
             return [];
           }),
+          stocksApi.getMarketStatus().catch((error) => {
+            console.warn("⚠️ 시장 상태 로드 실패:", error.message);
+            return null;
+          }),
         ]);
+
+        // 시장 상태 설정
+        if (marketStatusData) {
+          setIsMarketOpen(marketStatusData.is_open);
+          console.log(`🏢 시장 상태: ${marketStatusData.is_open ? '개장' : '휴장'} - ${marketStatusData.message}`);
+          
+          // 휴장일일 때 마지막 거래일 계산
+          if (!marketStatusData.is_open) {
+            const getLastTradingDay = () => {
+              const now = new Date();
+              const koreanTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+              let checkDate = new Date(koreanTime);
+              
+              for (let i = 0; i < 10; i++) {
+                checkDate.setDate(checkDate.getDate() - 1);
+                const dayOfWeek = checkDate.getDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                  return checkDate.toISOString().split('T')[0];
+                }
+              }
+              return koreanTime.toISOString().split('T')[0];
+            };
+            
+            const calculatedLastTradingDay = getLastTradingDay();
+            setLastTradingDay(calculatedLastTradingDay);
+            console.log(`📅 마지막 거래일: ${calculatedLastTradingDay}`);
+          }
+        }
 
         console.log("✅ 주식 데이터 로드 성공:", stocksData.count, "개 종목");
 
@@ -1289,8 +1332,8 @@ export default function Dashboard() {
                               const currentVolume =
                                 realTimeData?.volume || stock.volume;
 
-                              // 시장 휴장 여부 판단 (실시간 데이터가 없고 연결도 안되어 있으면 휴장)
-                              const isMarketClosed = !realTimeConnected;
+                              // 시장 휴장 여부 판단
+                              const isMarketClosedNow = !isMarketOpen;
 
                               // StockPriceCell용 데이터 구성
                               const stockPriceData: StockPriceData = {
@@ -1298,9 +1341,9 @@ export default function Dashboard() {
                                 change: changeAmount,
                                 changePercent: changePercent,
                                 volume: currentVolume,
-                                isRealTime: !!realTimeData && realTimeConnected,
-                                isMarketClosed: isMarketClosed,
-                                lastTradingDay: "2025-01-06",
+                                isRealTime: !!realTimeData && realTimeConnected && isMarketOpen,
+                                isMarketClosed: isMarketClosedNow,
+                                lastTradingDay: lastTradingDay || undefined,
                                 timestamp: realTimeData?.timestamp,
                               };
 

@@ -64,8 +64,10 @@ export function StockPriceCell({ data, showBadge = true, compact = false }: Stoc
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   <div className="text-xs">
-                    <div>장 마감</div>
-                    <div>마지막 거래일: {data.lastTradingDay || '2025-01-06'}</div>
+                    <div className="font-medium">휴장</div>
+                    {data.lastTradingDay && (
+                      <div>마지막 거래일: {data.lastTradingDay}</div>
+                    )}
                     <div>전일 종가 기준입니다</div>
                   </div>
                 </TooltipContent>
@@ -123,8 +125,10 @@ export function StockPriceCell({ data, showBadge = true, compact = false }: Stoc
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <div className="text-xs">
-                      <div>장 마감</div>
-                      <div>마지막 거래일: {data.lastTradingDay || '2025-01-06'}</div>
+                      <div className="font-medium">휴장</div>
+                      {data.lastTradingDay && (
+                        <div>마지막 거래일: {data.lastTradingDay}</div>
+                      )}
                       <div>전일 종가 기준입니다</div>
                     </div>
                   </TooltipContent>

@@ -175,6 +175,35 @@ export interface MarketOverview {
   }[];
 }
 
+export interface MarketStatusResponse {
+  is_open: boolean;
+  status: string;
+  message: string;
+  current_time: string;
+  current_time_str: string;
+  weekday: string;
+  is_weekend: boolean;
+  is_holiday: boolean;
+  next_open?: string;
+  close_time?: string;
+  time_until_close?: {
+    hours: number;
+    minutes: number;
+  };
+  time_until_open?: {
+    is_open: boolean;
+    message: string;
+    next_open: string;
+    days?: number;
+    hours?: number;
+    minutes?: number;
+  };
+  api_mode?: string;
+  market_hours?: string;
+  trading_days?: string;
+  holidays_note?: string;
+}
+
 export interface StockAnalysis {
   stock_code: string;
   stock_name: string;
@@ -740,6 +769,10 @@ class ApiClient {
     return data;
   }
 
+  async getMarketStatus(): Promise<MarketStatusResponse> {
+    return this.request<MarketStatusResponse>("/stocks/market-status/", {}, false);
+  }
+
   async getClusterData(code: string): Promise<ClusterData[]> {
     return this.request<ClusterData[]>(`/analysis/cluster/${code}/`, {}, false);
   }
@@ -1042,6 +1075,7 @@ export const stocksApi = {
     apiClient.getSentimentTrend(code, days),
   getFinancialData: (code: string) => apiClient.getFinancialData(code),
   getMarketOverview: () => apiClient.getMarketOverview(),
+  getMarketStatus: () => apiClient.getMarketStatus(),
   getClusterData: (code: string) => apiClient.getClusterData(code),
   getSimilarStocks: (code: string) => apiClient.getSimilarStocks(code),
   // Watchlist methods
