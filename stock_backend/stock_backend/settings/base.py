@@ -236,7 +236,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
 CORS_ALLOW_HEADERS = [
     'accept', 'accept-encoding', 'authorization', 'content-type', 'dnt', 'origin',
-    'user-agent', 'x-csrftoken', 'x-requested-with'
+    'user-agent', 'x-csrftoken', 'x-requested-with', 'x-internal-token'  # Sentiment 서비스용 인증 토큰
 ]
 CORS_ALLOWED_ORIGINS = _split_csv('CORS_ALLOWED_ORIGINS')
 
