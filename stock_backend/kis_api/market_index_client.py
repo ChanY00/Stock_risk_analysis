@@ -54,18 +54,23 @@ class KISMarketIndexClient:
         self._error_log_interval = 60  # 1분에 한 번만 에러 로그 출력
 
         # 시장 지수 코드 정의 (초기화 시점에 설정되어야 함)
+        # 환경 변수로 재정의 가능 (예: KIS_KOSPI_CODE=0001, KIS_KOSPI_DIV=U)
         self.market_indices = {
             'KOSPI': {
-                'code': '0001',  # KOSPI 지수 코드
+                'code': os.getenv('KIS_KOSPI_CODE', '0001'),
                 'name': 'KOSPI',
-                'market_div': 'J'
+                'market_div': os.getenv('KIS_KOSPI_DIV', 'U')  # KOSPI 종합지수
             },
             'KOSDAQ': {
-                'code': '1001',  # KOSDAQ 지수 코드 (업종지수시세: 2001)
+                'code': os.getenv('KIS_KOSDAQ_CODE', '1001'),  # KOSDAQ 종합지수 (884.71)
                 'name': 'KOSDAQ',
-                'market_div': 'Q'
+                'market_div': os.getenv('KIS_KOSDAQ_DIV', 'U')  # VTS에서 U 사용
             }
         }
+        
+        # 성공한 조합 캐싱 (폴백 최적화)
+        self._successful_combinations: Dict[str, tuple] = {}  # index_name -> (code, div)
+        logger.info(f"📊 시장 지수 설정 - KOSPI: ({self.market_indices['KOSPI']['code']}, {self.market_indices['KOSPI']['market_div']}), KOSDAQ: ({self.market_indices['KOSDAQ']['code']}, {self.market_indices['KOSDAQ']['market_div']})")
 
     def _emit_update(self, partial: Dict[str, Dict]):
         return  # WS 비활성화
@@ -80,8 +85,14 @@ class KISMarketIndexClient:
             logger.error(f"❌ 토큰 확보 오류: {e}")
             return False
 
-    def get_market_index_data(self, index_code: str, market_div: str) -> Optional[Dict]:
-        """특정 시장 지수 데이터 조회"""
+    def get_market_index_data(self, index_code: str, market_div: str, suppress_warning: bool = False) -> Optional[Dict]:
+        """특정 시장 지수 데이터 조회
+        
+        Args:
+            index_code: 지수 코드 (예: '0001', '1001')
+            market_div: 시장 구분 코드 (예: 'J', 'Q', 'U')
+            suppress_warning: True이면 폴백 시도 중 경고 로그 억제
+        """
         try:
             if not self._ensure_token():
                 # brief wait then retry once, to allow lock-holder to cache token
@@ -145,6 +156,10 @@ class KISMarketIndexClient:
                     last_error = str(req_err)
                     _dwarn(f"⚠️ 지수 조회 시도 실패 params={params} error={req_err}")
 
+            # 경고 로그 억제 옵션이 활성화된 경우 (폴백 시도 중)
+            if suppress_warning:
+                return None
+            
             # 에러 로그 빈도 제한 (1분에 한 번만)
             current_time = time.time()
             if current_time - self._last_error_log_time >= self._error_log_interval:
@@ -174,41 +189,94 @@ class KISMarketIndexClient:
     def get_all_market_indices(self) -> Dict[str, Dict]:
         """실제 시장 지수 데이터 조회(가급적 실데이터, 실패 시 Mock 폴백)
 
-        - VTS 환경에서 KOSDAQ 조회가 간헐적으로 500 또는 INVALID FID_COND_MRKT_DIV_CODE가 발생하는 사례가 있어
-          다음 순서로 강건하게 폴백 시도한다.
-            1) (1001, 'U')
-            2) (1001, 'Q')
-            3) (2001, 'U')  # 업종지수시세 코드 대체 시도
-            4) (2001, 'Q')
+        - KOSDAQ 지수 코드 설명:
+            1001 = KOSDAQ 종합지수 (884.71) - 우리가 원하는 지수!
+            2001 = KOSDAQ 업종지수 (575.52) - 업종별 지수, 종합지수 아님!
+        
+        - VTS 환경에서 폴백 순서:
+            1) 캐싱된 성공 조합 (있는 경우 우선)
+            2) (1001, 'U')  # KOSDAQ 종합지수
+            3) (1001, 'J')
+            4) (2001, 'U')  # KOSDAQ 업종지수 (폴백)
+            5) (2001, 'Q')
         """
         try:
             indices: Dict[str, Dict] = {}
-            # KOSPI: 일반적으로 (0001, 'U')가 동작
-            kospi = self.get_market_index_data(
-                self.market_indices['KOSPI']['code'],
-                self.market_indices['KOSPI']['market_div']
-            )
+            
+            # KOSPI: 캐싱된 조합이 있으면 먼저 시도
+            kospi = None
+            if 'KOSPI' in self._successful_combinations:
+                cached_code, cached_div = self._successful_combinations['KOSPI']
+                kospi = self.get_market_index_data(cached_code, cached_div)
+                if kospi:
+                    _dinfo(f"✅ KOSPI 캐싱 조합 사용: code={cached_code} div={cached_div}")
+            
+            # 캐싱 실패 또는 없는 경우, 기본 조합 시도
+            if not kospi:
+                default_code = self.market_indices['KOSPI']['code']
+                default_div = self.market_indices['KOSPI']['market_div']
+                kospi = self.get_market_index_data(default_code, default_div)
+                
+                # 기본 조합 실패 시 폴백 시도
+                if not kospi:
+                    kospi_try: List[tuple] = [
+                        ('0001', 'U'),  # VTS에서 일반적으로 성공
+                        ('0001', 'J'),  # 실계좌에서 사용
+                    ]
+                    for code, div in kospi_try:
+                        if code == default_code and div == default_div:
+                            continue  # 이미 시도한 조합 스킵
+                        result = self.get_market_index_data(code, div, suppress_warning=True)
+                        if result:
+                            logger.info(f"✅ KOSPI 폴백 성공: code={code} div={div}")
+                            self._successful_combinations['KOSPI'] = (code, div)
+                            kospi = result
+                            break
+                elif kospi:
+                    # 기본 조합 성공 시 캐싱
+                    self._successful_combinations['KOSPI'] = (default_code, default_div)
+                    _dinfo(f"✅ KOSPI 기본 조합 성공: code={default_code} div={default_div}")
 
-            # KOSDAQ: 다단계 폴백 시도
+            # KOSDAQ: 캐싱된 조합이 있으면 먼저 시도
             kosdaq = None
-            kosdaq_try: List[tuple] = [
-                ('1001', 'U'),
-                ('1001', 'Q'),
-                ('2001', 'U'),
-                ('2001', 'Q'),
-            ]
-            for code, div in kosdaq_try:
+            if 'KOSDAQ' in self._successful_combinations:
+                cached_code, cached_div = self._successful_combinations['KOSDAQ']
+                kosdaq = self.get_market_index_data(cached_code, cached_div)
                 if kosdaq:
-                    break
-                try:
-                    result = self.get_market_index_data(code, div)
-                    if result:
-                        if code != self.market_indices['KOSDAQ']['code'] or div != self.market_indices['KOSDAQ']['market_div']:
-                            _dinfo(f"📦 KOSDAQ 폴백 성공: code={code} div={div}")
-                        kosdaq = result
-                        break
-                except Exception as e:
-                    _dwarn(f"KOSDAQ 폴백 시도 실패 code={code} div={div} err={e}")
+                    _dinfo(f"✅ KOSDAQ 캐싱 조합 사용: code={cached_code} div={cached_div}")
+            
+            # 캐싱 실패 또는 없는 경우, 기본 조합 시도
+            if not kosdaq:
+                default_code = self.market_indices['KOSDAQ']['code']
+                default_div = self.market_indices['KOSDAQ']['market_div']
+                kosdaq = self.get_market_index_data(default_code, default_div)
+                
+                # 기본 조합 실패 시 폴백 시도 (KOSDAQ 종합지수 우선)
+                if not kosdaq:
+                    kosdaq_try: List[tuple] = [
+                        ('1001', 'U'),  # KOSDAQ 종합지수 (VTS에서 가장 안정적)
+                        ('1001', 'J'),
+                        ('2001', 'U'),  # KOSDAQ 업종지수 (폴백)
+                        ('2001', 'Q'),
+                    ]
+                    for code, div in kosdaq_try:
+                        if code == default_code and div == default_div:
+                            continue  # 이미 시도한 조합 스킵
+                        try:
+                            # suppress_warning=True로 폴백 시도 중 경고 로그 억제
+                            result = self.get_market_index_data(code, div, suppress_warning=True)
+                            if result:
+                                logger.info(f"✅ KOSDAQ 폴백 성공: code={code} div={div}")
+                                # 성공한 조합 캐싱
+                                self._successful_combinations['KOSDAQ'] = (code, div)
+                                kosdaq = result
+                                break
+                        except Exception as e:
+                            _dwarn(f"KOSDAQ 폴백 시도 실패 code={code} div={div} err={e}")
+                elif kosdaq:
+                    # 기본 조합 성공 시 캐싱
+                    self._successful_combinations['KOSDAQ'] = (default_code, default_div)
+                    _dinfo(f"✅ KOSDAQ 기본 조합 성공: code={default_code} div={default_div}")
 
             if kospi:
                 indices['kospi'] = {

@@ -172,6 +172,12 @@ services:
       
       # Django ALLOWED_HOSTS 설정 (Docker 네트워크 내부 서비스명 포함)
       - ALLOWED_HOSTS=backend,localhost,127.0.0.1
+      
+      # KIS 시장 지수 조회 최적화 (VTS 환경 기준)
+      - KIS_KOSPI_CODE=0001
+      - KIS_KOSPI_DIV=U  # KOSPI 종합지수 (4,073.05)
+      - KIS_KOSDAQ_CODE=1001  # KOSDAQ 종합지수 (884.71) - 올바른 코드!
+      - KIS_KOSDAQ_DIV=U  # VTS에서 U 사용
 
       - STATIC_ROOT=/app/staticfiles
       - SKIP_COLLECTSTATIC=False
@@ -229,6 +235,12 @@ services:
       - REDIS_DB=0
       - USE_REDIS_CHANNELS=True
       - KIS_USE_MOCK=False
+      
+      # KIS 시장 지수 조회 최적화
+      - KIS_KOSPI_CODE=0001
+      - KIS_KOSPI_DIV=U
+      - KIS_KOSDAQ_CODE=1001  # KOSDAQ 종합지수 - 올바른 코드!
+      - KIS_KOSDAQ_DIV=U
       - USE_MOCK_DATA=False
       - DJANGO_MODE=production
 
@@ -275,6 +287,12 @@ services:
       - REDIS_DB=0
       - USE_REDIS_CHANNELS=True
       - KIS_USE_MOCK=False
+      
+      # KIS 시장 지수 조회 최적화
+      - KIS_KOSPI_CODE=0001
+      - KIS_KOSPI_DIV=U
+      - KIS_KOSDAQ_CODE=1001  # KOSDAQ 종합지수 - 올바른 코드!
+      - KIS_KOSDAQ_DIV=U
       - USE_MOCK_DATA=False
       - DJANGO_MODE=production
 
