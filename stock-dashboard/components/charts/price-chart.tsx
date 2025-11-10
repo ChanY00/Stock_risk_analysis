@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef, memo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ComposedChart, Bar, Cell, BarChart } from 'recharts'
 import { PriceData } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -13,17 +13,29 @@ interface PriceChartProps {
   stockCode?: string
 }
 
-export function PriceChart({ data: initialData, title = "주가 차트", stockCode }: PriceChartProps) {
+export const PriceChart = memo(function PriceChart({ data: initialData, title = "주가 차트", stockCode }: PriceChartProps) {
   const [chartType, setChartType] = useState<'line' | 'candle'>('line')
   const [period, setPeriod] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M')
   const [loading, setLoading] = useState(false)
   const [apiData, setApiData] = useState<PriceData[]>(initialData || [])
+  
+  // 데이터 해시를 사용하여 실제로 변경되었는지 확인
+  const dataHashRef = useRef<string>('')
+  
+  // initialData가 변경되었을 때만 apiData 업데이트
+  useEffect(() => {
+    if (!stockCode && initialData) {
+      const currentHash = JSON.stringify(initialData.map(d => d.date))
+      if (currentHash !== dataHashRef.current) {
+        dataHashRef.current = currentHash
+        setApiData(initialData)
+      }
+    }
+  }, [initialData, stockCode])
 
   // 기간 변경시 새로운 데이터 로드
   useEffect(() => {
     if (!stockCode) {
-      // stockCode가 없으면 초기 데이터 사용
-      setApiData(initialData || [])
       return
     }
 
@@ -78,7 +90,7 @@ export function PriceChart({ data: initialData, title = "주가 차트", stockCo
     }
 
     loadPriceData()
-  }, [period, stockCode, initialData])
+  }, [period, stockCode])
 
   const data = apiData
 
@@ -178,16 +190,16 @@ export function PriceChart({ data: initialData, title = "주가 차트", stockCo
   const isGain = filteredData[filteredData.length - 1]?.close >= filteredData[0]?.close
   const chartColor = isGain ? '#ef4444' : '#3b82f6'
 
-  const periods = [
+  const periods = useMemo(() => [
     { label: '1주', value: '1W' as const },
     { label: '1개월', value: '1M' as const },
     { label: '3개월', value: '3M' as const },
     { label: '6개월', value: '6M' as const },
     { label: '1년', value: '1Y' as const },
     { label: '전체', value: 'ALL' as const },
-  ]
+  ], [])
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = useCallback(({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
@@ -225,10 +237,10 @@ export function PriceChart({ data: initialData, title = "주가 차트", stockCo
       )
     }
     return null
-  }
+  }, [])
 
   // 캔들스틱 커스텀 셰이프
-  const CandlestickBar = (props: any) => {
+  const CandlestickBar = useCallback((props: any) => {
     const { payload, x, y, width, height } = props
     if (!payload) return null
 
@@ -285,7 +297,7 @@ export function PriceChart({ data: initialData, title = "주가 차트", stockCo
         />
       </g>
     )
-  }
+  }, [yAxisMax, yAxisMin])
 
   return (
     <div className="w-full space-y-6">
@@ -504,4 +516,4 @@ export function PriceChart({ data: initialData, title = "주가 차트", stockCo
       )}
     </div>
   )
-}
+})

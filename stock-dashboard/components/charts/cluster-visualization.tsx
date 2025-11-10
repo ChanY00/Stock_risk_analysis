@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, memo } from "react"
 import { Scatter, ScatterChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceLine, Legend, AreaChart, Area, BarChart, Bar } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -86,7 +86,7 @@ interface ClusterVisualizationData {
   volatilityScore?: number
 }
 
-export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
+export const ClusterVisualization = memo(function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
   const [stockClusterInfo, setStockClusterInfo] = useState<StockClusterInfo | null>(null)
   const [spectralSimilarStocks, setSpectralSimilarStocks] = useState<SimilarStocks | null>(null)
   const [agglomerativeSimilarStocks, setAgglomerativeSimilarStocks] = useState<SimilarStocks | null>(null)
@@ -1746,4 +1746,4 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
       </Tabs>
     </div>
   )
-}
+})

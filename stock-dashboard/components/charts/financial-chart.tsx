@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { FinancialAnalysis } from '@/lib/api'
 import { TrendingUp, DollarSign, Building, PieChart as PieIcon, AlertTriangle } from 'lucide-react'
@@ -14,7 +14,7 @@ interface FinancialChartProps {
   title?: string
 }
 
-export function FinancialChart({ financial, title = "재무 분석" }: FinancialChartProps) {
+export const FinancialChart = memo(function FinancialChart({ financial, title = "재무 분석" }: FinancialChartProps) {
   const [viewType, setViewType] = useState<'overview' | 'trends' | 'ratios' | 'assets'>('overview')
 
   if (!financial || !financial.financials || Object.keys(financial.financials).length === 0) {
@@ -25,36 +25,42 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     )
   }
 
-  // 재무 데이터를 차트용으로 변환 (DB에 원 단위로 저장됨)
-  const financialData = Object.entries(financial.financials)
-    .map(([year, data]) => ({
-      year: parseInt(year),
-      revenue: data.revenue, // 원 단위
-      operating_income: data.operating_income, // 원 단위
-      net_income: data.net_income, // 원 단위
-      eps: data.eps, // 원 단위
-      total_assets: data.total_assets || 0, // 원 단위
-      total_liabilities: data.total_liabilities || 0, // 원 단위
-      total_equity: data.total_equity || 0 // 원 단위
-    }))
-    .sort((a, b) => a.year - b.year)
+  // 재무 데이터를 차트용으로 변환 (DB에 원 단위로 저장됨) - useMemo로 메모이제이션
+  const financialData = useMemo(() => {
+    if (!financial || !financial.financials) return []
+    return Object.entries(financial.financials)
+      .map(([year, data]) => ({
+        year: parseInt(year),
+        revenue: data.revenue, // 원 단위
+        operating_income: data.operating_income, // 원 단위
+        net_income: data.net_income, // 원 단위
+        eps: data.eps, // 원 단위
+        total_assets: data.total_assets || 0, // 원 단위
+        total_liabilities: data.total_liabilities || 0, // 원 단위
+        total_equity: data.total_equity || 0 // 원 단위
+      }))
+      .sort((a, b) => a.year - b.year)
+  }, [financial])
 
-  // 최신년도 데이터
-  const latestData = financialData[financialData.length - 1]
+  // 최신년도 데이터 - useMemo로 메모이제이션
+  const latestData = useMemo(() => financialData[financialData.length - 1], [financialData])
   
   // 2024년 데이터 특별 처리 - 순이익이 0인 경우 확인
   const has2024Data = financialData.some(data => data.year === 2024)
   const data2024 = financialData.find(data => data.year === 2024)
   const isNetIncomeZero = data2024 && data2024.net_income === 0
   
-  // 자산 구성 파이차트 데이터
-  const assetComposition = latestData ? [
-    { name: '부채', value: latestData.total_liabilities, color: '#ef4444' },
-    { name: '자본', value: latestData.total_equity, color: '#10b981' }
-  ].filter(item => item.value > 0) : []
+  // 자산 구성 파이차트 데이터 - useMemo로 메모이제이션
+  const assetComposition = useMemo(() => {
+    if (!latestData) return []
+    return [
+      { name: '부채', value: latestData.total_liabilities, color: '#ef4444' },
+      { name: '자본', value: latestData.total_equity, color: '#10b981' }
+    ].filter(item => item.value > 0)
+  }, [latestData])
 
-  // 재무비율 계산
-  const calculateRatios = (data: typeof latestData) => {
+  // 재무비율 계산 - useCallback으로 메모이제이션
+  const calculateRatios = useCallback((data: typeof latestData) => {
     if (!data) return null
     
     return {
@@ -63,11 +69,11 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       operating_margin: data.revenue > 0 ? (data.operating_income / data.revenue * 100).toFixed(1) : 'N/A',
       net_margin: data.revenue > 0 ? (data.net_income / data.revenue * 100).toFixed(1) : 'N/A'
     }
-  }
+  }, [])
 
-  const ratios = calculateRatios(latestData)
+  const ratios = useMemo(() => calculateRatios(latestData), [calculateRatios, latestData])
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = useCallback(({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
@@ -96,14 +102,14 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       )
     }
     return null
-  }
+  }, [])
 
   // 손실 기업 여부 확인
   const hasOperatingLoss = latestData && latestData.operating_income < 0
   const hasNetLoss = latestData && latestData.net_income < 0
 
-  // 데이터 품질 검증 함수들
-  const validateFinancialData = (data: any) => {
+  // 데이터 품질 검증 함수들 - useCallback으로 메모이제이션
+  const validateFinancialData = useCallback((data: any) => {
     const issues = [];
     
     // 1. 영업이익 > 매출액 체크
@@ -147,10 +153,10 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     }
     
     return issues;
-  };
+  }, [])
 
-  // 안전한 값 표시 함수 (원 단위 데이터용)
-  const formatSafeValue = (value: number | null | undefined, unit: string = '조원', issues: any[] = []) => {
+  // 안전한 값 표시 함수 (원 단위 데이터용) - useCallback으로 메모이제이션
+  const formatSafeValue = useCallback((value: number | null | undefined, unit: string = '조원', issues: any[] = []) => {
     if (value === null || value === undefined) return 'N/A';
     if (value === 0) return '0';
     
@@ -184,10 +190,10 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     }
     
     return formattedValue;
-  };
+  }, [])
 
-  // 데이터 품질 경고 컴포넌트
-  const DataQualityAlert = ({ issues }: { issues: any[] }) => {
+  // 데이터 품질 경고 컴포넌트 - useCallback으로 메모이제이션
+  const DataQualityAlert = useCallback(({ issues }: { issues: any[] }) => {
     if (issues.length === 0) return null;
     
     const errorIssues = issues.filter(i => i.severity === 'error');
@@ -224,10 +230,10 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
         )}
       </div>
     );
-  };
+  }, [])
 
-  // 각 연도별 데이터 검증
-  const dataWithQuality = financialData.map((data: any) => {
+  // 각 연도별 데이터 검증 - useMemo로 메모이제이션
+  const dataWithQuality = useMemo(() => financialData.map((data: any) => {
     const issues = validateFinancialData(data);
     return {
       ...data,
@@ -235,16 +241,20 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       dataQuality: issues.length === 0 ? 'good' : 
                    issues.some((i: any) => i.severity === 'error') ? 'poor' : 'fair'
     };
-  });
+  }), [financialData, validateFinancialData])
 
-  // 전체 데이터 이슈 수집
-  const allIssues = dataWithQuality.flatMap((d: any) => d.issues);
+  // 전체 데이터 이슈 수집 - useMemo로 메모이제이션
+  const allIssues = useMemo(() => dataWithQuality.flatMap((d: any) => d.issues), [dataWithQuality])
   
-  // 이전 연도 데이터 (전년 대비 계산용)
-  const previousData = financialData.length > 1 ? financialData[financialData.length - 2] : null;
+  // 이전 연도 데이터 (전년 대비 계산용) - useMemo로 메모이제이션
+  const previousData = useMemo(() => 
+    financialData.length > 1 ? financialData[financialData.length - 2] : null
+  , [financialData])
   
-  // 최신 데이터에서 이슈 정보 추가
-  const latestDataWithIssues = dataWithQuality[dataWithQuality.length - 1] || latestData;
+  // 최신 데이터에서 이슈 정보 추가 - useMemo로 메모이제이션
+  const latestDataWithIssues = useMemo(() => 
+    dataWithQuality[dataWithQuality.length - 1] || latestData
+  , [dataWithQuality, latestData])
 
   return (
     <div className="w-full space-y-6">
@@ -650,4 +660,4 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       )}
     </div>
   )
-} 
+})

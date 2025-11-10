@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import {
   PieChart,
   Pie,
@@ -32,7 +32,7 @@ interface SentimentChartProps {
   title?: string;
 }
 
-export function SentimentChart({
+export const SentimentChart = memo(function SentimentChart({
   sentiment,
   title = "감정 분석",
 }: SentimentChartProps) {
@@ -103,10 +103,10 @@ export function SentimentChart({
       setViewType={setViewType}
     />
   );
-}
+})
 
 // 실제 차트 렌더링 로직을 별도 컴포넌트로 분리
-function SentimentChartContent({
+const SentimentChartContent = memo(function SentimentChartContent({
   sentiment,
   title,
   viewType,
@@ -117,44 +117,47 @@ function SentimentChartContent({
   viewType: "overview" | "keywords" | "trend";
   setViewType: (type: "overview" | "keywords" | "trend") => void;
 }) {
-  // 감정 분포 데이터 (파이 차트용) - 안전한 숫자 변환
-  const positiveValue =
-    sentiment.positive !== undefined && sentiment.positive !== null
+  // 감정 분포 데이터 (파이 차트용) - useMemo로 메모이제이션
+  const { positiveValue, negativeValue, neutralValue } = useMemo(() => ({
+    positiveValue: sentiment.positive !== undefined && sentiment.positive !== null
       ? Number(sentiment.positive)
-      : 0;
-  const negativeValue =
-    sentiment.negative !== undefined && sentiment.negative !== null
+      : 0,
+    negativeValue: sentiment.negative !== undefined && sentiment.negative !== null
       ? Number(sentiment.negative)
-      : 0;
-  const neutralValue =
-    sentiment.neutral !== undefined && sentiment.neutral !== null
+      : 0,
+    neutralValue: sentiment.neutral !== undefined && sentiment.neutral !== null
       ? Number(sentiment.neutral)
-      : 0;
+      : 0,
+  }), [sentiment])
 
-  const sentimentDistribution = [
-    {
-      name: "긍정",
-      value: positiveValue,
-      color: "#10b981",
-      percentage: (positiveValue * 100).toFixed(1),
-    },
-    {
-      name: "부정",
-      value: negativeValue,
-      color: "#ef4444",
-      percentage: (negativeValue * 100).toFixed(1),
-    },
-  ].filter((item) => item.value > 0);
+  const sentimentDistribution = useMemo(() => {
+    const distribution = [
+      {
+        name: "긍정",
+        value: positiveValue,
+        color: "#10b981",
+        percentage: (positiveValue * 100).toFixed(1),
+      },
+      {
+        name: "부정",
+        value: negativeValue,
+        color: "#ef4444",
+        percentage: (negativeValue * 100).toFixed(1),
+      },
+    ].filter((item) => item.value > 0);
 
-  // 중립이 있는 경우 추가
-  if (neutralValue > 0) {
-    sentimentDistribution.push({
-      name: "중립",
-      value: neutralValue,
-      color: "#6b7280",
-      percentage: (neutralValue * 100).toFixed(1),
-    });
-  }
+    // 중립이 있는 경우 추가
+    if (neutralValue > 0) {
+      distribution.push({
+        name: "중립",
+        value: neutralValue,
+        color: "#6b7280",
+        percentage: (neutralValue * 100).toFixed(1),
+      });
+    }
+    
+    return distribution
+  }, [positiveValue, negativeValue, neutralValue])
 
   // 디버깅을 위한 콘솔 출력
   console.log("Sentiment data:", sentiment);
@@ -166,75 +169,82 @@ function SentimentChartContent({
     { name: "부정", value: 0.81, color: "#ef4444", percentage: "81.0" },
   ];
 
-  // 실제 데이터가 비어있으면 테스트 데이터 사용
-  const chartData =
-    sentimentDistribution.length > 0 ? sentimentDistribution : testData;
+  // 실제 데이터가 비어있으면 테스트 데이터 사용 - useMemo로 메모이제이션
+  const chartData = useMemo(() =>
+    sentimentDistribution.length > 0 ? sentimentDistribution : testData
+  , [sentimentDistribution])
 
-  // 감정 점수: 긍정 비율을 0~100 점수로 사용
-  const sentimentScore100 = Math.max(0, Math.min(100, positiveValue * 100));
+  // 감정 점수: 긍정 비율을 0~100 점수로 사용 - useMemo로 메모이제이션
+  const sentimentScore100 = useMemo(() => 
+    Math.max(0, Math.min(100, positiveValue * 100))
+  , [positiveValue])
 
-  // 키워드 데이터 (막대 차트용) - top_keywords 문자열을 배열로 변환
-  let keywordArray: string[] = [];
+  // 키워드 데이터 (막대 차트용) - useMemo로 메모이제이션
+  const keywordArray = useMemo(() => {
+    let keywords: string[] = [];
 
-  // keyword_array가 있으면 사용 (기존 로직)
-  if (sentiment.keyword_array && Array.isArray(sentiment.keyword_array)) {
-    keywordArray = sentiment.keyword_array;
-  }
-  // top_keywords 문자열이 있으면 분리하여 사용
-  else if (
-    sentiment.top_keywords &&
-    typeof sentiment.top_keywords === "string"
-  ) {
-    keywordArray = sentiment.top_keywords
-      .split(",")
-      .map((k) => k.trim())
-      .filter((k) => k.length > 0);
-  }
+    // keyword_array가 있으면 사용 (기존 로직)
+    if (sentiment.keyword_array && Array.isArray(sentiment.keyword_array)) {
+      keywords = sentiment.keyword_array;
+    }
+    // top_keywords 문자열이 있으면 분리하여 사용
+    else if (
+      sentiment.top_keywords &&
+      typeof sentiment.top_keywords === "string"
+    ) {
+      keywords = sentiment.top_keywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter((k) => k.length > 0);
+    }
 
-  // 명사만 표시되도록 간단한 한글 휴리스틱 필터 적용
-  const isKorean = (w: string) => /^[가-힣]+$/.test(w);
-  const endsWithAny = (w: string, suffixes: string[]) =>
-    suffixes.some((s) => w.endsWith(s));
-  const isLikelyNoun = (w: string) => {
-    if (!isKorean(w) || w.length < 2) return false;
-    const verbAdjEndings = [
-      "하다",
-      "되다",
-      "한다",
-      "했다",
-      "되는",
-      "하는",
-      "같다",
-      "있다",
-      "없다",
-      "크다",
-      "작다",
-      "높다",
-      "낮다",
-      "다",
-    ];
-    if (endsWithAny(w, verbAdjEndings)) return false;
-    return true;
-  };
-  keywordArray = keywordArray.filter(isLikelyNoun);
+    // 명사만 표시되도록 간단한 한글 휴리스틱 필터 적용
+    const isKorean = (w: string) => /^[가-힣]+$/.test(w);
+    const endsWithAny = (w: string, suffixes: string[]) =>
+      suffixes.some((s) => w.endsWith(s));
+    const isLikelyNoun = (w: string) => {
+      if (!isKorean(w) || w.length < 2) return false;
+      const verbAdjEndings = [
+        "하다",
+        "되다",
+        "한다",
+        "했다",
+        "되는",
+        "하는",
+        "같다",
+        "있다",
+        "없다",
+        "크다",
+        "작다",
+        "높다",
+        "낮다",
+        "다",
+      ];
+      if (endsWithAny(w, verbAdjEndings)) return false;
+      return true;
+    };
+    
+    return keywords.filter(isLikelyNoun)
+  }, [sentiment])
 
   console.log("🔑 Sentiment Chart - 키워드 배열(명사 필터):", keywordArray);
 
-  // 긍정 비율 기반 색상/라벨
-  const getSentimentColorByPositive = (positiveRatio: number) => {
+  // 긍정 비율 기반 색상/라벨 - useCallback으로 메모이제이션
+  const getSentimentColorByPositive = useCallback((positiveRatio: number) => {
     if (positiveRatio >= 0.7) return "#16a34a"; // green
     if (positiveRatio >= 0.5) return "#6b7280"; // neutral gray
     return "#ef4444"; // red
-  };
-  const getSentimentLabelByPositive = (positiveRatio: number) => {
+  }, [])
+  
+  const getSentimentLabelByPositive = useCallback((positiveRatio: number) => {
     if (positiveRatio >= 0.7) return "매우 긍정적";
     if (positiveRatio >= 0.5) return "긍정적";
     if (positiveRatio > 0.3) return "중립";
     return "부정적";
-  };
+  }, [])
 
-  // 커스텀 파이 차트 라벨
-  const renderCustomizedLabel = ({
+  // 커스텀 파이 차트 라벨 - useCallback으로 메모이제이션
+  const renderCustomizedLabel = useCallback(({
     cx,
     cy,
     midAngle,
@@ -263,7 +273,7 @@ function SentimentChartContent({
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     );
-  };
+  }, [])
 
   return (
     <div className="w-full space-y-6">
@@ -876,4 +886,4 @@ function SentimentChartContent({
       </div>
     </div>
   );
-}
+})
