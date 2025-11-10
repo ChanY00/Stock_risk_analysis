@@ -5,8 +5,8 @@ class SentimentAnalysis(models.Model):
     stock = models.OneToOneField(Stock, on_delete=models.CASCADE, related_name='sentiment')
     updated_at = models.DateTimeField()  # auto_now 제거
 
-    positive = models.DecimalField(max_digits=4, decimal_places=2)  # 0.00 ~ 1.00
-    negative = models.DecimalField(max_digits=4, decimal_places=2)  # 0.00 ~ 1.00
+    positive = models.DecimalField(max_digits=5, decimal_places=4)  # 0.0000 ~ 1.0000 (Serializer와 일치)
+    negative = models.DecimalField(max_digits=5, decimal_places=4)  # 0.0000 ~ 1.0000 (Serializer와 일치)
     top_keywords = models.TextField()  # 쉼표로 구분된 키워드 문자열
 
     def __str__(self):
