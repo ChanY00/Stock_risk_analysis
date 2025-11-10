@@ -45,6 +45,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { AlertCircle } from "lucide-react";
 
 import {
@@ -745,21 +751,41 @@ export default function StockDetailPage() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="sm"
-                onClick={handleFavoriteToggle}
-                disabled={favoriteLoading}
-              >
-                <Star
-                  className={`h-4 w-4 mr-2 ${isFavorite ? "fill-current" : ""}`}
-                />
-                {favoriteLoading
-                  ? "처리 중..."
-                  : isFavorite
-                  ? "관심종목 해제"
-                  : "관심종목 추가"}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        variant={isFavorite ? "default" : "outline"}
+                        size="sm"
+                        onClick={handleFavoriteToggle}
+                        disabled={!isAuthenticated || favoriteLoading}
+                        className={
+                          !isAuthenticated
+                            ? "cursor-not-allowed opacity-50"
+                            : ""
+                        }
+                      >
+                        <Star
+                          className={`h-4 w-4 mr-2 ${
+                            isFavorite ? "fill-current" : ""
+                          }`}
+                        />
+                        {favoriteLoading
+                          ? "처리 중..."
+                          : isFavorite
+                          ? "관심종목 해제"
+                          : "관심종목 추가"}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!isAuthenticated && (
+                    <TooltipContent>
+                      <p>로그인 후 관심종목을 추가할 수 있습니다</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
 
               {/* 인증 상태에 따른 버튼 표시 */}
               {isAuthenticated ? (

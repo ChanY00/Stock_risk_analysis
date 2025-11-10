@@ -755,40 +755,34 @@ class ApiClient {
   // Watchlist APIs (올바른 백엔드 엔드포인트 사용)
   async getWatchlist(): Promise<WatchlistItem[]> {
     try {
-      // 백엔드에서 관심종목 리스트 배열을 반환함
-      const watchlistArray = await this.request<
-        Array<{
-          id: number;
-          name: string;
-          stocks: WatchlistItem[];
-        }>
-      >("/analysis/watchlist/", {}, false);
+      // 새로운 엔드포인트: /stocks/watchlist/ 사용
+      const response = await this.request<{
+        success: boolean;
+        data: WatchlistItem[];
+      }>("/stocks/watchlist/", {}, true);  // 인증 필요
 
-      // 첫 번째 관심종목 리스트의 종목들만 반환 (기존 프론트엔드 로직과 호환)
-      if (watchlistArray && watchlistArray.length > 0) {
-        return watchlistArray[0].stocks || [];
-      }
-      return [];
+      return response.data || [];
     } catch (error) {
       console.warn("관심종목 로드 실패:", error);
+      // 인증되지 않은 경우 빈 배열 반환
       return [];
     }
   }
 
   async addToWatchlist(stockCode: string): Promise<WatchlistResponse> {
     try {
-      // 첫 번째 관심종목 리스트(ID: 1)에 추가
-      const result = await this.request<{ message: string }>(
-        `/analysis/watchlist/1/stocks/${stockCode}/`,
+      // 새로운 엔드포인트: /stocks/watchlist/:code/ 사용
+      const result = await this.request<WatchlistResponse>(
+        `/stocks/watchlist/${stockCode}/`,
         {
           method: "POST",
         },
-        false
+        true  // 인증 필요
       );
 
       return {
-        success: true,
-        message: result.message,
+        success: result.success !== false,
+        message: result.message || "관심종목에 추가되었습니다.",
       };
     } catch (error) {
       return {
@@ -800,24 +794,22 @@ class ApiClient {
 
   async removeFromWatchlist(stockCode: string): Promise<WatchlistResponse> {
     try {
-      // 첫 번째 관심종목 리스트(ID: 1)에서 삭제
-
-      const result = await this.request<{ message: string }>(
-        `/analysis/watchlist/1/stocks/${stockCode}/`,
+      // 새로운 엔드포인트: /stocks/watchlist/:code/ 사용
+      const result = await this.request<WatchlistResponse>(
+        `/stocks/watchlist/${stockCode}/`,
         {
           method: "DELETE",
         },
-        false
+        true  // 인증 필요
       );
 
       return {
-        success: true,
-        message: result.message,
+        success: result.success !== false,
+        message: result.message || "관심종목에서 제거되었습니다.",
       };
     } catch (error) {
       return {
         success: false,
-
         message: error instanceof Error ? error.message : "관심종목 삭제 실패",
       };
     }

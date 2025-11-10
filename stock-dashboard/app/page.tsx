@@ -1430,31 +1430,45 @@ export default function Dashboard() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (isFavorite(stock.code)) {
-                                          removeFromFavorites(stock.code);
-                                        } else {
-                                          addToFavorites(stock);
-                                        }
-                                      }}
-                                      className={`hover:scale-110 transition-all duration-200 rounded-full ${
-                                        isFavorite(stock.code)
-                                          ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/30"
-                                          : "text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
-                                      }`}
-                                    >
-                                      <Star
-                                        className={`h-5 w-5 ${
-                                          isFavorite(stock.code)
-                                            ? "fill-current"
-                                            : ""
-                                        }`}
-                                      />
-                                    </Button>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={!isAuthenticated}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (isFavorite(stock.code)) {
+                                                removeFromFavorites(stock.code);
+                                              } else {
+                                                addToFavorites(stock);
+                                              }
+                                            }}
+                                            className={`hover:scale-110 transition-all duration-200 rounded-full ${
+                                              !isAuthenticated
+                                                ? "cursor-not-allowed opacity-50"
+                                                : isFavorite(stock.code)
+                                                ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/30"
+                                                : "text-gray-400 dark:text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                                            }`}
+                                          >
+                                            <Star
+                                              className={`h-5 w-5 ${
+                                                isFavorite(stock.code)
+                                                  ? "fill-current"
+                                                  : ""
+                                              }`}
+                                            />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        {!isAuthenticated && (
+                                          <TooltipContent>
+                                            <p>로그인 후 관심종목을 추가할 수 있습니다</p>
+                                          </TooltipContent>
+                                        )}
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   </TableCell>
                                 </TableRow>
                               );
@@ -1814,31 +1828,45 @@ export default function Dashboard() {
                                     {formatTimeAgo(search.timestamp)}
                                   </div>
                                   {stockInfo && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (isFavorite(search.code)) {
-                                          removeFromFavorites(search.code);
-                                        } else {
-                                          addToFavorites(stockInfo);
-                                        }
-                                      }}
-                                      className={`hover:scale-110 transition-all duration-200 rounded-full ${
-                                        isFavorite(search.code)
-                                          ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                                          : "text-gray-400 hover:text-amber-600 hover:bg-amber-50"
-                                      }`}
-                                    >
-                                      <Star
-                                        className={`h-4 w-4 ${
-                                          isFavorite(search.code)
-                                            ? "fill-current"
-                                            : ""
-                                        }`}
-                                      />
-                                    </Button>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={!isAuthenticated}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (isFavorite(search.code)) {
+                                                removeFromFavorites(search.code);
+                                              } else {
+                                                addToFavorites(stockInfo);
+                                              }
+                                            }}
+                                            className={`hover:scale-110 transition-all duration-200 rounded-full ${
+                                              !isAuthenticated
+                                                ? "cursor-not-allowed opacity-50"
+                                                : isFavorite(search.code)
+                                                ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                                : "text-gray-400 hover:text-amber-600 hover:bg-amber-50"
+                                            }`}
+                                          >
+                                            <Star
+                                              className={`h-4 w-4 ${
+                                                isFavorite(search.code)
+                                                  ? "fill-current"
+                                                  : ""
+                                              }`}
+                                            />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        {!isAuthenticated && (
+                                          <TooltipContent>
+                                            <p>로그인 후 관심종목을 추가할 수 있습니다</p>
+                                          </TooltipContent>
+                                        )}
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   )}
                                 </div>
                               </div>
