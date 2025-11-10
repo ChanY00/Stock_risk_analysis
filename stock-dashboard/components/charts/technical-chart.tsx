@@ -16,6 +16,12 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
   const [selectedTab, setSelectedTab] = useState<'overview' | 'ma' | 'oscillators' | 'macd' | 'bollinger'>('overview')
   const [extendedPriceData, setExtendedPriceData] = useState<PriceData[]>(priceData)
   const [loading, setLoading] = useState(false)
+  const [showGuide, setShowGuide] = useState<Record<string, boolean>>({
+    ma: false,
+    oscillators: false,
+    macd: false,
+    bollinger: false
+  })
 
   // 기술적 분석을 위해 충분한 데이터 확보 (90일 이상)
   useEffect(() => {
@@ -256,6 +262,56 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
     { id: 'bollinger', label: '볼린저밴드' }
   ], [])
 
+  // 지표별 설명 - useMemo로 메모이제이션
+  const indicatorGuides = useMemo(() => ({
+    ma: {
+      title: '이동평균선 (Moving Average)',
+      description: '일정 기간 동안의 주가를 평균한 값을 연결한 선으로, 주가의 전반적인 추세를 파악하는데 사용됩니다.',
+      usage: [
+        '• 단기 이동평균선이 장기 이동평균선을 상향 돌파: 골든크로스 (매수 신호)',
+        '• 단기 이동평균선이 장기 이동평균선을 하향 돌파: 데드크로스 (매도 신호)',
+        '• 주가가 이동평균선 위에 있으면 상승 추세, 아래에 있으면 하락 추세'
+      ],
+      periods: 'MA5(5일), MA20(20일), MA60(60일)을 주로 사용합니다.'
+    },
+    rsi: {
+      title: 'RSI (상대강도지수)',
+      short: '과매수/과매도 상태를 판단하는 지표',
+      description: '일정 기간 동안의 주가 상승폭과 하락폭의 평균을 비교하여 과매수/과매도 상태를 판단합니다.',
+      interpretation: '70 이상: 과매수 (조정 가능성) | 30~70: 중립 | 30 이하: 과매도 (반등 가능성)'
+    },
+    macd: {
+      title: 'MACD (이동평균 수렴확산)',
+      short: '추세 전환과 매매 시점을 파악하는 지표',
+      description: '단기(12일)와 장기(26일) 지수이동평균의 차이를 이용해 추세 변화를 포착합니다.',
+      usage: [
+        '• MACD선이 Signal선을 상향 돌파: 매수 신호',
+        '• MACD선이 Signal선을 하향 돌파: 매도 신호',
+        '• Histogram이 양수: 상승 모멘텀 | 음수: 하락 모멘텀'
+      ],
+      note: 'MACD는 추세 추종 지표이므로 횡보장에서는 신뢰도가 낮습니다.'
+    },
+    bollinger: {
+      title: '볼린저 밴드 (Bollinger Bands)',
+      short: '변동성과 과매수/과매도를 동시에 판단',
+      description: '20일 이동평균선을 중심으로 표준편차의 ±2배 범위에 상단/하단 밴드를 그려 변동성을 시각화합니다.',
+      usage: [
+        '• 주가가 상단 밴드에 근접: 과매수 가능성 (저항선)',
+        '• 주가가 하단 밴드에 근접: 과매도 가능성 (지지선)',
+        '• 밴드 폭이 좁아짐: 변동성 축소, 큰 움직임 임박',
+        '• 밴드 폭이 넓어짐: 변동성 확대'
+      ],
+      note: '볼린저 밴드를 벗어나는 것이 항상 반전을 의미하지는 않습니다.'
+    },
+    stochastic: {
+      title: 'Stochastic (스토캐스틱)',
+      short: '일정 기간 중 현재 가격의 위치를 백분율로 표시',
+      description: '일정 기간의 최고가와 최저가 사이에서 현재 가격의 위치를 0~100 사이의 값으로 나타냅니다.',
+      interpretation: '80 이상: 과매수 | 20~80: 중립 | 20 이하: 과매도',
+      note: '%K선이 %D선을 교차할 때 매매 신호로 활용합니다.'
+    }
+  }), [])
+
   // 조건부 렌더링을 JSX에서 처리 - 모든 hooks가 실행된 후
   if (!indicators) {
     return (
@@ -301,7 +357,8 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* RSI 게이지 */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">RSI</h4>
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-2">RSI (상대강도지수)</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">💡 {indicatorGuides.rsi.short}</p>
             <div className="h-32">
               <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={rsiData}>
@@ -312,7 +369,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 </RadialBarChart>
               </ResponsiveContainer>
             </div>
-            <div className="text-center text-xs">
+            <div className="text-center text-xs mt-2">
               <span className={`font-medium ${
                 !indicators.rsi ? 'text-gray-400' :
                 indicators.rsi > 70 ? 'text-red-600' : 
@@ -320,15 +377,19 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 'text-green-600'
               }`}>
                 {!indicators.rsi ? '데이터 없음' :
-                 indicators.rsi > 70 ? '과매수' : 
-                 indicators.rsi < 30 ? '과매도' : '중립'}
+                 indicators.rsi > 70 ? '과매수 (조정 가능성)' : 
+                 indicators.rsi < 30 ? '과매도 (반등 가능성)' : '중립 (정상 범위)'}
               </span>
+            </div>
+            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs text-gray-400 dark:text-gray-500">📊 {indicatorGuides.rsi.interpretation}</p>
             </div>
           </div>
 
           {/* MACD 요약 */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">MACD</h4>
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-2">MACD</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">💡 {indicatorGuides.macd.short}</p>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="text-gray-600 dark:text-gray-400">MACD:</span>
@@ -351,36 +412,41 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 indicators.macd > indicators.macd_signal ? 'text-red-600' : 'text-blue-600'
               }`}>
                 {!indicators.macd || !indicators.macd_signal ? '데이터 없음' :
-                 indicators.macd > indicators.macd_signal ? '매수 신호' : '매도 신호'}
+                 indicators.macd > indicators.macd_signal ? '매수 신호 (상승 추세)' : '매도 신호 (하락 추세)'}
               </span>
             </div>
           </div>
 
           {/* 이동평균 요약 */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">이동평균</h4>
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-2">이동평균 (MA)</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">💡 주가 추세를 파악하는 지표</p>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-red-500">MA5:</span>
+                <span className="text-red-500">MA5 (단기):</span>
                 <span className="font-mono">{indicators.ma5?.toLocaleString() || 'N/A'}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-blue-500">MA20:</span>
+                <span className="text-blue-500">MA20 (중기):</span>
                 <span className="font-mono">{indicators.ma20?.toLocaleString() || 'N/A'}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-green-500">MA60:</span>
+                <span className="text-green-500">MA60 (장기):</span>
                 <span className="font-mono">{indicators.ma60?.toLocaleString() || 'N/A'}</span>
               </div>
+            </div>
+            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs text-gray-400 dark:text-gray-500">📊 골든/데드크로스 확인</p>
             </div>
           </div>
 
           {/* 볼린저밴드 요약 */}
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-3">볼린저밴드</h4>
+            <h4 className="text-sm font-medium text-gray-800 dark:text-white mb-2">볼린저 밴드</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">💡 {indicatorGuides.bollinger.short}</p>
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600 dark:text-gray-400">상단:</span>
+                <span className="text-red-500">상단:</span>
                 <span className="font-mono">
                   {(() => {
                     const latestData = candlestickData[candlestickData.length - 1]
@@ -389,7 +455,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600 dark:text-gray-400">중앙:</span>
+                <span className="text-blue-500">중앙 (MA20):</span>
                 <span className="font-mono">
                   {(() => {
                     const latestData = candlestickData[candlestickData.length - 1]
@@ -398,7 +464,7 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-gray-600 dark:text-gray-400">하단:</span>
+                <span className="text-green-500">하단:</span>
                 <span className="font-mono">
                   {(() => {
                     const latestData = candlestickData[candlestickData.length - 1]
@@ -407,6 +473,9 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
                 </span>
               </div>
             </div>
+            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs text-gray-400 dark:text-gray-500">📊 밴드 폭으로 변동성 파악</p>
+            </div>
           </div>
         </div>
       )}
@@ -414,6 +483,33 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
       {/* 이동평균 + 주가 차트 */}
       {selectedTab === 'ma' && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          {/* 이동평균 가이드 */}
+          <div className="mb-4">
+            <button
+              onClick={() => setShowGuide({ ...showGuide, ma: !showGuide.ma })}
+              className="flex items-center justify-between w-full text-left p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">📖</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{indicatorGuides.ma.title}</span>
+              </div>
+              <span className="text-gray-600 dark:text-gray-400">{showGuide.ma ? '▼' : '▶'}</span>
+            </button>
+            {showGuide.ma && (
+              <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg space-y-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300">{indicatorGuides.ma.description}</p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">📊 활용 방법:</p>
+                  {indicatorGuides.ma.usage.map((item, idx) => (
+                    <p key={idx} className="text-sm text-gray-600 dark:text-gray-400 pl-4">{item}</p>
+                  ))}
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                  💡 {indicatorGuides.ma.periods}
+                </p>
+              </div>
+            )}
+          </div>
           <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 + 이동평균선</h4>
           {candlestickData.length > 0 ? (
             <div className="h-80">
@@ -535,6 +631,42 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
       {/* 오실레이터 (RSI + Stochastic) + 주가 차트 */}
       {selectedTab === 'oscillators' && (
         <div className="space-y-6">
+          {/* 오실레이터 가이드 */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setShowGuide({ ...showGuide, oscillators: !showGuide.oscillators })}
+              className="flex items-center justify-between w-full text-left p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">📖</span>
+                <span className="font-semibold text-gray-900 dark:text-white">오실레이터 지표 (RSI & Stochastic)</span>
+              </div>
+              <span className="text-gray-600 dark:text-gray-400">{showGuide.oscillators ? '▼' : '▶'}</span>
+            </button>
+            {showGuide.oscillators && (
+              <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg space-y-4">
+                {/* RSI 설명 */}
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{indicatorGuides.rsi.title}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{indicatorGuides.rsi.description}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                    📊 {indicatorGuides.rsi.interpretation}
+                  </p>
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3"></div>
+                {/* Stochastic 설명 */}
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{indicatorGuides.stochastic.title}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{indicatorGuides.stochastic.description}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                    📊 {indicatorGuides.stochastic.interpretation}
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">⚠️ {indicatorGuides.stochastic.note}</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
           {/* 상단: 주가 차트 */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 차트</h4>
@@ -624,6 +756,34 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
       {/* MACD + 주가 차트 */}
       {selectedTab === 'macd' && (
         <div className="space-y-6">
+          {/* MACD 가이드 */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setShowGuide({ ...showGuide, macd: !showGuide.macd })}
+              className="flex items-center justify-between w-full text-left p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">📖</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{indicatorGuides.macd.title}</span>
+              </div>
+              <span className="text-gray-600 dark:text-gray-400">{showGuide.macd ? '▼' : '▶'}</span>
+            </button>
+            {showGuide.macd && (
+              <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg space-y-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300">{indicatorGuides.macd.description}</p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">📊 활용 방법:</p>
+                  {indicatorGuides.macd.usage.map((item, idx) => (
+                    <p key={idx} className="text-sm text-gray-600 dark:text-gray-400 pl-4">{item}</p>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
+                  ⚠️ {indicatorGuides.macd.note}
+                </p>
+              </div>
+            )}
+          </div>
+          
           {/* 상단: 주가 차트 */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 차트</h4>
@@ -704,6 +864,33 @@ export const TechnicalChart = memo(function TechnicalChart({ indicators, priceDa
       {/* 볼린저밴드 + 주가 차트 */}
       {selectedTab === 'bollinger' && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          {/* 볼린저밴드 가이드 */}
+          <div className="mb-4">
+            <button
+              onClick={() => setShowGuide({ ...showGuide, bollinger: !showGuide.bollinger })}
+              className="flex items-center justify-between w-full text-left p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">📖</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{indicatorGuides.bollinger.title}</span>
+              </div>
+              <span className="text-gray-600 dark:text-gray-400">{showGuide.bollinger ? '▼' : '▶'}</span>
+            </button>
+            {showGuide.bollinger && (
+              <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg space-y-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300">{indicatorGuides.bollinger.description}</p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">📊 활용 방법:</p>
+                  {indicatorGuides.bollinger.usage.map((item, idx) => (
+                    <p key={idx} className="text-sm text-gray-600 dark:text-gray-400 pl-4">{item}</p>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded">
+                  ⚠️ {indicatorGuides.bollinger.note}
+                </p>
+              </div>
+            )}
+          </div>
           <h4 className="text-lg font-medium text-gray-800 dark:text-white mb-4">주가 + 볼린저밴드</h4>
           
           {/* 디버깅 정보 (개발 환경에서만) */}
