@@ -112,7 +112,6 @@ interface StockDetail {
   aiScore?: number; // AI 종합 점수 (0-100)
   sector: string;
   market: string;
-  dividend_yield: number | null;
 }
 
 interface FinancialData {
@@ -199,7 +198,6 @@ const convertApiStockToDetail = (
     sentiment,
     sector: apiStock.sector,
     market: apiStock.market,
-    dividend_yield: apiStock.dividend_yield,
   };
 
   // AI 점수 계산
@@ -878,14 +876,6 @@ export default function StockDetailPage() {
                 </div>
                 <div className="text-lg font-mono text-gray-900 dark:text-white">
                   {formatNumber(stockDetail.marketCap)}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  배당수익률
-                </div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">
-                  {formatPercent(stockDetail.dividend_yield)}
                 </div>
               </div>
             </div>
