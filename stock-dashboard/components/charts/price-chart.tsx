@@ -203,32 +203,32 @@ export const PriceChart = memo(function PriceChart({ data: initialData, title = 
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
+        <div className="bg-white dark:bg-slate-800 p-3 border dark:border-slate-700 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900 dark:text-slate-100">{label}</p>
           <div className="mt-2 space-y-1">
             <p className="text-sm">
-              <span className="text-gray-600">시가: </span>
+              <span className="text-gray-600 dark:text-slate-400">시가: </span>
               <span className="font-mono">{data.open.toLocaleString()}원</span>
             </p>
             <p className="text-sm">
-              <span className="text-gray-600">고가: </span>
-              <span className="font-mono text-red-600">{data.high.toLocaleString()}원</span>
+              <span className="text-gray-600 dark:text-slate-400">고가: </span>
+              <span className="font-mono text-red-600 dark:text-red-400">{data.high.toLocaleString()}원</span>
             </p>
             <p className="text-sm">
-              <span className="text-gray-600">저가: </span>
-              <span className="font-mono text-blue-600">{data.low.toLocaleString()}원</span>
+              <span className="text-gray-600 dark:text-slate-400">저가: </span>
+              <span className="font-mono text-blue-600 dark:text-blue-400">{data.low.toLocaleString()}원</span>
             </p>
             <p className="text-sm">
-              <span className="text-gray-600">종가: </span>
-              <span className="font-mono font-medium">{data.close.toLocaleString()}원</span>
+              <span className="text-gray-600 dark:text-slate-400">종가: </span>
+              <span className="font-mono font-medium dark:text-slate-100">{data.close.toLocaleString()}원</span>
             </p>
             <p className="text-sm">
-              <span className="text-gray-600">거래량: </span>
-              <span className="font-mono">{data.volume.toLocaleString()}</span>
+              <span className="text-gray-600 dark:text-slate-400">거래량: </span>
+              <span className="font-mono dark:text-slate-100">{data.volume.toLocaleString()}</span>
             </p>
             <p className="text-sm">
-              <span className="text-gray-600">전일대비: </span>
-              <span className={`font-mono ${data.changeFromPrev >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
+              <span className="text-gray-600 dark:text-slate-400">전일대비: </span>
+              <span className={`font-mono ${data.changeFromPrev >= 0 ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
                 {data.changeFromPrev >= 0 ? '+' : ''}{data.changeFromPrev.toLocaleString()}원
               </span>
             </p>
@@ -302,7 +302,7 @@ export const PriceChart = memo(function PriceChart({ data: initialData, title = 
   return (
     <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{title}</h3>
         <div className="flex items-center space-x-4">
           {/* 기간 선택 버튼 */}
           <div className="flex space-x-1">
@@ -318,7 +318,7 @@ export const PriceChart = memo(function PriceChart({ data: initialData, title = 
                 {p.label}
               </Button>
             ))}
-            {loading && <span className="text-xs text-gray-500 ml-2">로딩 중...</span>}
+            {loading && <span className="text-xs text-gray-500 dark:text-slate-400 ml-2">로딩 중...</span>}
           </div>
           
           {/* 차트 타입 선택 */}
@@ -342,8 +342,8 @@ export const PriceChart = memo(function PriceChart({ data: initialData, title = 
           </div>
           
           <div className="flex items-center space-x-4 text-sm">
-            <span className="text-gray-600">기간: {filteredData.length}일</span>
-            <span className={`font-medium ${isGain ? 'text-red-600' : 'text-blue-600'}`}>
+            <span className="text-gray-600 dark:text-slate-400">기간: {filteredData.length}일</span>
+            <span className={`font-medium ${isGain ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}`}>
               {isGain ? '상승' : '하락'} 추세
             </span>
           </div>
@@ -353,9 +353,9 @@ export const PriceChart = memo(function PriceChart({ data: initialData, title = 
       {/* 주가 차트 */}
       <div className="h-80">
         {filteredData.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="h-full flex items-center justify-center text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-slate-700">
             <div className="text-center">
-              <TrendingUp className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+              <TrendingUp className="h-12 w-12 mx-auto text-gray-400 dark:text-slate-600 mb-2" />
               <div className="text-lg font-medium">선택한 기간에 데이터가 없습니다</div>
               <div className="text-sm mt-1">다른 기간을 선택해보세요</div>
             </div>
@@ -428,7 +428,7 @@ export const PriceChart = memo(function PriceChart({ data: initialData, title = 
       {/* 거래량 차트 - 데이터가 있을 때만 표시 */}
       {filteredData.length > 0 && (
         <div className="h-32 mt-8">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">거래량</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">거래량</h4>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -468,27 +468,27 @@ export const PriceChart = memo(function PriceChart({ data: initialData, title = 
       {/* 차트 요약 정보 - 데이터가 있을 때만 표시 */}
       {filteredData.length > 0 && (
         <>
-          <div className="mt-8 grid grid-cols-4 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
+          <div className="mt-8 grid grid-cols-4 gap-4 text-sm bg-gray-50 dark:bg-slate-800/50 p-4 rounded-lg">
             <div className="text-center">
-              <div className="text-gray-600">시작가</div>
-              <div className="font-mono font-medium">{filteredData[0]?.close.toLocaleString() || '-'}원</div>
+              <div className="text-gray-600 dark:text-slate-400">시작가</div>
+              <div className="font-mono font-medium dark:text-slate-100">{filteredData[0]?.close.toLocaleString() || '-'}원</div>
             </div>
             <div className="text-center">
-              <div className="text-gray-600">종료가</div>
-              <div className="font-mono font-medium">{filteredData[filteredData.length - 1]?.close.toLocaleString() || '-'}원</div>
+              <div className="text-gray-600 dark:text-slate-400">종료가</div>
+              <div className="font-mono font-medium dark:text-slate-100">{filteredData[filteredData.length - 1]?.close.toLocaleString() || '-'}원</div>
             </div>
             <div className="text-center">
-              <div className="text-gray-600">최고가</div>
-              <div className="font-mono font-medium text-red-600">{maxPrice > 0 ? maxPrice.toLocaleString() : '-'}원</div>
+              <div className="text-gray-600 dark:text-slate-400">최고가</div>
+              <div className="font-mono font-medium text-red-600 dark:text-red-400">{maxPrice > 0 ? maxPrice.toLocaleString() : '-'}원</div>
             </div>
             <div className="text-center">
-              <div className="text-gray-600">최저가</div>
-              <div className="font-mono font-medium text-blue-600">{minPrice > 0 ? minPrice.toLocaleString() : '-'}원</div>
+              <div className="text-gray-600 dark:text-slate-400">최저가</div>
+              <div className="font-mono font-medium text-blue-600 dark:text-blue-400">{minPrice > 0 ? minPrice.toLocaleString() : '-'}원</div>
             </div>
           </div>
 
           {/* 추가 통계 정보 - 간격 추가 */}
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-white p-4 rounded-lg border">
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-white dark:bg-slate-800/50 p-4 rounded-lg border dark:border-slate-700">
             <div className="text-center">
               <div className="text-gray-600">평균 거래량</div>
               <div className="font-mono font-medium">

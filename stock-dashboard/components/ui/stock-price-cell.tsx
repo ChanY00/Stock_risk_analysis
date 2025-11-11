@@ -66,7 +66,7 @@ export function StockPriceCell({ data, showBadge = true, compact = false }: Stoc
                   <div className="text-xs">
                     <div>장 마감</div>
                     <div>마지막 거래일: {data.lastTradingDay || '2025-01-06'}</div>
-                    <div>전일 종가 기준입니다</div>
+                    <div>당일 종가 (전일 종가 대비)</div>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -125,7 +125,7 @@ export function StockPriceCell({ data, showBadge = true, compact = false }: Stoc
                     <div className="text-xs">
                       <div>장 마감</div>
                       <div>마지막 거래일: {data.lastTradingDay || '2025-01-06'}</div>
-                      <div>전일 종가 기준입니다</div>
+                      <div>당일 종가 (전일 종가 대비)</div>
                     </div>
                   </TooltipContent>
                 </Tooltip>
