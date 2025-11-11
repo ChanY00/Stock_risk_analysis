@@ -717,32 +717,34 @@ export default function StockDetailPage() {
   if (!stockDetail) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      {/* Header - Toss Style */}
+      <header className="sticky top-0 z-50 border-b border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <Link href="/">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-300">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   돌아가기
                 </Button>
               </Link>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="flex items-center gap-3 mb-1.5">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                     {stockDetail.name}
                   </h1>
                   <Badge
-                    variant={
-                      stockDetail.market === "KOSPI" ? "default" : "secondary"
+                    className={
+                      stockDetail.market === "KOSPI" 
+                        ? "bg-blue-500 text-white hover:bg-blue-600 rounded-xl px-3 py-1 font-semibold" 
+                        : "bg-purple-500 text-white hover:bg-purple-600 rounded-xl px-3 py-1 font-semibold"
                     }
                   >
                     {stockDetail.market}
                   </Badge>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">
                   {stockDetail.code} •{" "}
                   {translateSectorToKorean(stockDetail.sector)}
                 </p>
@@ -759,9 +761,9 @@ export default function StockDetailPage() {
                         onClick={handleFavoriteToggle}
                         disabled={!isAuthenticated || favoriteLoading}
                         className={
-                          !isAuthenticated
-                            ? "cursor-not-allowed opacity-50"
-                            : ""
+                          isFavorite
+                            ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600 border-0 rounded-2xl shadow-lg shadow-yellow-500/30 font-semibold"
+                            : "border-2 border-gray-200 dark:border-slate-700 hover:border-yellow-400 dark:hover:border-yellow-500 rounded-2xl font-semibold transition-all duration-300" + (!isAuthenticated ? " cursor-not-allowed opacity-50" : "")
                         }
                       >
                         <Star
@@ -772,8 +774,8 @@ export default function StockDetailPage() {
                         {favoriteLoading
                           ? "처리 중..."
                           : isFavorite
-                          ? "관심종목 해제"
-                          : "관심종목 추가"}
+                          ? "관심종목"
+                          : "관심 추가"}
                       </Button>
                     </span>
                   </TooltipTrigger>
@@ -792,7 +794,7 @@ export default function StockDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 rounded-2xl border-2 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 font-semibold transition-all duration-300"
                     >
                       <User className="h-4 w-4" />
                       {user?.first_name || user?.username || "사용자"}
@@ -819,13 +821,13 @@ export default function StockDetailPage() {
               ) : (
                 <div className="flex items-center gap-2">
                   <Link href="/login">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="rounded-2xl border-2 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 font-semibold transition-all duration-300">
                       <LogIn className="mr-2 h-4 w-4" />
                       로그인
                     </Button>
                   </Link>
                   <Link href="/register">
-                    <Button size="sm">회원가입</Button>
+                    <Button size="sm" className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white border-0 rounded-2xl shadow-lg shadow-blue-500/30 font-semibold">회원가입</Button>
                   </Link>
                 </div>
               )}
@@ -834,11 +836,11 @@ export default function StockDetailPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Price Summary */}
-        <Card className="mb-8 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="container mx-auto px-6 py-10">
+        {/* Price Summary - Toss Style */}
+        <Card className="mb-10 bg-white dark:bg-slate-900 border-0 shadow-2xl rounded-3xl overflow-hidden">
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   {/* StockPriceCell 컴포넌트로 통합하여 중복 제거 */}
@@ -862,19 +864,19 @@ export default function StockDetailPage() {
                   {/* 시장 상태 표시기 제거 */}
                 </div>
               </div>
-              <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   거래량
                 </div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(stockDetail.volume)}
                 </div>
               </div>
-              <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   시가총액
                 </div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(stockDetail.marketCap)}
                 </div>
               </div>
@@ -884,107 +886,113 @@ export default function StockDetailPage() {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          {/* AI 리포트 생성 버튼 - 개요 탭 위에 위치 */}
-          <Card>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  AI 종합 분석 리포트
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Gemini AI를 통해 종목을 심층 분석하고 투자 의견을 확인하세요.
-                </p>
+          {/* AI 리포트 생성 버튼 - Toss Style */}
+          <Card className="border-0 shadow-lg rounded-3xl overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+            <CardContent className="p-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <BrainCircuit className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+                    AI 종합 분석 리포트
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-slate-300 font-medium">
+                    Gemini AI로 심층 분석하고 투자 인사이트를 확인하세요
+                  </p>
+                </div>
               </div>
               <Button
                 onClick={handleGenerateReport}
                 disabled={reportLoading || !isAuthenticated}
+                className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 rounded-2xl shadow-lg shadow-purple-500/30 font-semibold px-6"
               >
                 <BrainCircuit className="h-4 w-4 mr-2" />
-                {reportLoading ? "리포트 생성 중..." : "리포트 생성"}
+                {reportLoading ? "생성 중..." : "리포트 생성"}
               </Button>
             </CardContent>
           </Card>
-          <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-gray-700">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-50 dark:bg-slate-900 rounded-3xl p-2 border-0 shadow-lg">
             <TabsTrigger
               value="overview"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-emerald-700 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              개요
+              📊 개요
             </TabsTrigger>
             <TabsTrigger
               value="financials"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              재무
+              💰 재무
             </TabsTrigger>
             <TabsTrigger
               value="technical"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-purple-700 dark:data-[state=active]:text-purple-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              기술분석
+              📈 기술분석
             </TabsTrigger>
             <TabsTrigger
               value="sentiment"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-orange-700 dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              감정분석
+              💬 감정분석
             </TabsTrigger>
             <TabsTrigger
               value="clustering"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-teal-700 dark:data-[state=active]:text-teal-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              클러스터링
+              🔍 클러스터링
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     PER
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                     {stockDetail.per ? stockDetail.per.toFixed(1) : "-"}
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     PBR
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                     {stockDetail.pbr ? stockDetail.pbr.toFixed(1) : "-"}
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     ROE
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                     {stockDetail.roe ? formatPercent(stockDetail.roe) : "-"}
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     감정지수
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                       {(stockDetail.sentiment * 100).toFixed(0)}
                     </span>
 
@@ -1006,15 +1014,15 @@ export default function StockDetailPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     AI 종합 점수
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-300">
                       {typeof stockDetail.aiScore === "number"
                         ? stockDetail.aiScore
                         : "-"}

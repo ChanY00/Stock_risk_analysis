@@ -1,0 +1,66 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: kospi-postgres
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.postgres
+    envVars:
+      - key: POSTGRES_DB
+        sync: false
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+
+  # Redis
+  - type: redis
+    name: kospi-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+
+  # Django Backend
+  - type: web
+    name: kospi-backend
+    env: docker
+    dockerfilePath: ./stock_backend/Dockerfile
+    dockerContext: ./stock_backend
+    plan: free
+    healthCheckPath: /api/stocks/health/
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kospi-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: kospi-redis
+          type: redis
+          property: connectionString
+      - fromGroup: backend-env
+
+  # Flask Sentiment Service
+  - type: web
+    name: kospi-sentiment
+    env: docker
+    dockerfilePath: ./Stock_risk_analysis/Dockerfile
+    dockerContext: ./Stock_risk_analysis
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: sentiment-env
+
+  # Next.js Frontend
+  - type: web
+    name: kospi-frontend
+    env: docker
+    dockerfilePath: ./stock-dashboard/Dockerfile
+    dockerContext: ./stock-dashboard
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://kospi-backend.onrender.com/api
+      - key: NEXT_PUBLIC_SENTIMENT_URL
+        value: https://kospi-sentiment.onrender.com
+      - key: NEXT_PUBLIC_WS_URL
+        value: wss://kospi-backend.onrender.com/ws/stocks/realtime/

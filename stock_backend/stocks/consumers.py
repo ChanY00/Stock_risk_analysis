@@ -299,12 +299,39 @@ class GlobalSubscriptionManager:
     
     @database_sync_to_async
     def _get_stock_info(self, stock_code: str):
-        """비동기 DB 접근을 위한 래퍼 함수"""
+        """비동기 DB 접근을 위한 래퍼 함수 - 실제 가격 데이터 조회"""
         try:
-            from stocks.models import Stock
+            from stocks.models import Stock, StockPrice
+            from django.db.models import Q
+            
             stock = Stock.objects.get(stock_code=stock_code)
-            return stock.stock_name, getattr(stock, 'current_price', 50000)
-        except Exception:
+            stock_name = stock.stock_name
+            
+            # 1. Stock 모델의 current_price 확인
+            current_price = stock.current_price
+            
+            # 2. current_price가 없으면 StockPrice에서 최신 가격 조회
+            if current_price is None or current_price == 0:
+                try:
+                    latest_price = StockPrice.objects.filter(
+                        stock=stock
+                    ).order_by('-date').first()
+                    
+                    if latest_price:
+                        current_price = latest_price.close_price
+                        logger.info(f"📊 {stock_code} StockPrice에서 가격 조회: {current_price:,}원 (날짜: {latest_price.date})")
+                except Exception as e:
+                    logger.warning(f"StockPrice 조회 실패 ({stock_code}): {e}")
+            
+            # 3. 여전히 없으면 기본값 사용
+            if current_price is None or current_price == 0:
+                current_price = 50000
+                logger.warning(f"⚠️ {stock_code}({stock_name}) 가격 정보 없음, 기본값 사용: {current_price:,}원")
+            
+            return stock_name, current_price
+            
+        except Exception as e:
+            logger.error(f"❌ _get_stock_info 오류 ({stock_code}): {e}")
             return None, None
     
     async def _async_handle_market_closed(self, stock_code: str):

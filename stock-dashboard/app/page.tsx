@@ -955,14 +955,21 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
-                {/* Investment Insight 텍스트 로고 */}
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-edu-handwriting font-bold bg-gradient-to-r from-slate-600 to-blue-600 dark:from-slate-300 dark:to-blue-400 bg-clip-text text-transparent modern-underline">
-                    investment
-                  </span>
-                  <span className="text-4xl font-edu-handwriting font-bold bg-gradient-to-r from-blue-600 to-slate-700 dark:from-blue-400 dark:to-slate-300 bg-clip-text text-transparent modern-underline">
-                    insight
-                  </span>
+                {/* Investment Insight 텍스트 로고 - Professional Finance Design */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-700 via-teal-600 to-cyan-600 dark:from-emerald-400 dark:via-teal-400 dark:to-cyan-400 bg-clip-text text-transparent">
+                      investment
+                    </span>
+                    <span className="text-3xl font-semibold tracking-tight bg-gradient-to-r from-blue-700 via-indigo-600 to-slate-700 dark:from-blue-400 dark:via-indigo-400 dark:to-slate-300 bg-clip-text text-transparent">
+                      insight
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-6 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-sm"></div>
+                    <div className="w-1.5 h-8 bg-gradient-to-b from-teal-500 to-cyan-600 rounded-sm"></div>
+                    <div className="w-1.5 h-5 bg-gradient-to-b from-cyan-500 to-blue-600 rounded-sm"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1025,12 +1032,31 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-700 via-gray-800 to-slate-600 dark:from-slate-300 dark:via-gray-200 dark:to-slate-400 bg-clip-text text-transparent mb-3">
-            🚀 KOSPI 200 Real-Time Dashboard
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
-            KOSPI 200 종목의 실시간 정보와 시장 동향을 확인하세요
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-12 bg-gradient-to-b from-emerald-500 via-teal-500 to-blue-500 rounded-full"></div>
+              <h1 className="text-4xl font-bold font-poppins bg-gradient-to-r from-emerald-700 via-teal-600 to-blue-700 dark:from-emerald-300 dark:via-teal-300 dark:to-blue-300 bg-clip-text text-transparent">
+                KOSPI 200 실시간 투자 인사이트
+              </h1>
+            </div>
+          </div>
+          <p className="text-lg text-slate-600 dark:text-slate-400 font-medium ml-5">
+            데이터 기반 투자 의사결정을 위한 실시간 시장 분석 플랫폼
           </p>
+          <div className="flex items-center gap-6 mt-3 ml-5">
+            <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="font-semibold">실시간 데이터</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-teal-600 dark:text-teal-400">
+              <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+              <span className="font-semibold">AI 감정 분석</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="font-semibold">기술적 지표</span>
+            </div>
+          </div>
           {/* 상승률 상위 10개 마퀴 배너 */}
         <RisingTicker
           stocks={topMcapItems.map((item) => {
@@ -1067,59 +1093,59 @@ export default function Dashboard() {
         />
         </div>
 
-        {/* 인터렉티브 카드(시총 상위 30를 상단 카드로 노출) */}
+        {/* 토스 스타일 인터렉티브 카드 */}
         {!loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
             <Card
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className="group cursor-pointer border-0 bg-white dark:bg-slate-800/50 dark:border dark:border-slate-700/50 hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden hover:-translate-y-1"
               onClick={() => setActiveTab("stocks")}
             >
-              <CardContent className="p-6 h-32">
-                <div className="flex items-start justify-between h-full">
-                  <div className="flex-1">
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">
-                      전체 종목
-                    </p>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
-                      {filteredStocks.length.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      페이지 {currentPage} / {totalPages}
-                    </p>
+              <CardContent className="p-7">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-700 dark:to-teal-700 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 dark:shadow-emerald-900/20">
+                    <TrendingUp className="h-7 w-7 text-white" />
                   </div>
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center group-hover:bg-slate-200 dark:group-hover:bg-slate-600 transition-colors duration-300">
-                    <TrendingUp className="h-6 w-6 text-slate-600 dark:text-slate-300" />
-                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 font-semibold mb-2">
+                    전체 종목
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1">
+                    {filteredStocks.length.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">
+                    {currentPage} / {totalPages} 페이지
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
             <Card
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className="group cursor-pointer border-0 bg-white dark:bg-slate-800/50 dark:border dark:border-slate-700/50 hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden hover:-translate-y-1"
               onClick={() => setActiveTab("favorites")}
             >
-              <CardContent className="p-6 h-32">
-                <div className="flex items-start justify-between h-full">
-                  <div className="flex-1">
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">
-                      관심 종목
-                    </p>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
-                      {favorites.length}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {favoriteConnected ? "실시간 연결" : "정적 데이터"}
-                    </p>
+              <CardContent className="p-7">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 dark:from-blue-700 dark:to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 dark:shadow-blue-900/20">
+                    <Star className="h-7 w-7 text-white" />
                   </div>
-                  <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50 transition-colors duration-300">
-                    <Star className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 font-semibold mb-2">
+                    관심 종목
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1">
+                    {favorites.length}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                    {favoriteConnected ? "실시간 연결" : "정적 데이터"}
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
             <Card
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className="group cursor-pointer border-0 bg-white dark:bg-slate-800/50 dark:border dark:border-slate-700/50 hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden hover:-translate-y-1"
               onClick={() => {
                 setActiveTab("stocks");
                 setTimeout(() => {
@@ -1132,46 +1158,46 @@ export default function Dashboard() {
                 }, 100);
               }}
             >
-              <CardContent className="p-6 h-32">
-                <div className="flex items-start justify-between h-full">
-                  <div className="flex-1">
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">
-                      검색 & 필터
-                    </p>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
-                      빠른 검색
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      종목명/코드 검색
-                    </p>
+              <CardContent className="p-7">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-500 dark:from-cyan-700 dark:to-blue-700 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30 dark:shadow-cyan-900/20">
+                    <Search className="h-7 w-7 text-white" />
                   </div>
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-300">
-                    <Search className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 font-semibold mb-2">
+                    검색 & 필터
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1">
+                    빠른 검색
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">
+                    종목명/코드 검색
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
             <Card
-              className="group hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+              className="group cursor-pointer border-0 bg-white dark:bg-slate-800/50 dark:border dark:border-slate-700/50 hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden hover:-translate-y-1"
               onClick={() => setActiveTab("recent")}
             >
-              <CardContent className="p-6 h-32">
-                <div className="flex items-start justify-between h-full">
-                  <div className="flex-1">
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-3 text-sm">
-                      최근 검색
-                    </p>
-                    <p className="text-2xl font-bold text-gray-800 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 transition-colors duration-300 mb-1">
-                      {recentSearches.length}
-                    </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      검색 기록
-                    </p>
+              <CardContent className="p-7">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-500 dark:from-teal-700 dark:to-emerald-700 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-500/30 dark:shadow-teal-900/20">
+                    <Clock className="h-7 w-7 text-white" />
                   </div>
-                  <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors duration-300">
-                    <Clock className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 font-semibold mb-2">
+                    최근 검색
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-1">
+                    {recentSearches.length}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">
+                    검색 기록
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -1191,94 +1217,94 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3 order-2 lg:order-1 space-y-8">
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            <div className="bg-white dark:bg-slate-800/50 rounded-3xl border-0 dark:border dark:border-slate-700/50 shadow-lg p-6">
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-gray-700 border-0 p-1 h-12">
+                <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-slate-100 via-gray-100 to-slate-100 dark:from-slate-800 dark:via-gray-800 dark:to-slate-800 border-0 p-1 h-12">
                   <TabsTrigger
                     value="stocks"
-                    className="rounded-lg font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300"
+                    className="rounded-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-50 data-[state=active]:to-teal-50 dark:data-[state=active]:from-emerald-900/30 dark:data-[state=active]:to-teal-900/30 data-[state=active]:text-emerald-700 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300"
                   >
                     전체 종목
                   </TabsTrigger>
                   <TabsTrigger
                     value="favorites"
-                    className="rounded-lg font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300"
+                    className="rounded-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-50 data-[state=active]:to-indigo-50 dark:data-[state=active]:from-blue-900/30 dark:data-[state=active]:to-indigo-900/30 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300"
                   >
                     관심 종목
                   </TabsTrigger>
                   <TabsTrigger
                     value="recent"
-                    className="rounded-lg font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300"
+                    className="rounded-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-50 data-[state=active]:to-teal-50 dark:data-[state=active]:from-cyan-900/30 dark:data-[state=active]:to-teal-900/30 data-[state=active]:text-cyan-700 dark:data-[state=active]:text-cyan-400 data-[state=active]:shadow-sm transition-all duration-200 text-gray-700 dark:text-gray-300"
                   >
                     최근 검색
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="stocks" className="space-y-6 mt-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
+                <TabsContent value="stocks" className="space-y-6 mt-8">
+                  <div className="flex flex-col sm:flex-row gap-3 p-5 bg-gradient-to-r from-gray-50/50 to-slate-50/50 dark:from-slate-900/20 dark:to-slate-800/20 rounded-2xl border border-gray-100 dark:border-slate-700/30">
                     <div className="relative flex-1 group">
-                      <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-slate-600 dark:group-focus-within:text-slate-400 transition-colors duration-200" />
+                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-slate-500 group-focus-within:text-emerald-600 dark:group-focus-within:text-emerald-400 transition-all duration-200" />
                       <Input
-                        placeholder="종목명 또는 코드 검색 (예: 삼성전자, 005930)"
+                        placeholder="종목명 또는 코드를 검색하세요"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-12 h-14 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 shadow-sm rounded-xl group-focus-within:ring-2 group-focus-within:ring-slate-200 dark:group-focus-within:ring-slate-700 group-focus-within:border-slate-300 dark:group-focus-within:border-slate-600 transition-all duration-200 text-lg"
+                        className="pl-14 pr-24 h-[56px] border-0 bg-white dark:bg-slate-800/50 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 rounded-2xl group-focus-within:bg-white dark:group-focus-within:bg-slate-800 group-focus-within:ring-2 group-focus-within:ring-emerald-500/20 dark:group-focus-within:ring-emerald-400/20 transition-all duration-300 text-base font-medium shadow-sm hover:shadow-md"
                       />
                       {searchQuery && (
-                        <div className="absolute right-4 top-4">
-                          <div className="text-sm text-gray-500 dark:text-gray-400 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-full font-medium">
-                            {filteredStocks.length}개 결과
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <div className="text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-full font-semibold">
+                            {filteredStocks.length}
                           </div>
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <Select value={filterBy} onValueChange={setFilterBy}>
-                        <SelectTrigger className="w-40 h-14 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm rounded-xl hover:shadow-md transition-all duration-200 text-gray-900 dark:text-white">
-                          <Filter className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
+                        <SelectTrigger className="w-[140px] h-[56px] border-0 bg-white dark:bg-slate-800/50 rounded-2xl hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all duration-300 text-gray-900 dark:text-slate-100 font-medium">
+                          <Filter className="h-4 w-4 mr-2 text-gray-500 dark:text-slate-400" />
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="border-gray-200 dark:border-gray-700 shadow-lg bg-white dark:bg-gray-800">
+                        <SelectContent className="border-0 shadow-2xl bg-white dark:bg-slate-800 rounded-2xl p-2">
                           <SelectItem
                             value="all"
-                            className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="text-gray-900 dark:text-slate-100 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded-xl font-medium transition-colors"
                           >
                             전체
                           </SelectItem>
                           <SelectItem
                             value="positive"
-                            className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="text-gray-900 dark:text-slate-100 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl font-medium transition-colors"
                           >
-                            상승
+                            📈 상승
                           </SelectItem>
                           <SelectItem
                             value="negative"
-                            className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="text-gray-900 dark:text-slate-100 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl font-medium transition-colors"
                           >
-                            하락
+                            📉 하락
                           </SelectItem>
                           <SelectItem
                             value="high-sentiment"
-                            className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="text-gray-900 dark:text-slate-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-colors"
                           >
-                            긍정 심리
+                            🚀 긍정 심리
                           </SelectItem>
                           <SelectItem
                             value="top-ai"
-                            className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="text-gray-900 dark:text-slate-100 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl font-medium transition-colors"
                           >
-                            AI 종합 점수 상위
+                            ⭐ AI 추천
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  <Card className="border border-gray-200 shadow-sm bg-white rounded-xl overflow-hidden">
+                  <Card className="border-0 shadow-lg bg-white dark:bg-slate-800/50 rounded-3xl overflow-hidden">
                     <CardContent className="p-0">
                       {loading ? (
                         <div className="p-8 space-y-4">
@@ -1292,29 +1318,29 @@ export default function Dashboard() {
                       ) : (
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 py-4 w-48">
+                            <TableRow className="border-b-2 border-gray-100 dark:border-slate-700/50 bg-gray-50/50 dark:bg-slate-900/30">
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 py-5 px-6 w-48 text-sm">
                                 종목
                               </TableHead>
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-32 text-center">
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 px-4 w-32 text-center text-sm">
                                 섹터
                               </TableHead>
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-36 text-right">
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 px-4 w-36 text-right text-sm">
                                 현재가
                               </TableHead>
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-28 text-right">
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 px-4 w-28 text-right text-sm">
                                 변동률
                               </TableHead>
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-24 text-right">
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 px-4 w-24 text-right text-sm">
                                 거래량
                               </TableHead>
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-20 text-right">
-                                AI 종합 점수
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 px-4 w-20 text-right text-sm">
+                                AI 점수
                               </TableHead>
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-24 text-center">
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 px-4 w-24 text-center text-sm">
                                 감정
                               </TableHead>
-                              <TableHead className="font-bold text-gray-700 dark:text-gray-300 w-16 text-center">
+                              <TableHead className="font-bold text-gray-600 dark:text-slate-400 px-6 w-16 text-center text-sm">
                                 관심
                               </TableHead>
                             </TableRow>
@@ -1351,9 +1377,9 @@ export default function Dashboard() {
                               return (
                                 <TableRow
                                   key={stock.id}
-                                  className="cursor-pointer bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 group border-b border-gray-100 dark:border-gray-700"
+                                  className="cursor-pointer bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-teal-50/30 dark:hover:from-emerald-900/10 dark:hover:to-teal-900/10 transition-all duration-300 group border-b border-gray-50 dark:border-gray-700/50 hover:shadow-sm"
                                 >
-                                  <TableCell className="py-4">
+                                  <TableCell className="py-5 px-6">
                                     <div
                                       className="cursor-pointer"
                                       onClick={() => {
@@ -1364,14 +1390,14 @@ export default function Dashboard() {
                                         );
                                       }}
                                     >
-                                      <div className="font-semibold text-gray-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">
+                                      <div className="font-bold text-gray-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-300 text-base">
                                         {stock.name}
                                       </div>
-                                      <div className="text-sm text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
+                                      <div className="text-sm text-gray-400 dark:text-gray-500 font-medium flex items-center gap-2 mt-1">
                                         {stock.code}
                                         {realTimeData && (
-                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
-                                            실시간
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-500 text-white animate-pulse">
+                                            LIVE
                                           </span>
                                         )}
                                       </div>
@@ -1650,9 +1676,9 @@ export default function Dashboard() {
                 </TabsContent>
 
                 <TabsContent value="favorites">
-                  <Card className="border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
-                    <CardHeader className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                      <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-800 dark:text-gray-200">
+                  <Card className="border-0 shadow-lg bg-white dark:bg-slate-800/50 rounded-3xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-slate-800/30 dark:to-slate-900/30 border-b border-gray-100 dark:border-slate-700/50">
+                      <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900 dark:text-slate-100">
                         <Star className="h-6 w-6 text-amber-600" />
                         관심 종목
                         {/* 관심종목 실시간 상태 표시 */}
@@ -1691,14 +1717,14 @@ export default function Dashboard() {
                           </Button>
                         </div>
                       </CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-400 font-medium">
+                      <CardDescription className="text-gray-600 dark:text-slate-400 font-medium">
                         자주 확인하는 종목들
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
                       {favorites.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                          <Star className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                        <div className="text-center py-12 text-gray-500 dark:text-slate-400">
+                          <Star className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-slate-600" />
                           <p className="text-lg font-medium">
                             관심 종목이 없습니다
                           </p>
@@ -1726,13 +1752,13 @@ export default function Dashboard() {
                             return (
                               <div
                                 key={stock.id}
-                                className="flex items-center justify-between p-5 border border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                                className="flex items-center justify-between p-5 border-0 border-b border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-all duration-200 cursor-pointer group last:border-0"
                               >
                                 <div className="flex-1">
-                                  <div className="font-bold text-lg text-gray-900 group-hover:text-slate-700 transition-colors duration-200">
+                                  <div className="font-bold text-lg text-gray-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-200">
                                     {stock.name}
                                   </div>
-                                  <div className="text-sm text-gray-500 font-medium mt-1">
+                                  <div className="text-sm text-gray-500 dark:text-slate-400 font-medium mt-1">
                                     {stock.code}
                                     {realTimeData && (
                                       <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
@@ -1741,7 +1767,7 @@ export default function Dashboard() {
                                     )}
                                   </div>
                                   {currentVolume > 0 && (
-                                    <div className="text-xs text-gray-400 mt-2 font-medium">
+                                    <div className="text-xs text-gray-400 dark:text-slate-500 mt-2 font-medium">
                                       거래량: {currentVolume.toLocaleString()}
                                       {realTimeData &&
                                         realTimeData.trading_value && (
@@ -1756,7 +1782,7 @@ export default function Dashboard() {
                                   )}
                                 </div>
                                 <div className="text-right">
-                                  <div className="font-mono text-xl font-bold text-gray-900 transition-colors duration-200">
+                                  <div className="font-mono text-xl font-bold text-gray-900 dark:text-slate-100 transition-colors duration-200">
                                     {formatNumber(currentPrice)}원
                                   </div>
                                   <div
@@ -1803,11 +1829,11 @@ export default function Dashboard() {
                 </TabsContent>
 
                 <TabsContent value="recent">
-                  <Card className="border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
-                    <CardHeader className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                      <CardTitle className="flex items-center justify-between text-xl font-bold text-gray-800 dark:text-gray-200">
+                  <Card className="border-0 shadow-lg bg-white dark:bg-slate-800/50 rounded-3xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-slate-800/30 dark:to-slate-900/30 border-b border-gray-100 dark:border-slate-700/50">
+                      <CardTitle className="flex items-center justify-between text-xl font-bold text-gray-900 dark:text-slate-100">
                         <div className="flex items-center gap-3">
-                          <Clock className="h-6 w-6 text-slate-600" />
+                          <Clock className="h-6 w-6 text-slate-600 dark:text-slate-400" />
                           최근 검색
                         </div>
                         {recentSearches.length > 0 && (
@@ -1821,14 +1847,14 @@ export default function Dashboard() {
                           </Button>
                         )}
                       </CardTitle>
-                      <CardDescription className="text-gray-600 dark:text-gray-400 font-medium">
+                      <CardDescription className="text-gray-600 dark:text-slate-400 font-medium">
                         최근에 조회한 종목들 (최대 10개까지 저장)
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
                       {recentSearches.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                          <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                        <div className="text-center py-12 text-gray-500 dark:text-slate-400">
+                          <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300 dark:text-slate-600" />
                           <p className="text-lg font-medium">
                             최근 검색 기록이 없습니다
                           </p>
@@ -1848,7 +1874,7 @@ export default function Dashboard() {
                             return (
                               <div
                                 key={search.id}
-                                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200 cursor-pointer group"
+                                className="flex items-center justify-between p-5 border-0 border-b border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-all duration-200 cursor-pointer group last:border-0"
                                 onClick={() => {
                                   if (stockInfo) {
                                     addToRecentSearches(stockInfo);
@@ -1860,15 +1886,15 @@ export default function Dashboard() {
                                 }}
                               >
                                 <div className="flex-1">
-                                  <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                                  <div className="font-bold text-lg text-gray-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors duration-200">
                                     {search.name}
                                   </div>
-                                  <div className="text-sm text-gray-500 font-medium mt-1">
+                                  <div className="text-sm text-gray-500 dark:text-slate-400 font-medium mt-1">
                                     {search.code}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                  <div className="text-sm text-gray-400 font-medium">
+                                  <div className="text-sm text-gray-400 dark:text-slate-500 font-medium">
                                     {formatTimeAgo(search.timestamp)}
                                   </div>
                                   {stockInfo && (

@@ -619,17 +619,38 @@ def market_status(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'POST', 'DELETE'])
-@permission_classes([IsAuthenticated])
 def watchlist_api_v2(request, stock_code=None):
-    """프론트엔드 호환 관심종목 API (인증 필수)"""
+    """프론트엔드 호환 관심종목 API (GET은 비회원 허용, POST/DELETE는 인증 필수)"""
     from analysis.models import Watchlist
     
-    # 현재 로그인한 사용자의 관심종목 리스트 가져오기 (없으면 생성)
-    watchlist, created = Watchlist.objects.get_or_create(
-        user=request.user,
-        name="My Watchlist",
-        defaults={'user': request.user, 'name': "My Watchlist"}
-    )
+    # GET 요청은 비회원도 허용 (빈 배열 반환)
+    if request.method == 'GET':
+        if not request.user.is_authenticated:
+            return Response({
+                'success': True,
+                'data': []
+            })
+        
+        # 로그인한 사용자의 관심종목 리스트 가져오기 (없으면 생성)
+        watchlist, created = Watchlist.objects.get_or_create(
+            user=request.user,
+            name="My Watchlist",
+            defaults={'user': request.user, 'name': "My Watchlist"}
+        )
+    else:
+        # POST/DELETE는 인증 필수
+        if not request.user.is_authenticated:
+            return Response({
+                'success': False,
+                'message': '로그인이 필요합니다.'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # 현재 로그인한 사용자의 관심종목 리스트 가져오기 (없으면 생성)
+        watchlist, created = Watchlist.objects.get_or_create(
+            user=request.user,
+            name="My Watchlist",
+            defaults={'user': request.user, 'name': "My Watchlist"}
+        )
     
     if request.method == 'GET':
         # 관심종목 목록 반환

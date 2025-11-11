@@ -1,0 +1,72 @@
+[
+  {
+    "stock_code": "005930",
+    "updated_at": "2025-11-10T08:13:46.728641Z",
+    "positive": 0.2607,
+    "negative": 0.7393,
+    "top_keywords": "대장동, 삼성전자, 주식시장, 하이닉스만"
+  },
+  {
+    "stock_code": "000660",
+    "updated_at": "2025-11-10T08:14:10.921126Z",
+    "positive": 0.4147,
+    "negative": 0.5853,
+    "top_keywords": "하이닉스, 만, 다, 셧다운"
+  },
+  {
+    "stock_code": "373220",
+    "updated_at": "2025-11-10T08:14:14.730212Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "대장, 지수, 가즈아, 퍼"
+  },
+  {
+    "stock_code": "207940",
+    "updated_at": "2025-11-10T08:14:17.457116Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "삼바, 개인정보, 파스야, 모든"
+  },
+  {
+    "stock_code": "005380",
+    "updated_at": "2025-11-10T08:14:30.131421Z",
+    "positive": 0.3472,
+    "negative": 0.6528,
+    "top_keywords": "현대차, 만원, 분리과세, 한"
+  },
+  {
+    "stock_code": "012450",
+    "updated_at": "2025-11-10T08:14:32.823521Z",
+    "positive": 0.2917,
+    "negative": 0.7083,
+    "top_keywords": "내일, 코스피, 급등, 예상"
+  },
+  {
+    "stock_code": "329180",
+    "updated_at": "2025-11-10T08:14:35.501083Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "수주, 오늘, 매수세, 신한"
+  },
+  {
+    "stock_code": "000270",
+    "updated_at": "2025-11-10T08:14:38.382699Z",
+    "positive": 0.2083,
+    "negative": 0.7917,
+    "top_keywords": "또, 광주에선, 이런거, 안거르냐"
+  },
+  {
+    "stock_code": "105560",
+    "updated_at": "2025-11-10T08:14:39.885435Z",
+    "positive": 0.6429,
+    "negative": 0.3571,
+    "top_keywords": "외인, 빨리, 분리과세, 배당"
+  },
+  {
+    "stock_code": "068270",
+    "updated_at": "2025-11-10T08:15:01.213603Z",
+    "positive": 0.189,
+    "negative": 0.811,
+    "top_keywords": "자사주, 공매, 셀트리온, 또"
+  }
+]
