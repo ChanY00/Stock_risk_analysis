@@ -672,11 +672,13 @@ class ApiClient {
 
   // Stock APIs (비회원 접근 가능)
   async getStocks(
-    options: { page?: number; search?: string } = {}
+    options: { page?: number; search?: string; sort_by?: string; sort_order?: string } = {}
   ): Promise<{ count: number; results: Stock[] }> {
     const params = new URLSearchParams();
     if (options.page) params.append("page", options.page.toString());
     if (options.search) params.append("search", options.search);
+    if (options.sort_by) params.append("sort_by", options.sort_by);
+    if (options.sort_order) params.append("sort_order", options.sort_order);
 
     const queryString = params.toString();
     const endpoint = queryString ? `/stocks/?${queryString}` : "/stocks/";
@@ -1062,7 +1064,7 @@ export const authApi = {
 
 // Stock API convenience functions (stocksApi - 기존 이름 유지)
 export const stocksApi = {
-  getStocks: (options?: { page?: number; search?: string }) =>
+  getStocks: (options?: { page?: number; search?: string; sort_by?: string; sort_order?: string }) =>
     apiClient.getStocks(options),
   getStock: (code: string) => apiClient.getStock(code),
   getStockAnalysis: (code: string) => apiClient.getStockAnalysis(code),

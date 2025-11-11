@@ -307,13 +307,13 @@ export default function Dashboard() {
   const [favorites, setFavorites] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortBy, setSortBy] = useState<string>("market_cap"); // 백엔드 정렬 키와 일치하도록 변경
   const [filterBy, setFilterBy] = useState<string>("all");
   const [filterCriteria, setFilterCriteria] = useState<FilterCriteria>({});
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(8); // 시가총액 상위 종목을 더 많이 보여주기 위해 15개로 변경
 
   // 탭 상태 관리
   const [activeTab, setActiveTab] = useState("stocks");
@@ -524,9 +524,9 @@ export default function Dashboard() {
           process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
         );
 
-        // 병렬로 데이터 로드 (시장 상태 포함)
+        // 병렬로 데이터 로드 (시장 상태 포함) - 시가총액 내림차순 정렬 추가
         const [stocksData, marketData, watchlistData, marketStatusData] = await Promise.all([
-          stocksApi.getStocks().catch((error) => {
+          stocksApi.getStocks({ sort_by: 'market_cap', sort_order: 'desc' }).catch((error) => {
             console.error("❌ 주식 데이터 로드 실패:", error);
             throw error; // 주식 데이터는 필수이므로 에러를 다시 던짐
           }),
@@ -862,6 +862,7 @@ export default function Dashboard() {
           bValue = b.sentiment;
           break;
         case "market_cap":
+        case "marketCap": // 두 가지 형식 모두 지원
           aValue = a.marketCap || 0;
           bValue = b.marketCap || 0;
           break;
