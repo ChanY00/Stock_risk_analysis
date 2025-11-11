@@ -1,0 +1,72 @@
+[
+  {
+    "stock_code": "005930",
+    "updated_at": "2025-11-11T03:16:13.904231Z",
+    "positive": 0.3251,
+    "negative": 0.6749,
+    "top_keywords": "환율, 원, 오늘, 삼전"
+  },
+  {
+    "stock_code": "000660",
+    "updated_at": "2025-11-11T03:16:37.515974Z",
+    "positive": 0.3581,
+    "negative": 0.6419,
+    "top_keywords": "투경, 외인, 만원, 오늘"
+  },
+  {
+    "stock_code": "373220",
+    "updated_at": "2025-11-11T03:16:42.487260Z",
+    "positive": 0.5,
+    "negative": 0.5,
+    "top_keywords": "대장, 지수, 가즈아, 퍼"
+  },
+  {
+    "stock_code": "207940",
+    "updated_at": "2025-11-11T03:16:44.947699Z",
+    "positive": 0.2632,
+    "negative": 0.7368,
+    "top_keywords": "조, 삼바, 시총, 셀트"
+  },
+  {
+    "stock_code": "005380",
+    "updated_at": "2025-11-11T03:17:03.654777Z",
+    "positive": 0.249,
+    "negative": 0.751,
+    "top_keywords": "현대차, 하닉, 상승, 하이닉스"
+  },
+  {
+    "stock_code": "012450",
+    "updated_at": "2025-11-11T03:17:07.100976Z",
+    "positive": 0.3333,
+    "negative": 0.6667,
+    "top_keywords": "이, 불장에, 슬슬, 모든"
+  },
+  {
+    "stock_code": "329180",
+    "updated_at": "2025-11-11T03:17:10.882161Z",
+    "positive": 0.2558,
+    "negative": 0.7442,
+    "top_keywords": "코스피, 오늘, 내일, 오늘도"
+  },
+  {
+    "stock_code": "000270",
+    "updated_at": "2025-11-11T03:17:13.356199Z",
+    "positive": 0.1765,
+    "negative": 0.8235,
+    "top_keywords": "원, 이것봐, 또, 환율"
+  },
+  {
+    "stock_code": "105560",
+    "updated_at": "2025-11-11T03:17:16.811254Z",
+    "positive": 0.4828,
+    "negative": 0.5172,
+    "top_keywords": "배당, 빨리, 팔고, 년"
+  },
+  {
+    "stock_code": "068270",
+    "updated_at": "2025-11-11T03:17:39.322514Z",
+    "positive": 0.2158,
+    "negative": 0.7842,
+    "top_keywords": "셀트리온, 셀트, 공매, 개잡주"
+  }
+]
