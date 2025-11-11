@@ -11,7 +11,10 @@ const config: Config = {
   theme: {
   	extend: {
   		fontFamily: {
+  			'inter': ['var(--font-inter)', 'Inter', 'sans-serif'],
+  			'poppins': ['var(--font-poppins)', 'Poppins', 'sans-serif'],
   			'edu-handwriting': ['var(--font-edu-nsw-act)', 'cursive', 'system-ui'],
+  			'playfair': ['var(--font-playfair)', '"Playfair Display"', 'serif'],
   		},
   		colors: {
   			background: 'hsl(var(--background))',
