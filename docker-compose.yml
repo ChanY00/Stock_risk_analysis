@@ -117,6 +117,13 @@ services:
     environment:
       - FLASK_ENV=production
       - FLASK_APP=app.py
+      - DJANGO_HOST=backend # Docker 네트워크에서 Django 서비스명 사용
+      - DJANGO_ENDPOINT=http://backend:8000/api/sentiment/bulk/ # Docker 환경용 엔드포인트 (env_file 우선순위 문제 해결)
+
+    # 💾 볼륨 마운트 (결과 JSON 파일 저장 및 소스 코드 동기화)
+    volumes:
+      - ./Stock_risk_analysis/result_json:/app/result_json
+      - ./Stock_risk_analysis:/app  # 소스 코드 실시간 반영 (개발 환경)
 
     # 🌐 네트워크 연결
     networks:
@@ -162,6 +169,15 @@ services:
       # 운영 환경 설정
       - USE_MOCK_DATA=False
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
+      
+      # Django ALLOWED_HOSTS 설정 (Docker 네트워크 내부 서비스명 포함)
+      - ALLOWED_HOSTS=backend,localhost,127.0.0.1
+      
+      # KIS 시장 지수 조회 최적화 (VTS 환경 기준)
+      - KIS_KOSPI_CODE=0001
+      - KIS_KOSPI_DIV=U  # KOSPI 종합지수 (4,073.05)
+      - KIS_KOSDAQ_CODE=1001  # KOSDAQ 종합지수 (884.71) - 올바른 코드!
+      - KIS_KOSDAQ_DIV=U  # VTS에서 U 사용
 
       - STATIC_ROOT=/app/staticfiles
       - SKIP_COLLECTSTATIC=False
@@ -195,6 +211,115 @@ services:
       timeout: 10s
       retries: 3
       start_period: 120s # Django는 시작이 오래 걸림
+
+  # ==========================================
+  # ⚙️ Celery Worker (비동기 작업 실행)
+  # ==========================================
+  celery-worker:
+    build:
+      context: ./stock_backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: kospi-celery-worker
+    restart: unless-stopped
+
+    # 🔧 환경변수 (backend와 동일)
+    env_file:
+      - ./stock_backend/.env
+      - ./Stock_risk_analysis/.env
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - USE_REDIS_CHANNELS=True
+      - KIS_USE_MOCK=False
+      
+      # KIS 시장 지수 조회 최적화
+      - KIS_KOSPI_CODE=0001
+      - KIS_KOSPI_DIV=U
+      - KIS_KOSDAQ_CODE=1001  # KOSDAQ 종합지수 - 올바른 코드!
+      - KIS_KOSDAQ_DIV=U
+      - USE_MOCK_DATA=False
+      - DJANGO_MODE=production
+
+    # 🚀 Celery Worker 실행 명령어
+    command: celery -A stock_backend worker --loglevel=info --logfile=/var/log/celery-worker.log --concurrency=2
+
+    # 🔗 의존성 설정
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+    # 🌐 네트워크 연결
+    networks:
+      - kospi-network
+
+    # 💾 로그 파일 저장을 위한 볼륨
+    volumes:
+      - ./stock_backend/logs:/var/log
+
+  # ==========================================
+  # ⏰ Celery Beat (주기적 작업 스케줄러)
+  # ==========================================
+  celery-beat:
+    build:
+      context: ./stock_backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: kospi-celery-beat
+    restart: unless-stopped
+
+    # 🔧 환경변수 (backend와 동일)
+    env_file:
+      - ./stock_backend/.env
+      - ./Stock_risk_analysis/.env
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - USE_REDIS_CHANNELS=True
+      - KIS_USE_MOCK=False
+      
+      # KIS 시장 지수 조회 최적화
+      - KIS_KOSPI_CODE=0001
+      - KIS_KOSPI_DIV=U
+      - KIS_KOSDAQ_CODE=1001  # KOSDAQ 종합지수 - 올바른 코드!
+      - KIS_KOSDAQ_DIV=U
+      - USE_MOCK_DATA=False
+      - DJANGO_MODE=production
+
+    # 🚀 Celery Beat 실행 명령어
+    # pidfile을 사용하지 않고 실행 (컨테이너 내부에서만 실행되므로 불필요)
+    # Python으로 직접 실행하여 오류를 더 명확히 확인
+    command: sh -c "mkdir -p /var/celerybeat-schedule /var/log && python -m celery -A stock_backend beat --loglevel=info --schedule=/var/celerybeat-schedule/celerybeat-schedule"
+
+    # 🔗 의존성 설정
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      celery-worker:
+        condition: service_started  # Worker가 시작되면 Beat도 시작
+
+    # 🌐 네트워크 연결
+    networks:
+      - kospi-network
+
+    # 💾 로그 파일 및 스케줄 파일 저장을 위한 볼륨
+    volumes:
+      - ./stock_backend/logs:/var/log
+      - ./stock_backend/celerybeat-schedule:/var/celerybeat-schedule
 
   # ==========================================
   # ⚛️ Next.js 프론트엔드

@@ -1,7 +1,8 @@
 # stocks/views.py
 
 from rest_framework import generics, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
 from .models import Stock
@@ -619,14 +620,37 @@ def market_status(request):
 
 @api_view(['GET', 'POST', 'DELETE'])
 def watchlist_api_v2(request, stock_code=None):
-    """프론트엔드 호환 관심종목 API"""
+    """프론트엔드 호환 관심종목 API (GET은 비회원 허용, POST/DELETE는 인증 필수)"""
     from analysis.models import Watchlist
     
-    # 기본 관심종목 리스트 가져오기 (첫 번째 리스트 사용)
-    watchlist, created = Watchlist.objects.get_or_create(
-        name="My Watchlist",
-        defaults={'name': "My Watchlist"}
-    )
+    # GET 요청은 비회원도 허용 (빈 배열 반환)
+    if request.method == 'GET':
+        if not request.user.is_authenticated:
+            return Response({
+                'success': True,
+                'data': []
+            })
+        
+        # 로그인한 사용자의 관심종목 리스트 가져오기 (없으면 생성)
+        watchlist, created = Watchlist.objects.get_or_create(
+            user=request.user,
+            name="My Watchlist",
+            defaults={'user': request.user, 'name': "My Watchlist"}
+        )
+    else:
+        # POST/DELETE는 인증 필수
+        if not request.user.is_authenticated:
+            return Response({
+                'success': False,
+                'message': '로그인이 필요합니다.'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # 현재 로그인한 사용자의 관심종목 리스트 가져오기 (없으면 생성)
+        watchlist, created = Watchlist.objects.get_or_create(
+            user=request.user,
+            name="My Watchlist",
+            defaults={'user': request.user, 'name': "My Watchlist"}
+        )
     
     if request.method == 'GET':
         # 관심종목 목록 반환
@@ -656,6 +680,14 @@ def watchlist_api_v2(request, stock_code=None):
         
         try:
             stock = Stock.objects.get(stock_code=stock_code)
+            
+            # 이미 추가된 종목인지 확인
+            if watchlist.stocks.filter(stock_code=stock_code).exists():
+                return Response({
+                    'success': False,
+                    'message': f'{stock.stock_name}은(는) 이미 관심종목에 추가되어 있습니다.'
+                }, status=status.HTTP_409_CONFLICT)
+            
             watchlist.stocks.add(stock)
             return Response({
                 'success': True,
@@ -677,6 +709,14 @@ def watchlist_api_v2(request, stock_code=None):
         
         try:
             stock = Stock.objects.get(stock_code=stock_code)
+            
+            # 관심종목에 없는 종목인지 확인
+            if not watchlist.stocks.filter(stock_code=stock_code).exists():
+                return Response({
+                    'success': False,
+                    'message': f'{stock.stock_name}은(는) 관심종목에 없습니다.'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
             watchlist.stocks.remove(stock)
             return Response({
                 'success': True,

@@ -669,3 +669,4 @@ def shares_verification_detail_api(request, stock_code):
         return Response({'error': 'Stock not found'}, status=status.HTTP_404_NOT_FOUND)
     except SharesVerification.DoesNotExist:
         return Response({'error': 'Verification not found'}, status=status.HTTP_404_NOT_FOUND)
+

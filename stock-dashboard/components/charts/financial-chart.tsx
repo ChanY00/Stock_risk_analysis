@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { FinancialAnalysis } from '@/lib/api'
 import { TrendingUp, DollarSign, Building, PieChart as PieIcon, AlertTriangle } from 'lucide-react'
@@ -14,7 +14,7 @@ interface FinancialChartProps {
   title?: string
 }
 
-export function FinancialChart({ financial, title = "재무 분석" }: FinancialChartProps) {
+export const FinancialChart = memo(function FinancialChart({ financial, title = "재무 분석" }: FinancialChartProps) {
   const [viewType, setViewType] = useState<'overview' | 'trends' | 'ratios' | 'assets'>('overview')
 
   if (!financial || !financial.financials || Object.keys(financial.financials).length === 0) {
@@ -25,36 +25,42 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     )
   }
 
-  // 재무 데이터를 차트용으로 변환 (백엔드에서 이미 백만원 단위로 저장됨)
-  const financialData = Object.entries(financial.financials)
-    .map(([year, data]) => ({
-      year: parseInt(year),
-      revenue: data.revenue, // 백만원 단위 그대로 사용
-      operating_income: data.operating_income,
-      net_income: data.net_income,
-      eps: data.eps,
-      total_assets: data.total_assets || 0,
-      total_liabilities: data.total_liabilities || 0,
-      total_equity: data.total_equity || 0
-    }))
-    .sort((a, b) => a.year - b.year)
+  // 재무 데이터를 차트용으로 변환 (DB에 원 단위로 저장됨) - useMemo로 메모이제이션
+  const financialData = useMemo(() => {
+    if (!financial || !financial.financials) return []
+    return Object.entries(financial.financials)
+      .map(([year, data]) => ({
+        year: parseInt(year),
+        revenue: data.revenue, // 원 단위
+        operating_income: data.operating_income, // 원 단위
+        net_income: data.net_income, // 원 단위
+        eps: data.eps, // 원 단위
+        total_assets: data.total_assets || 0, // 원 단위
+        total_liabilities: data.total_liabilities || 0, // 원 단위
+        total_equity: data.total_equity || 0 // 원 단위
+      }))
+      .sort((a, b) => a.year - b.year)
+  }, [financial])
 
-  // 최신년도 데이터
-  const latestData = financialData[financialData.length - 1]
+  // 최신년도 데이터 - useMemo로 메모이제이션
+  const latestData = useMemo(() => financialData[financialData.length - 1], [financialData])
   
   // 2024년 데이터 특별 처리 - 순이익이 0인 경우 확인
   const has2024Data = financialData.some(data => data.year === 2024)
   const data2024 = financialData.find(data => data.year === 2024)
   const isNetIncomeZero = data2024 && data2024.net_income === 0
   
-  // 자산 구성 파이차트 데이터
-  const assetComposition = latestData ? [
-    { name: '부채', value: latestData.total_liabilities, color: '#ef4444' },
-    { name: '자본', value: latestData.total_equity, color: '#10b981' }
-  ].filter(item => item.value > 0) : []
+  // 자산 구성 파이차트 데이터 - useMemo로 메모이제이션
+  const assetComposition = useMemo(() => {
+    if (!latestData) return []
+    return [
+      { name: '부채', value: latestData.total_liabilities, color: '#ef4444' },
+      { name: '자본', value: latestData.total_equity, color: '#10b981' }
+    ].filter(item => item.value > 0)
+  }, [latestData])
 
-  // 재무비율 계산
-  const calculateRatios = (data: typeof latestData) => {
+  // 재무비율 계산 - useCallback으로 메모이제이션
+  const calculateRatios = useCallback((data: typeof latestData) => {
     if (!data) return null
     
     return {
@@ -63,43 +69,59 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       operating_margin: data.revenue > 0 ? (data.operating_income / data.revenue * 100).toFixed(1) : 'N/A',
       net_margin: data.revenue > 0 ? (data.net_income / data.revenue * 100).toFixed(1) : 'N/A'
     }
-  }
+  }, [])
 
-  const ratios = calculateRatios(latestData)
+  const ratios = useMemo(() => calculateRatios(latestData), [calculateRatios, latestData])
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = useCallback(({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900 dark:text-white">{label}년</p>
           <div className="mt-2 space-y-1">
-            {payload.map((entry: any, index: number) => (
-              <p key={index} className="text-sm">
-                <span className="text-gray-600 dark:text-gray-400">{entry.name}: </span>
-                <span className="font-mono font-medium" style={{ color: entry.color }}>
-                  {typeof entry.value === 'number' 
-                    ? entry.dataKey === 'eps' 
-                      ? `${entry.value.toLocaleString()}원`
-                      : entry.value >= 100000
-                      ? `${(entry.value / 100000).toFixed(0)}억원`
-                      : `${entry.value.toLocaleString()}백만원`
-                    : entry.value}
-                </span>
-              </p>
-            ))}
+            {payload.map((entry: any, index: number) => {
+              const value = entry.value;
+              const absValue = Math.abs(value);
+              let formatted = '';
+              
+              if (typeof value === 'number') {
+                if (entry.dataKey === 'eps') {
+                  formatted = `${value.toLocaleString()}원`;
+                } else if (absValue >= 1e12) {
+                  formatted = `${(value / 1e12).toFixed(1)}조원`;
+                } else if (absValue >= 1e8) {
+                  formatted = `${(value / 1e8).toFixed(1)}억원`;
+                } else if (absValue >= 1e4) {
+                  formatted = `${(value / 1e4).toFixed(1)}만원`;
+                } else {
+                  formatted = `${value.toLocaleString()}원`;
+                }
+              } else {
+                formatted = value;
+              }
+              
+              return (
+                <p key={index} className="text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">{entry.name}: </span>
+                  <span className="font-mono font-medium" style={{ color: entry.color }}>
+                    {formatted}
+                  </span>
+                </p>
+              );
+            })}
           </div>
         </div>
       )
     }
     return null
-  }
+  }, [])
 
   // 손실 기업 여부 확인
   const hasOperatingLoss = latestData && latestData.operating_income < 0
   const hasNetLoss = latestData && latestData.net_income < 0
 
-  // 데이터 품질 검증 함수들
-  const validateFinancialData = (data: any) => {
+  // 데이터 품질 검증 함수들 - useCallback으로 메모이제이션
+  const validateFinancialData = useCallback((data: any) => {
     const issues = [];
     
     // 1. 영업이익 > 매출액 체크
@@ -143,10 +165,10 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
     }
     
     return issues;
-  };
+  }, [])
 
-  // 안전한 값 표시 함수 (백만원 단위 데이터용)
-  const formatSafeValue = (value: number | null | undefined, unit: string = '조원', issues: any[] = []) => {
+  // 안전한 값 표시 함수 (원 단위 데이터용) - useCallback으로 메모이제이션
+  const formatSafeValue = useCallback((value: number | null | undefined, unit: string = '조원', issues: any[] = []) => {
     if (value === null || value === undefined) return 'N/A';
     if (value === 0) return '0';
     
@@ -157,24 +179,33 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       issue.type === 'ABNORMAL_EPS'
     );
     
-    // 백만원 단위로 저장된 데이터를 적절한 단위로 변환
-    const formattedValue = Math.abs(value) >= 1000000 
-      ? `${(value / 1000000).toFixed(1)}조원`
-      : Math.abs(value) >= 100000
-      ? `${(value / 100000).toFixed(0)}억원`
-      : Math.abs(value) >= 1000
-      ? `${(value / 1000).toFixed(1)}십억원`
-      : `${value.toLocaleString()}백만원`;
+    // 원 단위로 저장된 데이터를 적절한 단위로 변환
+    const absValue = Math.abs(value);
+    let formattedValue: string;
+    
+    if (absValue >= 1e12) {
+      // 1조원 이상
+      formattedValue = `${(value / 1e12).toFixed(1)}조원`;
+    } else if (absValue >= 1e8) {
+      // 1억원 이상
+      formattedValue = `${(value / 1e8).toFixed(1)}억원`;
+    } else if (absValue >= 1e4) {
+      // 1만원 이상
+      formattedValue = `${(value / 1e4).toFixed(1)}만원`;
+    } else {
+      // 1만원 미만
+      formattedValue = `${value.toLocaleString()}원`;
+    }
     
     if (hasDataIssue) {
       return `${formattedValue} ⚠️`;
     }
     
     return formattedValue;
-  };
+  }, [])
 
-  // 데이터 품질 경고 컴포넌트
-  const DataQualityAlert = ({ issues }: { issues: any[] }) => {
+  // 데이터 품질 경고 컴포넌트 - useCallback으로 메모이제이션
+  const DataQualityAlert = useCallback(({ issues }: { issues: any[] }) => {
     if (issues.length === 0) return null;
     
     const errorIssues = issues.filter(i => i.severity === 'error');
@@ -211,10 +242,10 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
         )}
       </div>
     );
-  };
+  }, [])
 
-  // 각 연도별 데이터 검증
-  const dataWithQuality = financialData.map((data: any) => {
+  // 각 연도별 데이터 검증 - useMemo로 메모이제이션
+  const dataWithQuality = useMemo(() => financialData.map((data: any) => {
     const issues = validateFinancialData(data);
     return {
       ...data,
@@ -222,16 +253,20 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       dataQuality: issues.length === 0 ? 'good' : 
                    issues.some((i: any) => i.severity === 'error') ? 'poor' : 'fair'
     };
-  });
+  }), [financialData, validateFinancialData])
 
-  // 전체 데이터 이슈 수집
-  const allIssues = dataWithQuality.flatMap((d: any) => d.issues);
+  // 전체 데이터 이슈 수집 - useMemo로 메모이제이션
+  const allIssues = useMemo(() => dataWithQuality.flatMap((d: any) => d.issues), [dataWithQuality])
   
-  // 이전 연도 데이터 (전년 대비 계산용)
-  const previousData = financialData.length > 1 ? financialData[financialData.length - 2] : null;
+  // 이전 연도 데이터 (전년 대비 계산용) - useMemo로 메모이제이션
+  const previousData = useMemo(() => 
+    financialData.length > 1 ? financialData[financialData.length - 2] : null
+  , [financialData])
   
-  // 최신 데이터에서 이슈 정보 추가
-  const latestDataWithIssues = dataWithQuality[dataWithQuality.length - 1] || latestData;
+  // 최신 데이터에서 이슈 정보 추가 - useMemo로 메모이제이션
+  const latestDataWithIssues = useMemo(() => 
+    dataWithQuality[dataWithQuality.length - 1] || latestData
+  , [dataWithQuality, latestData])
 
   return (
     <div className="w-full space-y-6">
@@ -298,9 +333,6 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
         </Alert>
       )}
 
-      {/* 데이터 품질 경고 */}
-      <DataQualityAlert issues={allIssues} />
-
       {/* 재무 개요 */}
       {viewType === 'overview' && latestData && (
         <div className="space-y-6">
@@ -350,31 +382,14 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                <CardContent>
                  <div className={`text-2xl font-bold text-gray-900 dark:text-white ${latestDataWithIssues.net_income < 0 ? 'text-red-600 dark:text-red-400' : latestDataWithIssues.net_income === 0 ? 'text-gray-500 dark:text-gray-400' : ''}`}>
                    {latestDataWithIssues.net_income === 0 
-                     ? (latestDataWithIssues.year === 2024 ? '미공시' : '손실없음')
-                     : formatSafeValue(latestDataWithIssues.net_income, '조')
+                     ? (latestDataWithIssues.year === 2024 ? '미공시' : '0')
+                     : formatSafeValue(latestDataWithIssues.net_income, '조', latestDataWithIssues.issues || [])
                    }
                  </div>
-                 <p className="text-xs text-muted-foreground dark:text-gray-400">
-                   {latestDataWithIssues.net_income < 0 ? '순손실' : ''}
-                   {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year === 2024 ? '2024년 실적 대기 중' : ''}
-                 </p>
-               </CardContent>
-             </Card>
-             <Card className={`bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${latestDataWithIssues.issues?.some((i: any) => i.type === 'ABNORMAL_EPS') ? 'border-yellow-200 dark:border-yellow-800' : ''}`}>
-               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                 <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">EPS</CardTitle>
-                 <PieIcon className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
-               </CardHeader>
-               <CardContent>
-                 <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                   {latestDataWithIssues.eps === 0 
-                     ? 'N/A'
-                     : latestDataWithIssues.eps > 100000
-                     ? `${formatSafeValue(latestDataWithIssues.eps, '원', latestDataWithIssues.issues || [])}`
-                     : `${latestDataWithIssues.eps.toLocaleString()}원`
-                   }
-                 </div>
-                 <p className="text-xs text-muted-foreground dark:text-gray-400">주당순이익</p>
+                <p className="text-xs text-muted-foreground dark:text-gray-400">
+                  {latestDataWithIssues.net_income < 0 ? '순손실' : ''}
+                  {latestDataWithIssues.net_income === 0 && latestDataWithIssues.year === 2024 ? '2024년 실적 대기 중' : ''}
+                </p>
                </CardContent>
              </Card>
           </div>
@@ -453,7 +468,13 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                       
                       return [centeredMin, centeredMax]
                     })()}
-                    tickFormatter={(value) => value >= 100000 ? `${(value / 100000).toFixed(0)}억` : `${value.toLocaleString()}백만`}
+                    tickFormatter={(value) => {
+                      const absValue = Math.abs(value);
+                      if (absValue >= 1e12) return `${(value / 1e12).toFixed(1)}조`;
+                      if (absValue >= 1e8) return `${(value / 1e8).toFixed(0)}억`;
+                      if (absValue >= 1e4) return `${(value / 1e4).toFixed(1)}만`;
+                      return `${value.toLocaleString()}`;
+                    }}
                     tick={{ fontSize: 12, fill: '#6b7280' }}
                   />
                   <Tooltip content={<CustomTooltip />} />
@@ -478,7 +499,10 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="year" />
                 <YAxis 
-                  tickFormatter={(value) => value >= 100000 ? `${(value / 100000).toFixed(0)}억` : `${value.toLocaleString()}백만`}
+                  tickFormatter={(value) => {
+                    const absValue = Math.abs(value);
+                    return absValue >= 100000 ? `${(value / 100000).toFixed(0)}억` : `${value.toLocaleString()}백만`;
+                  }}
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                 />
                 <Tooltip content={<CustomTooltip />} />
@@ -564,12 +588,13 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => [
-                      value >= 100000 
-                        ? `${(value / 100000).toFixed(0)}억원` 
-                        : `${value.toLocaleString()}백만원`, 
-                      ''
-                    ]}
+                    formatter={(value: number) => {
+                      const absValue = Math.abs(value);
+                      if (absValue >= 1e12) return `${(value / 1e12).toFixed(1)}조원`;
+                      if (absValue >= 1e8) return `${(value / 1e8).toFixed(1)}억원`;
+                      if (absValue >= 1e4) return `${(value / 1e4).toFixed(1)}만원`;
+                      return `${value.toLocaleString()}원`;
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -583,9 +608,13 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="text-sm text-gray-600">
-                    {item.name} ({item.value >= 100000 
-                      ? `${(item.value / 100000).toFixed(0)}억원` 
-                      : `${item.value.toLocaleString()}백만원`})
+                    {item.name} ({(() => {
+                      const absValue = Math.abs(item.value);
+                      if (absValue >= 1e12) return `${(item.value / 1e12).toFixed(1)}조원`;
+                      if (absValue >= 1e8) return `${(item.value / 1e8).toFixed(1)}억원`;
+                      if (absValue >= 1e4) return `${(item.value / 1e4).toFixed(1)}만원`;
+                      return `${item.value.toLocaleString()}원`;
+                    })()})
                   </span>
                 </div>
               ))}
@@ -599,25 +628,34 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
               <div className="border-b pb-4">
                 <div className="text-sm text-gray-600 mb-2">총자산</div>
                 <div className="text-2xl font-bold text-gray-800">
-                  {latestData.total_assets >= 100000 
-                    ? `${(latestData.total_assets / 100000).toFixed(0)}억원`
-                    : `${latestData.total_assets.toLocaleString()}백만원`}
+                  {(() => {
+                    const absValue = Math.abs(latestData.total_assets);
+                    if (absValue >= 1e12) return `${(latestData.total_assets / 1e12).toFixed(1)}조원`;
+                    if (absValue >= 1e8) return `${(latestData.total_assets / 1e8).toFixed(1)}억원`;
+                    return `${latestData.total_assets.toLocaleString()}원`;
+                  })()}
                 </div>
               </div>
               <div className="border-b pb-4">
                 <div className="text-sm text-gray-600 mb-2">부채</div>
                 <div className="text-xl font-semibold text-red-600">
-                  {latestData.total_liabilities >= 100000 
-                    ? `${(latestData.total_liabilities / 100000).toFixed(0)}억원`
-                    : `${latestData.total_liabilities.toLocaleString()}백만원`}
+                  {(() => {
+                    const absValue = Math.abs(latestData.total_liabilities);
+                    if (absValue >= 1e12) return `${(latestData.total_liabilities / 1e12).toFixed(1)}조원`;
+                    if (absValue >= 1e8) return `${(latestData.total_liabilities / 1e8).toFixed(1)}억원`;
+                    return `${latestData.total_liabilities.toLocaleString()}원`;
+                  })()}
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600 mb-2">자본</div>
                 <div className="text-xl font-semibold text-green-600">
-                  {latestData.total_equity >= 100000 
-                    ? `${(latestData.total_equity / 100000).toFixed(0)}억원`
-                    : `${latestData.total_equity.toLocaleString()}백만원`}
+                  {(() => {
+                    const absValue = Math.abs(latestData.total_equity);
+                    if (absValue >= 1e12) return `${(latestData.total_equity / 1e12).toFixed(1)}조원`;
+                    if (absValue >= 1e8) return `${(latestData.total_equity / 1e8).toFixed(1)}억원`;
+                    return `${latestData.total_equity.toLocaleString()}원`;
+                  })()}
                 </div>
               </div>
             </div>
@@ -626,4 +664,4 @@ export function FinancialChart({ financial, title = "재무 분석" }: Financial
       )}
     </div>
   )
-} 
+})

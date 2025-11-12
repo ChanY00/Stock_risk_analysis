@@ -1,0 +1,50 @@
+[
+  {
+    "stock_code": "373220",
+    "stock_name": "LG에너지솔루션",
+    "updated_at": "2025-11-04T23:57:22.618575+00:00Z",
+    "positive": 0.36,
+    "negative": 0.64,
+    "top_keywords": "만, 갑니다, 엔솔, 테슬라"
+  },
+  {
+    "stock_code": "207940",
+    "stock_name": "삼성바이오로직스",
+    "updated_at": "2025-11-04T23:57:25.272981+00:00Z",
+    "positive": 0.25,
+    "negative": 0.75,
+    "top_keywords": "삼바, 대악재터져, 슬, 미국장"
+  },
+  {
+    "stock_code": "012450",
+    "stock_name": "한화에어로스페이스",
+    "updated_at": "2025-11-04T23:57:33.081799+00:00Z",
+    "positive": 0.41,
+    "negative": 0.59,
+    "top_keywords": "실적이, 더, 실적, 프로그램"
+  },
+  {
+    "stock_code": "329180",
+    "stock_name": "HD현대중공업",
+    "updated_at": "2025-11-04T23:57:39.504040+00:00Z",
+    "positive": 0.33,
+    "negative": 0.67,
+    "top_keywords": "실적, 공매도, 주가가, 투자경고"
+  },
+  {
+    "stock_code": "000270",
+    "stock_name": "기아",
+    "updated_at": "2025-11-04T23:57:49.023721+00:00Z",
+    "positive": 0.23,
+    "negative": 0.77,
+    "top_keywords": "기아, 공매도, 매수, 진짜"
+  },
+  {
+    "stock_code": "105560",
+    "stock_name": "KB금융",
+    "updated_at": "2025-11-04T23:57:51.368194+00:00Z",
+    "positive": 0.18,
+    "negative": 0.82,
+    "top_keywords": "떨구네, 장후, 만주, 남짓"
+  }
+]

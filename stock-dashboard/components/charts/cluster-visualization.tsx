@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, memo } from "react"
 import { Scatter, ScatterChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceLine, Legend, AreaChart, Area, BarChart, Bar } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -86,7 +86,7 @@ interface ClusterVisualizationData {
   volatilityScore?: number
 }
 
-export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
+export const ClusterVisualization = memo(function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
   const [stockClusterInfo, setStockClusterInfo] = useState<StockClusterInfo | null>(null)
   const [spectralSimilarStocks, setSpectralSimilarStocks] = useState<SimilarStocks | null>(null)
   const [agglomerativeSimilarStocks, setAgglomerativeSimilarStocks] = useState<SimilarStocks | null>(null)
@@ -97,7 +97,7 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
   const [selectedTab, setSelectedTab] = useState<'spectral' | 'agglomerative'>('spectral')
   const [visualizationAxis, setVisualizationAxis] = useState<VisualizationAxis>('per_pbr')
   const [selectedSector, setSelectedSector] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<'bubble' | 'network'>('bubble')
+  const [viewMode, setViewMode] = useState<'bubble' | 'network'>('network')
   const [networkMode, setNetworkMode] = useState<'2d' | '3d'>('2d')
   const [is3DMode, setIs3DMode] = useState(false)
   const forceGraphRef = useRef<any>(null)
@@ -247,16 +247,6 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
     const centeredMin = Math.max(median - range * 1.3, p5)
     const centeredMax = Math.min(median + range * 1.3, p95)
     
-    // 디버깅을 위한 로그
-    console.log(`${axis}축 도메인 계산:`, {
-      originalRange: [values[0], values[values.length - 1]],
-      filteredRange: [filteredValues[0], filteredValues[filteredValues.length - 1]],
-      p5,
-      p95,
-      median,
-      centeredRange: [centeredMin, centeredMax]
-    })
-    
     return [centeredMin, centeredMax]
   }
 
@@ -332,8 +322,17 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
 
   // 네트워크 그래프 데이터 생성 (메모이제이션으로 안정화)
   const createNetworkGraphData = useCallback((stocks: Stock[], clusterId: number, currentStockCode: string, axis: VisualizationAxis) => {
-    // 상위 15개 종목으로 확대하여 풍부한 시각화
-    const topStocks = stocks.slice(0, 15)
+    // 현재 주식을 항상 포함하도록 보장
+    const currentStock = stocks.find(s => s.stock_code === currentStockCode)
+    if (!currentStock) {
+      return { nodes: [], links: [] }
+    }
+    
+    // 상위 15개 종목 선택 (현재 주식 포함 보장)
+    const topStocksWithoutCurrent = stocks
+      .filter(s => s.stock_code !== currentStockCode)
+      .slice(0, 14) // 현재 주식 제외하고 14개 선택
+    const topStocks = [currentStock, ...topStocksWithoutCurrent] // 현재 주식을 맨 앞에 추가
     
     // 축에 따른 데이터 값 추출 함수
     const getAxisValue = (key: string, stock: Stock): number => {
@@ -347,8 +346,6 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
     }
     
     const [xKey, yKey] = axis.split('_')
-    const currentStock = topStocks.find(s => s.stock_code === currentStockCode)
-    if (!currentStock) return { nodes: [], links: [] }
 
     const currentXValue = getAxisValue(xKey.replace('marketcap', 'market_cap'), currentStock)
     const currentYValue = getAxisValue(yKey, currentStock)
@@ -414,26 +411,42 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
         targetX: 0, // 중심에 고정
         targetY: 0,
         metricDistance: 0,
-        fx: 0, // 물리 엔진에서 위치 고정
-        fy: 0
+        x: 0, // 초기 위치를 정확히 중앙에
+        y: 0,
+        fx: 0, // 물리 엔진에서 위치 고정 (고정된 위치)
+        fy: 0,
+        vx: 0, // 초기 속도 0
+        vy: 0
       })
     }
 
     // 2. 다른 주식들을 거리에 따라 방사형으로 배치
-    const maxRadialDistance = Math.max(...otherStocks.map(item => item.distance)) || 1
     const colorPalette = [
       '#4F46E5', '#7C3AED', '#8B5CF6', '#A855F7', '#C084FC',
       '#06B6D4', '#0EA5E9', '#3B82F6', '#6366F1', '#EC4899',
       '#F59E0B', '#10B981', '#84CC16', '#F97316', '#EF4444'
     ]
 
+    // [핵심 수정] Log Scale을 사용해 아웃라이어 거리 압축
+    const distances = otherStocks.map(item => item.distance).filter(d => d > 0);
+    const minDistance = distances.length > 0 ? Math.min(...distances) : 1;
+    const maxDistance = distances.length > 0 ? Math.max(...distances) : 100;
+    
+    // d3의 symlog 스케일을 사용. 
+    // 최소 거리는 100px, 최대 거리는 450px 반경에 매핑
+    const radiusScale = scaleSymlog()
+      .domain([minDistance, maxDistance])
+      .range([100, 450]);
+
     otherStocks.forEach((item, index) => {
       const maxMarketCap = Math.max(...topStocks.map(s => s.market_cap || 1))
       const nodeSize = 8 + ((item.stock.market_cap || 0) / maxMarketCap * 10)
 
-      // 거리에 비례한 반지름 (100-400px 범위)
-      const normalizedDistance = item.distance / maxRadialDistance
-      const radius = 100 + (normalizedDistance * 300)
+      // [핵심 수정] Log Scale을 적용하여 반지름 계산
+      // 거리가 0이거나(중심점) 유효하지 않으면 기본 100px
+      const radius = (item.distance > 0) 
+        ? radiusScale(item.distance)
+        : 100;
 
       // 균등하게 퍼지도록 각도 계산 (약간의 랜덤성 추가)
       const baseAngle = (index / otherStocks.length) * 2 * Math.PI
@@ -443,7 +456,8 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
       const targetX = radius * Math.cos(angle)
       const targetY = radius * Math.sin(angle)
 
-      // 거리에 따른 색상 선택 (가까운 것일수록 따뜻한 색)
+      // 거리에 따른 색상 선택 (maxDistance 기준)
+      const normalizedDistance = item.distance / maxDistance;
       const colorIndex = Math.floor(normalizedDistance * (colorPalette.length - 1))
 
       nodes.push({
@@ -473,18 +487,23 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
     
     // 거리 기반 링크 생성
     const links: NetworkLink[] = []
-    const currentNodeId = currentStockCode
-    const maxLinkDistance = Math.max(...nodes.filter(n => !n.isCurrentStock).map(n => n.metricDistance || 0))
+    const currentNode = nodes.find(n => n.isCurrentStock)
+    if (!currentNode) {
+      return { nodes, links: [] }
+    }
+    
+    const maxLinkDistance = Math.max(...nodes.filter(n => !n.isCurrentStock).map(n => n.metricDistance || 0)) || 1
 
     // 현재 주식에서 모든 다른 주식으로의 링크 (거리에 반비례한 강도)
+    // d3.forceLink는 노드 객체를 참조해야 하므로 노드 객체를 직접 사용
     nodes.forEach(node => {
-      if (node.id !== currentNodeId) {
+      if (!node.isCurrentStock) {
         const normalizedDistance = (node.metricDistance || 0) / maxLinkDistance
         const linkStrength = Math.max(0.1, 1 - normalizedDistance) // 가까울수록 강한 연결
         
         links.push({
-          source: currentNodeId,
-          target: node.id,
+          source: currentNode, // 노드 객체 직접 참조
+          target: node, // 노드 객체 직접 참조
           strength: linkStrength,
           type: 'similarity',
           distance: node.metricDistance || 0
@@ -502,8 +521,8 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
         const linkStrength = Math.max(0.05, 0.3 * (1 - avgDistance / maxLinkDistance))
         
         links.push({
-          source: closeNodes[i].id,
-          target: closeNodes[j].id,
+          source: closeNodes[i], // 노드 객체 직접 참조
+          target: closeNodes[j], // 노드 객체 직접 참조
           strength: linkStrength,
           type: 'cluster',
           distance: avgDistance
@@ -672,15 +691,18 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
   // 네트워크 그래프 컴포넌트 (실시간 업데이트 안정화)
   const ObsidianNetworkGraph = useCallback(({ data, title, clusterId, axis }: { data: Stock[], title: string, clusterId: number, axis: VisualizationAxis }) => {
     const forceGraphRef = useRef<any>(null)
+    const sidebarRef = useRef<HTMLDivElement>(null)
+    // [수정] 1회 실행 플래그
+    const hasCenteredRef = useRef(false) 
     const [localAxis, setLocalAxis] = useState<VisualizationAxis>(axis)
     const [stableData, setStableData] = useState<Stock[]>([])
     const [graphData, setGraphData] = useState<{ nodes: NetworkNode[], links: NetworkLink[] }>({ nodes: [], links: [] })
     const dataHashRef = useRef<string>('')
+    const graphDataRef = useRef<{ nodes: NetworkNode[], links: NetworkLink[] }>({ nodes: [], links: [] })
     
-    // 데이터 안정화 - 실시간 가격 변동은 무시하고 구조적 데이터만 사용
+    // 데이터 안정화 로직 (기존과 동일)
     useEffect(() => {
       if (data && data.length > 0) {
-        // 가격을 제외한 구조적 데이터만 비교하여 변경 감지
         const structuralData = data.map(stock => ({
           stock_code: stock.stock_code,
           stock_name: stock.stock_name,
@@ -691,67 +713,62 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
           roe: stock.roe
         }))
         
-        // 구조적 데이터 해시 생성
         const currentHash = JSON.stringify(structuralData)
         
-        // 해시가 다를 때만 업데이트
         if (currentHash !== dataHashRef.current) {
-          console.log('네트워크 그래프: 구조적 데이터 변경 감지, 업데이트 진행')
           dataHashRef.current = currentHash
           setStableData(data)
         }
       }
-    }, [data]) // stableData 의존성 제거하여 순환 방지
+    }, [data])
     
-    // 그래프 데이터 메모이제이션 - 안정화된 데이터 사용
+    // 그래프 데이터 메모이제이션 (기존과 동일)
     useEffect(() => {
       if (stableData.length === 0) {
         setGraphData({ nodes: [], links: [] })
         return
       }
       
-      console.log('네트워크 그래프 데이터 생성:', { 
-        stockCount: stableData.length, 
-        clusterId, 
-        axis: localAxis
-      })
-      
       const newGraphData = createNetworkGraphData(stableData, clusterId, stockCode, localAxis)
       setGraphData(newGraphData)
-    }, [stableData, clusterId, localAxis]) // createNetworkGraphData, stockCode 의존성 제거
+      graphDataRef.current = newGraphData 
+    }, [stableData, clusterId, localAxis, stockCode])
 
-    // 방사형 배치를 위한 물리엔진 설정 (지연 없이 즉시 적용)
+    // 물리엔진 설정 (수정됨)
     useEffect(() => {
       if (forceGraphRef.current && graphData.nodes.length > 0) {
-        console.log('물리 엔진 설정 시작:', graphData.nodes.length, '개 노드')
+        // [핵심 수정] 그래프 데이터가 바뀔 때마다 (e.g., 축 변경) 
+        // 중앙 정렬 플래그를 리셋해야 함
+        hasCenteredRef.current = false 
         const fg = forceGraphRef.current
-
-        // 방사형 배치를 위한 물리 엔진 설정
-        fg.d3Force('x', d3.forceX((d: any) => d.targetX || 0).strength(0.8))
-        fg.d3Force('y', d3.forceY((d: any) => d.targetY || 0).strength(0.8))
-        // 더 넓게 퍼지도록 반발/링크 거리 조정
-        fg.d3Force('charge').strength(-120)
-        fg.d3Force('link').strength(0.02).distance((d: any) => {
-          // 거리 기반, 과도한 클램프 제거
-          return Math.min(200, Math.max(40, (d.distance || 0) * 1.0))
-        })
-        fg.d3Force('center', d3.forceCenter(0, 0).strength(0.05))
-
-        // 중심 노드 위치 완전 고정
-        fg.d3Force('radial', d3.forceRadial((d: any) => {
-          if (d.isCurrentStock) return 0
-          return d.radius || 100
-        }, 0, 0).strength(0.5))
-
-        // 설정 후 즉시 재가열하여 수동으로 시뮬레이션 시작
+        // 초기 카메라 설정 제거 (onEngineStop에서 처리)
+        // 중심 노드 고정 (기존과 동일)
+        const centerNode = graphData.nodes.find((n: any) => n.isCurrentStock)
+        if (centerNode) {
+          centerNode.x = 0; centerNode.y = 0;
+          centerNode.fx = 0; centerNode.fy = 0;
+          centerNode.vx = 0; centerNode.vy = 0;
+        }
+        // d3-force 설정 (기존과 동일)
+        fg.d3Force('x', d3.forceX((d: any) => (d.isCurrentStock ? 0 : d.targetX || 0)).strength((d: any) => d.isCurrentStock ? 1 : 0.8))
+        fg.d3Force('y', d3.forceY((d: any) => (d.isCurrentStock ? 0 : d.targetY || 0)).strength((d: any) => d.isCurrentStock ? 1 : 0.8))
+        fg.d3Force('charge', d3.forceManyBody().strength((d: any) => (d.isCurrentStock ? 0 : -120)))
+        
+        if (graphData.links && graphData.links.length > 0) {
+          fg.d3Force('link', d3.forceLink(graphData.links)
+            .id((d: any) => d.id)
+            .strength((d: any) => d.strength || 0.02)
+            .distance((d: any) => Math.min(200, Math.max(40, (d.distance || 0) * 1.0))))
+        }
+        
+        fg.d3Force('center', d3.forceCenter(0, 0).strength(0.01))
+        fg.d3Force('radial', d3.forceRadial((d: any) => (d.isCurrentStock ? 0 : d.radius || 100), 0, 0).strength((d: any) => (d.isCurrentStock ? 0 : 0.5)))
+        
         fg.d3ReheatSimulation()
-        console.log('물리 엔진 설정 완료')
       }
-    }, [graphData.nodes])
+    }, [graphData.nodes]) // 의존성 배열은 graphData.nodes가 맞음
 
-    // 축 변경 시 처리 - 부모 컴포넌트 state 변경 제거 (리렌더링 방지)
-
-    // 노드 렌더링
+    // 노드/링크 렌더링 (기존과 동일)
     const nodeCanvasObject = useCallback((node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const radius = node.size / 2 || 5
       const fontSize = Math.max(8, 9 / globalScale)
@@ -783,7 +800,6 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
       ctx.fillText(node.name, textX, textY)
     }, [])
     
-    // 링크 렌더링
     const linkCanvasObject = useCallback((link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const start = link.source
       const end = link.target
@@ -808,28 +824,32 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
       ctx.globalAlpha = 1
     }, [stockCode])
 
-    // 데이터가 없는 경우에만 로딩 표시
+    // 로딩 UI (기존과 동일)
     if (!data || data.length === 0 || graphData.nodes.length === 0) {
       return (
         <div className="h-[800px] relative bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center">
           <div className="text-white text-center space-y-4">
             <div className="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full mx-auto"></div>
             <div className="text-sm">네트워크 그래프 초기화 중...</div>
-            <div className="text-xs text-gray-400">
-              {!data || data.length === 0 ? '클러스터 데이터 로딩 중' : `${graphData.nodes.length}개 노드 준비 중`}
-            </div>
           </div>
         </div>
       )
     }
-
+    // JSX 렌더링 (수정됨)
     return (
-      <div className="h-[800px] relative bg-slate-950 rounded-lg overflow-hidden network-graph-container">
-        <div className="absolute top-4 left-4 z-10 space-y-2">
+      <div 
+        // [수정] containerRef는 사용하지 않으므로 제거
+        className="h-[800px] relative bg-slate-950 rounded-lg overflow-hidden network-graph-container"
+      >
+        <div 
+          ref={sidebarRef} // 사이드바 ref는 그대로 사용
+          className="absolute top-4 left-4 z-10 space-y-2"
+        >
+          {/* 사이드바 UI (기존과 동일) */}
           <div className="bg-black/80 text-white p-3 rounded-lg text-xs space-y-2">
             <div className="font-medium">{title}</div>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => forceGraphRef.current?.zoomToFit(400, 100)} className="h-6 px-2 text-xs">
+              <Button size="sm" variant="outline" onClick={() => forceGraphRef.current?.zoomToFit(400, 250)} className="h-6 px-2 text-xs">
                 <Maximize2 className="w-3 h-3" />
               </Button>
               <Button size="sm" variant="outline" onClick={() => forceGraphRef.current?.d3ReheatSimulation()} className="h-6 px-2 text-xs">
@@ -903,25 +923,95 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
           nodeLabel={() => ''}
           d3AlphaDecay={0.02}
           d3VelocityDecay={0.4}
+          minZoom={0.1}
+          maxZoom={4}
+          onEngineTick={() => {
+            // onEngineTick은 그대로 둡니다 (중심 노드 고정)
+            const nodes = graphDataRef.current.nodes || []
+            const centerNode = nodes.find((n: any) => n.isCurrentStock)
+            if (centerNode) {
+              centerNode.x = 0; centerNode.y = 0;
+              centerNode.fx = 0; centerNode.fy = 0;
+              centerNode.vx = 0; centerNode.vy = 0;
+            }
+          }}
+          // ==========================================================
+          // [핵심] onEngineStop 로직 전체 교체
+          // ==========================================================
           onEngineStop={() => {
-            // 레이아웃이 충분히 퍼진 이후에만 자동 줌 실행
+            // 중심 노드 위치 최종 확인 및 고정
+            const nodes = graphDataRef.current.nodes || []
+            const centerNode = nodes.find((n: any) => n.isCurrentStock)
+            if (centerNode) {
+              centerNode.x = 0; centerNode.y = 0;
+              centerNode.fx = 0; centerNode.fy = 0;
+              centerNode.vx = 0; centerNode.vy = 0;
+            }
+            
+            // 1. 재귀 호출 방지 플래그 확인
+            // [수정] hasCenteredRef는 축이 변경될 때마다(useEffect[graphData.nodes]) 리셋되므로
+            // 여기서는 1회만 실행하도록 보장합니다.
+            if (hasCenteredRef.current) {
+              return
+            }
+            
+            hasCenteredRef.current = true
+            
             try {
-              const bbox = forceGraphRef.current?.getGraphBbox?.()
-              const width = bbox?.w ?? 0
-              const height = bbox?.h ?? 0
-              console.log('엔진 스톱 - BBox:', width, height)
-              if (width > 200 && height > 200) {
-                setTimeout(() => {
-                  forceGraphRef.current?.zoomToFit(400, 100)
-                }, 200)
-              } else {
-                // 너무 작게 모여 있으면 한 번 더 가열 후 재시도
-                setTimeout(() => {
-                  forceGraphRef.current?.d3ReheatSimulation()
-                }, 200)
+              if (forceGraphRef.current) {
+                const fg = forceGraphRef.current
+                if (nodes.length === 0) return // 노드 없으면 중단
+                
+                // 2. 캔버스 및 사이드바 크기 가져오기
+                const containerElement = fg.width ? null : document.querySelector('.network-graph-container')
+                const canvasWidth = fg.width ? fg.width() : (containerElement?.clientWidth || 800)
+                const canvasHeight = fg.height ? fg.height() : (containerElement?.clientHeight || 800)
+                const sidebarWidth = sidebarRef.current?.offsetWidth || 0
+                
+                // 3. 줌 레벨 계산 (zoomToFit() 대체)
+                // createNetworkGraphData에서 설정한 최대 반경(450)을 기준으로 함
+                const maxDataRadius = 450
+                
+                // 여유 공간 (노드 크기, 텍스트 등)을 위해 1.3배
+                const paddedDataRadius = maxDataRadius * 1.3
+                const dataBoxSize = paddedDataRadius * 2 // 직경
+                
+                // 사이드바를 제외한 "실제 보이는" 캔버스 크기
+                const visibleCanvasWidth = canvasWidth - sidebarWidth
+                const visibleCanvasHeight = canvasHeight
+                
+                // 줌 레벨 (k) = (스크린 픽셀 / 데이터 유닛)
+                const zoomX = visibleCanvasWidth / dataBoxSize
+                const zoomY = visibleCanvasHeight / dataBoxSize
+                let newZoom = Math.min(zoomX, zoomY) // 더 작은 쪽에 맞춤
+                
+                // 줌 레벨 안정성 체크
+                if (!isFinite(newZoom) || newZoom <= 0.01 || newZoom > 5) {
+                  newZoom = 0.5
+                }
+                
+                // 4. 중앙 좌표 계산 (사이드바 보정)
+                // 1 픽셀당 데이터 유닛 (줌 레벨의 역수)
+                const dataUnitsPerPixel = 1 / newZoom
+                
+                // 사이드바로 인해 이동해야 할 픽셀 (화면 중앙에서)
+                const pixelShift = sidebarWidth / 2
+                
+                // 데이터 좌표 이동량
+                const dataShift = pixelShift * dataUnitsPerPixel
+                
+                // 화면 중앙이 데이터 (0,0)을 보게 하되,
+                // 사이드바 보정을 위해 데이터 좌표를 왼쪽(-)으로 이동
+                const targetDataX = -dataShift
+                const targetDataY = 0
+                
+                // 5. 줌 레벨 및 중앙점 즉시 적용 (0ms)
+                // [중요] 줌을 먼저 설정하고, 그 줌 레벨에서 중앙을 맞춰야 함
+                fg.zoom(newZoom, 0)
+                fg.centerAt(targetDataX, targetDataY, 0)
               }
             } catch (e) {
-              // 실패 시 무시
+              // 에러는 무시 (조용히 실패)
             }
           }}
         />
@@ -950,17 +1040,24 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
         
         // 3. 클러스터별 전체 주식 데이터 로드
         if (clusterInfo.clusters.spectral) {
-          const spectralCluster = await stocksApi.getClusterStocks('spectral', clusterInfo.clusters.spectral.cluster_id).catch(() => null)
-          setSpectralClusterData(spectralCluster)
+          try {
+            const spectralCluster = await stocksApi.getClusterStocks('spectral', clusterInfo.clusters.spectral.cluster_id)
+            setSpectralClusterData(spectralCluster)
+          } catch (err) {
+            setSpectralClusterData(null)
+          }
         }
         
         if (clusterInfo.clusters.agglomerative) {
-          const agglomerativeCluster = await stocksApi.getClusterStocks('agglomerative', clusterInfo.clusters.agglomerative.cluster_id).catch(() => null)
-          setAgglomerativeClusterData(agglomerativeCluster)
+          try {
+            const agglomerativeCluster = await stocksApi.getClusterStocks('agglomerative', clusterInfo.clusters.agglomerative.cluster_id)
+            setAgglomerativeClusterData(agglomerativeCluster)
+          } catch (err) {
+            setAgglomerativeClusterData(null)
+          }
         }
         
       } catch (err) {
-        console.error('클러스터 데이터 로드 실패:', err)
         setError('클러스터 데이터를 불러오는데 실패했습니다.')
       } finally {
         setLoading(false)
@@ -1649,4 +1746,4 @@ export function ClusterVisualization({ stockCode }: ClusterVisualizationProps) {
       </Tabs>
     </div>
   )
-}
+})

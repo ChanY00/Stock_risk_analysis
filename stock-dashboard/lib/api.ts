@@ -175,6 +175,35 @@ export interface MarketOverview {
   }[];
 }
 
+export interface MarketStatusResponse {
+  is_open: boolean;
+  status: string;
+  message: string;
+  current_time: string;
+  current_time_str: string;
+  weekday: string;
+  is_weekend: boolean;
+  is_holiday: boolean;
+  next_open?: string;
+  close_time?: string;
+  time_until_close?: {
+    hours: number;
+    minutes: number;
+  };
+  time_until_open?: {
+    is_open: boolean;
+    message: string;
+    next_open: string;
+    days?: number;
+    hours?: number;
+    minutes?: number;
+  };
+  api_mode?: string;
+  market_hours?: string;
+  trading_days?: string;
+  holidays_note?: string;
+}
+
 export interface StockAnalysis {
   stock_code: string;
   stock_name: string;
@@ -643,11 +672,13 @@ class ApiClient {
 
   // Stock APIs (비회원 접근 가능)
   async getStocks(
-    options: { page?: number; search?: string } = {}
+    options: { page?: number; search?: string; sort_by?: string; sort_order?: string } = {}
   ): Promise<{ count: number; results: Stock[] }> {
     const params = new URLSearchParams();
     if (options.page) params.append("page", options.page.toString());
     if (options.search) params.append("search", options.search);
+    if (options.sort_by) params.append("sort_by", options.sort_by);
+    if (options.sort_order) params.append("sort_order", options.sort_order);
 
     const queryString = params.toString();
     const endpoint = queryString ? `/stocks/?${queryString}` : "/stocks/";
@@ -740,6 +771,10 @@ class ApiClient {
     return data;
   }
 
+  async getMarketStatus(): Promise<MarketStatusResponse> {
+    return this.request<MarketStatusResponse>("/stocks/market-status/", {}, false);
+  }
+
   async getClusterData(code: string): Promise<ClusterData[]> {
     return this.request<ClusterData[]>(`/analysis/cluster/${code}/`, {}, false);
   }
@@ -755,40 +790,34 @@ class ApiClient {
   // Watchlist APIs (올바른 백엔드 엔드포인트 사용)
   async getWatchlist(): Promise<WatchlistItem[]> {
     try {
-      // 백엔드에서 관심종목 리스트 배열을 반환함
-      const watchlistArray = await this.request<
-        Array<{
-          id: number;
-          name: string;
-          stocks: WatchlistItem[];
-        }>
-      >("/analysis/watchlist/", {}, false);
+      // 새로운 엔드포인트: /stocks/watchlist/ 사용
+      const response = await this.request<{
+        success: boolean;
+        data: WatchlistItem[];
+      }>("/stocks/watchlist/", {}, true);  // 인증 필요
 
-      // 첫 번째 관심종목 리스트의 종목들만 반환 (기존 프론트엔드 로직과 호환)
-      if (watchlistArray && watchlistArray.length > 0) {
-        return watchlistArray[0].stocks || [];
-      }
-      return [];
+      return response.data || [];
     } catch (error) {
       console.warn("관심종목 로드 실패:", error);
+      // 인증되지 않은 경우 빈 배열 반환
       return [];
     }
   }
 
   async addToWatchlist(stockCode: string): Promise<WatchlistResponse> {
     try {
-      // 첫 번째 관심종목 리스트(ID: 1)에 추가
-      const result = await this.request<{ message: string }>(
-        `/analysis/watchlist/1/stocks/${stockCode}/`,
+      // 새로운 엔드포인트: /stocks/watchlist/:code/ 사용
+      const result = await this.request<WatchlistResponse>(
+        `/stocks/watchlist/${stockCode}/`,
         {
           method: "POST",
         },
-        false
+        true  // 인증 필요
       );
 
       return {
-        success: true,
-        message: result.message,
+        success: result.success !== false,
+        message: result.message || "관심종목에 추가되었습니다.",
       };
     } catch (error) {
       return {
@@ -800,24 +829,22 @@ class ApiClient {
 
   async removeFromWatchlist(stockCode: string): Promise<WatchlistResponse> {
     try {
-      // 첫 번째 관심종목 리스트(ID: 1)에서 삭제
-
-      const result = await this.request<{ message: string }>(
-        `/analysis/watchlist/1/stocks/${stockCode}/`,
+      // 새로운 엔드포인트: /stocks/watchlist/:code/ 사용
+      const result = await this.request<WatchlistResponse>(
+        `/stocks/watchlist/${stockCode}/`,
         {
           method: "DELETE",
         },
-        false
+        true  // 인증 필요
       );
 
       return {
-        success: true,
-        message: result.message,
+        success: result.success !== false,
+        message: result.message || "관심종목에서 제거되었습니다.",
       };
     } catch (error) {
       return {
         success: false,
-
         message: error instanceof Error ? error.message : "관심종목 삭제 실패",
       };
     }
@@ -1037,7 +1064,7 @@ export const authApi = {
 
 // Stock API convenience functions (stocksApi - 기존 이름 유지)
 export const stocksApi = {
-  getStocks: (options?: { page?: number; search?: string }) =>
+  getStocks: (options?: { page?: number; search?: string; sort_by?: string; sort_order?: string }) =>
     apiClient.getStocks(options),
   getStock: (code: string) => apiClient.getStock(code),
   getStockAnalysis: (code: string) => apiClient.getStockAnalysis(code),
@@ -1050,6 +1077,7 @@ export const stocksApi = {
     apiClient.getSentimentTrend(code, days),
   getFinancialData: (code: string) => apiClient.getFinancialData(code),
   getMarketOverview: () => apiClient.getMarketOverview(),
+  getMarketStatus: () => apiClient.getMarketStatus(),
   getClusterData: (code: string) => apiClient.getClusterData(code),
   getSimilarStocks: (code: string) => apiClient.getSimilarStocks(code),
   // Watchlist methods

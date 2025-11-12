@@ -12,7 +12,13 @@ class FinancialDataAPIView(APIView):
         except Stock.DoesNotExist:
             raise NotFound("종목이 존재하지 않습니다.")
 
-        financials = FinancialStatement.objects.filter(stock=stock)
+        # 검증된 데이터만 필터링 (필요시 주석 해제하여 모든 데이터 제공 가능)
+        financials = FinancialStatement.objects.filter(stock=stock, is_verified=True)
+        
+        # 검증된 데이터가 없으면 모든 데이터 제공 (호환성을 위해)
+        if not financials.exists():
+            financials = FinancialStatement.objects.filter(stock=stock)
+        
         serializer = FinancialStatementSerializer(financials, many=True)
 
         # 연도별로 딕셔너리 정리

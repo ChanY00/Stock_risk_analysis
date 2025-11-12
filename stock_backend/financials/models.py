@@ -13,6 +13,23 @@ class FinancialStatement(models.Model):
     total_assets = models.BigIntegerField(null=True, blank=True)  # 총자산
     total_liabilities = models.BigIntegerField(null=True, blank=True)  # 총부채
     total_equity = models.BigIntegerField(null=True, blank=True)  # 총자본 (자기자본)
+    
+    # 검증 관련 필드
+    is_verified = models.BooleanField(default=False, help_text='DART API 검증 완료 여부')
+    verified_at = models.DateTimeField(null=True, blank=True, help_text='검증 완료 일시')
+    verification_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('not_verified', '미검증'),
+            ('exact_match', '완벽 일치'),
+            ('within_tolerance', '허용 오차 내'),
+            ('difference', '차이 발견'),
+            ('api_error', 'API 오류'),
+        ],
+        default='not_verified',
+        help_text='검증 상태'
+    )
+    verification_note = models.TextField(null=True, blank=True, help_text='검증 결과 상세 메모')
 
     class Meta:
         unique_together = ('stock', 'year')

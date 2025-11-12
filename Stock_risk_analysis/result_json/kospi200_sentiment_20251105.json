@@ -1,0 +1,72 @@
+[
+  {
+    "stock_code": "005930",
+    "updated_at": "2025-11-05T05:34:09.088576Z",
+    "positive": 0.3299,
+    "negative": 0.6701,
+    "top_keywords": "하이닉스, 하닉, 개미들, 진짜"
+  },
+  {
+    "stock_code": "000660",
+    "updated_at": "2025-11-05T05:34:47.668560Z",
+    "positive": 0.3514,
+    "negative": 0.6486,
+    "top_keywords": "오늘, 다시, 하이닉스, 또"
+  },
+  {
+    "stock_code": "373220",
+    "updated_at": "2025-11-05T05:34:57.620170Z",
+    "positive": 0.2162,
+    "negative": 0.7838,
+    "top_keywords": "테슬라, 매일, 돈, 엔솔"
+  },
+  {
+    "stock_code": "207940",
+    "updated_at": "2025-11-05T05:35:03.660427Z",
+    "positive": 0.3667,
+    "negative": 0.6333,
+    "top_keywords": "삼바, 정지, 이제, 작살난다"
+  },
+  {
+    "stock_code": "005380",
+    "updated_at": "2025-11-05T05:35:38.586471Z",
+    "positive": 0.2673,
+    "negative": 0.7327,
+    "top_keywords": "현대차, 하이닉스, 만, 다"
+  },
+  {
+    "stock_code": "012450",
+    "updated_at": "2025-11-05T05:35:50.515721Z",
+    "positive": 0.2593,
+    "negative": 0.7407,
+    "top_keywords": "오늘, 더, 어제, 또"
+  },
+  {
+    "stock_code": "329180",
+    "updated_at": "2025-11-05T05:35:58.664369Z",
+    "positive": 0.2794,
+    "negative": 0.7206,
+    "top_keywords": "매수, 공매도, 역시, 조선"
+  },
+  {
+    "stock_code": "000270",
+    "updated_at": "2025-11-05T05:36:07.377739Z",
+    "positive": 0.3247,
+    "negative": 0.6753,
+    "top_keywords": "기아, 더, 분기, 영업이익"
+  },
+  {
+    "stock_code": "105560",
+    "updated_at": "2025-11-05T05:36:11.251479Z",
+    "positive": 0.2857,
+    "negative": 0.7143,
+    "top_keywords": "금융, 되면, 죄가, 사라집니까"
+  },
+  {
+    "stock_code": "068270",
+    "updated_at": "2025-11-05T05:36:48.634129Z",
+    "positive": 0.2878,
+    "negative": 0.7122,
+    "top_keywords": "셀트리온, 공매, 이, 날강도"
+  }
+]

@@ -153,7 +153,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'  # 한국 시간대 사용
 USE_I18N = True
 USE_TZ = True
 
@@ -161,6 +161,42 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.getenv('STATIC_ROOT', '/app/staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ===== Celery Configuration =====
+# Redis를 Celery 브로커로 사용 (기본값은 dev/prod에서 오버라이드)
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+REDIS_DB = int(os.getenv('REDIS_DB', '0'))
+
+CELERY_BROKER_URL = os.getenv(
+    'CELERY_BROKER_URL',
+    f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
+)
+CELERY_RESULT_BACKEND = os.getenv(
+    'CELERY_RESULT_BACKEND',
+    f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB + 1}'  # 결과는 별도 DB 사용
+)
+
+# Celery 설정
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Seoul'  # 한국 시간대
+CELERY_ENABLE_UTC = True
+
+# Celery Beat 스케줄 설정
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'update-daily-stock-prices': {
+        'task': 'stocks.update_daily_prices',
+        # cron 표현식: 분 시 일 월 요일
+        # KST 15:30 = UTC 06:30 (KST는 UTC+9)
+        # crontab 객체를 사용하여 스케줄 정의 (UTC 기준)
+        # CELERY_TIMEZONE 설정이 있지만, crontab은 UTC 기준으로 동작
+        'schedule': crontab(minute='30', hour='6', day_of_week='1-5'),  # 월~금요일 UTC 06:30 (= KST 15:30)
+    },
+}
 
 LOGGING = {
     'version': 1,
@@ -200,7 +236,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ['DELETE', 'GET', 'OPTIONS', 'PATCH', 'POST', 'PUT']
 CORS_ALLOW_HEADERS = [
     'accept', 'accept-encoding', 'authorization', 'content-type', 'dnt', 'origin',
-    'user-agent', 'x-csrftoken', 'x-requested-with'
+    'user-agent', 'x-csrftoken', 'x-requested-with', 'x-internal-token'  # Sentiment 서비스용 인증 토큰
 ]
 CORS_ALLOWED_ORIGINS = _split_csv('CORS_ALLOWED_ORIGINS')
 

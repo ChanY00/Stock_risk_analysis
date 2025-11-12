@@ -4,7 +4,8 @@ from .views import (
     cluster_overview_api, cluster_stocks_api, stock_cluster_info_api,
     similar_stocks_api, similarity_network_api, stock_similarity_detail_api,
     generate_report_view, watchlist_placeholder_view, 
-    watchlist_add_stock_view, watchlist_remove_stock_view
+    watchlist_add_stock_view, watchlist_remove_stock_view,
+    shares_verification_list_api, shares_verification_detail_api
 )
 
 urlpatterns = [
@@ -27,4 +28,8 @@ urlpatterns = [
     path('stock-similarity/<str:stock_code>/', stock_similarity_detail_api, name='stock-similarity-detail-api'),
     # AI 리포트 생성 API
     path('report/<str:stock_code>/', generate_report_view, name='generate-report'),
+    
+    # 발행주식수 검증 API
+    path('shares-verification/', shares_verification_list_api, name='shares-verification-list'),
+    path('shares-verification/<str:stock_code>/', shares_verification_detail_api, name='shares-verification-detail'),
 ]

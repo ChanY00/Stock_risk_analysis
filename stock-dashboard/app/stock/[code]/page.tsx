@@ -45,6 +45,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { AlertCircle } from "lucide-react";
 
 import {
@@ -55,7 +61,6 @@ import {
   handleApiError,
   type FinancialData as ApiFinancialData,
   type SentimentAnalysis,
-  type SentimentTrendData,
   type FinancialAnalysis,
   type AIReport,
 } from "@/lib/api";
@@ -107,7 +112,6 @@ interface StockDetail {
   aiScore?: number; // AI 종합 점수 (0-100)
   sector: string;
   market: string;
-  dividend_yield: number | null;
 }
 
 interface FinancialData {
@@ -171,14 +175,21 @@ const convertApiStockToDetail = (
     sentiment = Math.random() * 0.4 + 0.3; // 0.3-0.7
   }
 
+  // 실시간 주가를 기준으로 시가총액 계산 (발행주식수가 있는 경우)
+  const currentPrice = realTime?.current_price || apiStock.current_price;
+  const sharesOutstanding = (apiStock as any).shares_outstanding; // 발행주식수
+  const marketCap = sharesOutstanding && currentPrice
+    ? currentPrice * sharesOutstanding  // 실시간 주가 기준으로 계산
+    : apiStock.market_cap;  // 발행주식수 없으면 DB 값 사용
+
   const stockDetail: StockDetail = {
     code: apiStock.stock_code,
     name: apiStock.stock_name,
-    price: realTime?.current_price || apiStock.current_price,
+    price: currentPrice,
     change: realTime?.change_amount || 0,
     changePercent: realTime?.change_percent || 0,
     volume: realTime?.volume || 0,
-    marketCap: apiStock.market_cap,
+    marketCap: marketCap,  // 실시간 계산된 시가총액 사용
     per: apiStock.per,
     pbr: apiStock.pbr,
     roe: apiStock.roe,
@@ -187,7 +198,6 @@ const convertApiStockToDetail = (
     sentiment,
     sector: apiStock.sector,
     market: apiStock.market,
-    dividend_yield: apiStock.dividend_yield,
   };
 
   // AI 점수 계산
@@ -215,9 +225,6 @@ export default function StockDetailPage() {
     useState<SentimentAnalysis | null>(null);
   const [financialAnalysis, setFinancialAnalysis] =
     useState<FinancialAnalysis | null>(null);
-  const [sentimentTrend, setSentimentTrend] = useState<SentimentTrendData[]>(
-    []
-  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -232,6 +239,7 @@ export default function StockDetailPage() {
   // 실시간 데이터 업데이트 추적을 위한 ref
   const lastRealTimePriceRef = useRef<any>(null);
   const stockDetailRef = useRef<StockDetail | null>(null);
+  const sharesOutstandingRef = useRef<number | null>(null); // 발행주식수 저장 (시가총액 재계산용)
 
   // WebSocket 구독을 위한 종목 코드 메모이제이션
   const subscriptionCodes = useMemo(() => {
@@ -286,12 +294,19 @@ export default function StockDetailPage() {
           }
 
           // 실제 변경된 필드만 업데이트
+          // 시가총액 재계산 (실시간 주가가 업데이트되었으므로)
+          const sharesOutstanding = sharesOutstandingRef.current;
+          const newMarketCap = sharesOutstanding && realTimeData.current_price
+            ? realTimeData.current_price * sharesOutstanding
+            : prevDetail.marketCap; // 발행주식수가 없으면 기존 값 유지
+
           const updatedDetail = {
             ...prevDetail,
             price: realTimeData.current_price,
             change: realTimeData.change_amount,
             changePercent: realTimeData.change_percent,
             volume: realTimeData.volume,
+            marketCap: newMarketCap, // 실시간 주가 기준으로 재계산된 시가총액
           };
 
           // AI 점수 재계산 (변동률이 변경되었으므로)
@@ -459,6 +474,11 @@ export default function StockDetailPage() {
           undefined,
           sentimentData
         );
+        
+        // 발행주식수 저장 (실시간 주가 업데이트 시 시가총액 재계산용)
+        const sharesOutstanding = (stockData as any).shares_outstanding;
+        sharesOutstandingRef.current = sharesOutstanding || null;
+        
         setStockDetail(convertedStock);
         stockDetailRef.current = convertedStock;
 
@@ -553,16 +573,6 @@ export default function StockDetailPage() {
             positiveRatio: 60,
             negativeRatio: 40,
           });
-        }
-
-        // 감정 추이 데이터 로드 (14일)
-        try {
-          const trend = await stocksApi.getSentimentTrend(code, 14);
-          console.log("📈 감정 추이 데이터:", trend);
-          setSentimentTrend(trend);
-        } catch (trendErr) {
-          console.log("⚠️ 감정 추이 API 호출 실패:", trendErr);
-          setSentimentTrend([]);
         }
 
         // 추가 데이터 로드 (선택적) - 기존 기술지표가 없을 때만
@@ -707,53 +717,75 @@ export default function StockDetailPage() {
   if (!stockDetail) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      {/* Header - Toss Style */}
+      <header className="sticky top-0 z-50 border-b border-gray-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <Link href="/">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-300">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   돌아가기
                 </Button>
               </Link>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="flex items-center gap-3 mb-1.5">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                     {stockDetail.name}
                   </h1>
                   <Badge
-                    variant={
-                      stockDetail.market === "KOSPI" ? "default" : "secondary"
+                    className={
+                      stockDetail.market === "KOSPI" 
+                        ? "bg-blue-500 text-white hover:bg-blue-600 rounded-xl px-3 py-1 font-semibold" 
+                        : "bg-purple-500 text-white hover:bg-purple-600 rounded-xl px-3 py-1 font-semibold"
                     }
                   >
                     {stockDetail.market}
                   </Badge>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">
                   {stockDetail.code} •{" "}
                   {translateSectorToKorean(stockDetail.sector)}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant={isFavorite ? "default" : "outline"}
-                size="sm"
-                onClick={handleFavoriteToggle}
-                disabled={favoriteLoading}
-              >
-                <Star
-                  className={`h-4 w-4 mr-2 ${isFavorite ? "fill-current" : ""}`}
-                />
-                {favoriteLoading
-                  ? "처리 중..."
-                  : isFavorite
-                  ? "관심종목 해제"
-                  : "관심종목 추가"}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        variant={isFavorite ? "default" : "outline"}
+                        size="sm"
+                        onClick={handleFavoriteToggle}
+                        disabled={!isAuthenticated || favoriteLoading}
+                        className={
+                          isFavorite
+                            ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600 border-0 rounded-2xl shadow-lg shadow-yellow-500/30 font-semibold"
+                            : "border-2 border-gray-200 dark:border-slate-700 hover:border-yellow-400 dark:hover:border-yellow-500 rounded-2xl font-semibold transition-all duration-300" + (!isAuthenticated ? " cursor-not-allowed opacity-50" : "")
+                        }
+                      >
+                        <Star
+                          className={`h-4 w-4 mr-2 ${
+                            isFavorite ? "fill-current" : ""
+                          }`}
+                        />
+                        {favoriteLoading
+                          ? "처리 중..."
+                          : isFavorite
+                          ? "관심종목"
+                          : "관심 추가"}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!isAuthenticated && (
+                    <TooltipContent>
+                      <p>로그인 후 관심종목을 추가할 수 있습니다</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
 
               {/* 인증 상태에 따른 버튼 표시 */}
               {isAuthenticated ? (
@@ -762,7 +794,7 @@ export default function StockDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 rounded-2xl border-2 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 font-semibold transition-all duration-300"
                     >
                       <User className="h-4 w-4" />
                       {user?.first_name || user?.username || "사용자"}
@@ -789,13 +821,13 @@ export default function StockDetailPage() {
               ) : (
                 <div className="flex items-center gap-2">
                   <Link href="/login">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="rounded-2xl border-2 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 font-semibold transition-all duration-300">
                       <LogIn className="mr-2 h-4 w-4" />
                       로그인
                     </Button>
                   </Link>
                   <Link href="/register">
-                    <Button size="sm">회원가입</Button>
+                    <Button size="sm" className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white border-0 rounded-2xl shadow-lg shadow-blue-500/30 font-semibold">회원가입</Button>
                   </Link>
                 </div>
               )}
@@ -804,11 +836,11 @@ export default function StockDetailPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Price Summary */}
-        <Card className="mb-8 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="container mx-auto px-6 py-10">
+        {/* Price Summary - Toss Style */}
+        <Card className="mb-10 bg-white dark:bg-slate-900 border-0 shadow-2xl rounded-3xl overflow-hidden">
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   {/* StockPriceCell 컴포넌트로 통합하여 중복 제거 */}
@@ -832,28 +864,20 @@ export default function StockDetailPage() {
                   {/* 시장 상태 표시기 제거 */}
                 </div>
               </div>
-              <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   거래량
                 </div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(stockDetail.volume)}
                 </div>
               </div>
-              <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   시가총액
                 </div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(stockDetail.marketCap)}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  배당수익률
-                </div>
-                <div className="text-lg font-mono text-gray-900 dark:text-white">
-                  {formatPercent(stockDetail.dividend_yield)}
                 </div>
               </div>
             </div>
@@ -862,107 +886,113 @@ export default function StockDetailPage() {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          {/* AI 리포트 생성 버튼 - 개요 탭 위에 위치 */}
-          <Card>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  AI 종합 분석 리포트
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Gemini AI를 통해 종목을 심층 분석하고 투자 의견을 확인하세요.
-                </p>
+          {/* AI 리포트 생성 버튼 - Toss Style */}
+          <Card className="border-0 shadow-lg rounded-3xl overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+            <CardContent className="p-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <BrainCircuit className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+                    AI 종합 분석 리포트
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-slate-300 font-medium">
+                    Gemini AI로 심층 분석하고 투자 인사이트를 확인하세요
+                  </p>
+                </div>
               </div>
               <Button
                 onClick={handleGenerateReport}
                 disabled={reportLoading || !isAuthenticated}
+                className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white border-0 rounded-2xl shadow-lg shadow-purple-500/30 font-semibold px-6"
               >
                 <BrainCircuit className="h-4 w-4 mr-2" />
-                {reportLoading ? "리포트 생성 중..." : "리포트 생성"}
+                {reportLoading ? "생성 중..." : "리포트 생성"}
               </Button>
             </CardContent>
           </Card>
-          <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-gray-700">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-50 dark:bg-slate-900 rounded-3xl p-2 border-0 shadow-lg">
             <TabsTrigger
               value="overview"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-emerald-700 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              개요
+              📊 개요
             </TabsTrigger>
             <TabsTrigger
               value="financials"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-blue-700 dark:data-[state=active]:text-blue-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              재무
+              💰 재무
             </TabsTrigger>
             <TabsTrigger
               value="technical"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-purple-700 dark:data-[state=active]:text-purple-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              기술분석
+              📈 기술분석
             </TabsTrigger>
             <TabsTrigger
               value="sentiment"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-orange-700 dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              감정분석
+              💬 감정분석
             </TabsTrigger>
             <TabsTrigger
               value="clustering"
-              className="text-gray-700 dark:text-gray-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-600 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white"
+              className="rounded-2xl font-semibold text-gray-600 dark:text-slate-400 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-teal-700 dark:data-[state=active]:text-teal-400 data-[state=active]:shadow-md transition-all duration-300"
             >
-              클러스터링
+              🔍 클러스터링
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     PER
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                     {stockDetail.per ? stockDetail.per.toFixed(1) : "-"}
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     PBR
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                     {stockDetail.pbr ? stockDetail.pbr.toFixed(1) : "-"}
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     ROE
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                     {stockDetail.roe ? formatPercent(stockDetail.roe) : "-"}
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     감정지수
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                       {(stockDetail.sentiment * 100).toFixed(0)}
                     </span>
 
@@ -984,15 +1014,15 @@ export default function StockDetailPage() {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card className="bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
                     AI 종합 점수
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-300">
                       {typeof stockDetail.aiScore === "number"
                         ? stockDetail.aiScore
                         : "-"}
@@ -1214,26 +1244,6 @@ export default function StockDetailPage() {
                             : "-"}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          EPS
-                        </span>
-                        <span className="font-mono text-gray-900 dark:text-white">
-                          {stockDetail.eps
-                            ? stockDetail.eps.toLocaleString()
-                            : "-"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          BPS
-                        </span>
-                        <span className="font-mono text-gray-900 dark:text-white">
-                          {stockDetail.bps
-                            ? stockDetail.bps.toLocaleString()
-                            : "-"}
-                        </span>
-                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -1264,7 +1274,6 @@ export default function StockDetailPage() {
             {sentimentAnalysis ? (
               <SentimentChart
                 sentiment={sentimentAnalysis}
-                sentimentTrend={sentimentTrend}
                 title="네이버 종목토론방 감정 분석"
               />
             ) : (

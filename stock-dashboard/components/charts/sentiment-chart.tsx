@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import {
   PieChart,
   Pie,
@@ -17,7 +17,7 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { SentimentAnalysis, SentimentTrendData } from "@/lib/api";
+import { SentimentAnalysis } from "@/lib/api";
 import {
   TrendingUp,
   TrendingDown,
@@ -29,13 +29,11 @@ import { Button } from "@/components/ui/button";
 
 interface SentimentChartProps {
   sentiment: SentimentAnalysis;
-  sentimentTrend?: SentimentTrendData[];
   title?: string;
 }
 
-export function SentimentChart({
+export const SentimentChart = memo(function SentimentChart({
   sentiment,
-  sentimentTrend,
   title = "감정 분석",
 }: SentimentChartProps) {
   const [viewType, setViewType] = useState<"overview" | "keywords" | "trend">(
@@ -100,66 +98,66 @@ export function SentimentChart({
   return (
     <SentimentChartContent
       sentiment={sentiment}
-      sentimentTrend={sentimentTrend}
       title={title}
       viewType={viewType}
       setViewType={setViewType}
     />
   );
-}
+})
 
 // 실제 차트 렌더링 로직을 별도 컴포넌트로 분리
-function SentimentChartContent({
+const SentimentChartContent = memo(function SentimentChartContent({
   sentiment,
-  sentimentTrend,
   title,
   viewType,
   setViewType,
 }: {
   sentiment: SentimentAnalysis;
-  sentimentTrend?: SentimentTrendData[];
   title: string;
   viewType: "overview" | "keywords" | "trend";
   setViewType: (type: "overview" | "keywords" | "trend") => void;
 }) {
-  // 감정 분포 데이터 (파이 차트용) - 안전한 숫자 변환
-  const positiveValue =
-    sentiment.positive !== undefined && sentiment.positive !== null
+  // 감정 분포 데이터 (파이 차트용) - useMemo로 메모이제이션
+  const { positiveValue, negativeValue, neutralValue } = useMemo(() => ({
+    positiveValue: sentiment.positive !== undefined && sentiment.positive !== null
       ? Number(sentiment.positive)
-      : 0;
-  const negativeValue =
-    sentiment.negative !== undefined && sentiment.negative !== null
+      : 0,
+    negativeValue: sentiment.negative !== undefined && sentiment.negative !== null
       ? Number(sentiment.negative)
-      : 0;
-  const neutralValue =
-    sentiment.neutral !== undefined && sentiment.neutral !== null
+      : 0,
+    neutralValue: sentiment.neutral !== undefined && sentiment.neutral !== null
       ? Number(sentiment.neutral)
-      : 0;
+      : 0,
+  }), [sentiment])
 
-  const sentimentDistribution = [
-    {
-      name: "긍정",
-      value: positiveValue,
-      color: "#10b981",
-      percentage: (positiveValue * 100).toFixed(1),
-    },
-    {
-      name: "부정",
-      value: negativeValue,
-      color: "#ef4444",
-      percentage: (negativeValue * 100).toFixed(1),
-    },
-  ].filter((item) => item.value > 0);
+  const sentimentDistribution = useMemo(() => {
+    const distribution = [
+      {
+        name: "긍정",
+        value: positiveValue,
+        color: "#10b981",
+        percentage: (positiveValue * 100).toFixed(1),
+      },
+      {
+        name: "부정",
+        value: negativeValue,
+        color: "#ef4444",
+        percentage: (negativeValue * 100).toFixed(1),
+      },
+    ].filter((item) => item.value > 0);
 
-  // 중립이 있는 경우 추가
-  if (neutralValue > 0) {
-    sentimentDistribution.push({
-      name: "중립",
-      value: neutralValue,
-      color: "#6b7280",
-      percentage: (neutralValue * 100).toFixed(1),
-    });
-  }
+    // 중립이 있는 경우 추가
+    if (neutralValue > 0) {
+      distribution.push({
+        name: "중립",
+        value: neutralValue,
+        color: "#6b7280",
+        percentage: (neutralValue * 100).toFixed(1),
+      });
+    }
+    
+    return distribution
+  }, [positiveValue, negativeValue, neutralValue])
 
   // 디버깅을 위한 콘솔 출력
   console.log("Sentiment data:", sentiment);
@@ -171,105 +169,82 @@ function SentimentChartContent({
     { name: "부정", value: 0.81, color: "#ef4444", percentage: "81.0" },
   ];
 
-  // 실제 데이터가 비어있으면 테스트 데이터 사용
-  const chartData =
-    sentimentDistribution.length > 0 ? sentimentDistribution : testData;
+  // 실제 데이터가 비어있으면 테스트 데이터 사용 - useMemo로 메모이제이션
+  const chartData = useMemo(() =>
+    sentimentDistribution.length > 0 ? sentimentDistribution : testData
+  , [sentimentDistribution])
 
-  // 감정 점수: 긍정 비율을 0~100 점수로 사용
-  const sentimentScore100 = Math.max(0, Math.min(100, positiveValue * 100));
+  // 감정 점수: 긍정 비율을 0~100 점수로 사용 - useMemo로 메모이제이션
+  const sentimentScore100 = useMemo(() => 
+    Math.max(0, Math.min(100, positiveValue * 100))
+  , [positiveValue])
 
-  // 키워드 데이터 (막대 차트용) - top_keywords 문자열을 배열로 변환
-  let keywordArray: string[] = [];
+  // 키워드 데이터 (막대 차트용) - useMemo로 메모이제이션
+  const keywordArray = useMemo(() => {
+    let keywords: string[] = [];
 
-  // keyword_array가 있으면 사용 (기존 로직)
-  if (sentiment.keyword_array && Array.isArray(sentiment.keyword_array)) {
-    keywordArray = sentiment.keyword_array;
-  }
-  // top_keywords 문자열이 있으면 분리하여 사용
-  else if (
-    sentiment.top_keywords &&
-    typeof sentiment.top_keywords === "string"
-  ) {
-    keywordArray = sentiment.top_keywords
-      .split(",")
-      .map((k) => k.trim())
-      .filter((k) => k.length > 0);
-  }
+    // keyword_array가 있으면 사용 (기존 로직)
+    if (sentiment.keyword_array && Array.isArray(sentiment.keyword_array)) {
+      keywords = sentiment.keyword_array;
+    }
+    // top_keywords 문자열이 있으면 분리하여 사용
+    else if (
+      sentiment.top_keywords &&
+      typeof sentiment.top_keywords === "string"
+    ) {
+      keywords = sentiment.top_keywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter((k) => k.length > 0);
+    }
 
-  // 명사만 표시되도록 간단한 한글 휴리스틱 필터 적용
-  const isKorean = (w: string) => /^[가-힣]+$/.test(w);
-  const endsWithAny = (w: string, suffixes: string[]) =>
-    suffixes.some((s) => w.endsWith(s));
-  const isLikelyNoun = (w: string) => {
-    if (!isKorean(w) || w.length < 2) return false;
-    const verbAdjEndings = [
-      "하다",
-      "되다",
-      "한다",
-      "했다",
-      "되는",
-      "하는",
-      "같다",
-      "있다",
-      "없다",
-      "크다",
-      "작다",
-      "높다",
-      "낮다",
-      "다",
-    ];
-    if (endsWithAny(w, verbAdjEndings)) return false;
-    return true;
-  };
-  keywordArray = keywordArray.filter(isLikelyNoun);
+    // 명사만 표시되도록 간단한 한글 휴리스틱 필터 적용
+    const isKorean = (w: string) => /^[가-힣]+$/.test(w);
+    const endsWithAny = (w: string, suffixes: string[]) =>
+      suffixes.some((s) => w.endsWith(s));
+    const isLikelyNoun = (w: string) => {
+      if (!isKorean(w) || w.length < 2) return false;
+      const verbAdjEndings = [
+        "하다",
+        "되다",
+        "한다",
+        "했다",
+        "되는",
+        "하는",
+        "같다",
+        "있다",
+        "없다",
+        "크다",
+        "작다",
+        "높다",
+        "낮다",
+        "다",
+      ];
+      if (endsWithAny(w, verbAdjEndings)) return false;
+      return true;
+    };
+    
+    return keywords.filter(isLikelyNoun)
+  }, [sentiment])
 
   console.log("🔑 Sentiment Chart - 키워드 배열(명사 필터):", keywordArray);
 
-  // 긍정 비율 기반 색상/라벨
-  const getSentimentColorByPositive = (positiveRatio: number) => {
+  // 긍정 비율 기반 색상/라벨 - useCallback으로 메모이제이션
+  const getSentimentColorByPositive = useCallback((positiveRatio: number) => {
     if (positiveRatio >= 0.7) return "#16a34a"; // green
     if (positiveRatio >= 0.5) return "#6b7280"; // neutral gray
     return "#ef4444"; // red
-  };
-  const getSentimentLabelByPositive = (positiveRatio: number) => {
+  }, [])
+  
+  const getSentimentLabelByPositive = useCallback((positiveRatio: number) => {
     if (positiveRatio >= 0.7) return "매우 긍정적";
     if (positiveRatio >= 0.5) return "긍정적";
     if (positiveRatio > 0.3) return "중립";
     return "부정적";
-  };
+  }, [])
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
-          <div className="mt-2">
-            {payload.map((entry: any, index: number) => (
-              <p key={index} className="text-sm">
-                <span className="text-gray-600">
-                  {entry.name || entry.dataKey}:{" "}
-                </span>
-                <span className="font-mono" style={{ color: entry.color }}>
-                  {typeof entry.value === "number"
-                    ? entry.value.toFixed(2)
-                    : entry.value}
-                  {entry.dataKey === "value" &&
-                    entry.payload?.percentage &&
-                    ` (${entry.payload.percentage}%)`}
-                </span>
-              </p>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // 기존 점수 기반 함수 제거됨 -> 긍정 비율 기반 함수 사용
-
-  // 커스텀 파이 차트 라벨
-  const renderCustomizedLabel = ({
+  // 커스텀 파이 차트 라벨 - useCallback으로 메모이제이션
+  const renderCustomizedLabel = useCallback(({
     cx,
     cy,
     midAngle,
@@ -298,50 +273,7 @@ function SentimentChartContent({
         {`${(percent * 100).toFixed(0)}%`}
       </text>
     );
-  };
-
-  // 감정 추이 데이터 가공: 0~100 점수(긍정 비율)로 변환
-  let trendData = (
-    sentimentTrend && sentimentTrend.length > 0 ? sentimentTrend : []
-  ).map((item) => ({
-    date: new Date(item.date).toLocaleDateString("ko-KR", {
-      month: "short",
-      day: "numeric",
-    }),
-    score: Math.max(0, Math.min(100, (item.positive || 0) * 100)),
-  }));
-
-  // 더미 데이터 토글: 쿼리스트링 dummySentiment=1 또는 환경변수로 활성화
-  const isDummyEnabled = (() => {
-    try {
-      if (typeof window !== "undefined") {
-        const sp = new URLSearchParams(window.location.search);
-        if (sp.get("dummySentiment") === "1") return true;
-      }
-      return process.env.NEXT_PUBLIC_SHOW_SENTIMENT_DUMMY === "1";
-    } catch {
-      return false;
-    }
-  })();
-
-  if (trendData.length === 0 || isDummyEnabled) {
-    const basePositive =
-      positiveValue && positiveValue > 0 ? positiveValue : 0.62;
-    const today = new Date();
-    const days = 14;
-    trendData = Array.from({ length: days }, (_, idx) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - (days - 1 - idx));
-      // 가벼운 진동과 잡음으로 자연스러운 더미 데이터 생성
-      const wave = 0.04 * Math.sin((idx / days) * Math.PI * 2);
-      const noise = (Math.random() - 0.5) * 0.03;
-      const p = Math.max(0.1, Math.min(0.9, basePositive + wave + noise));
-      return {
-        date: d.toLocaleDateString("ko-KR", { month: "short", day: "numeric" }),
-        score: Math.round(p * 100),
-      };
-    });
-  }
+  }, [])
 
   return (
     <div className="w-full space-y-6">
@@ -543,39 +475,6 @@ function SentimentChartContent({
             </div>
           </div>
 
-          {/* 최근 2주 감정 점수(긍정%) 추이 - 개요에 표시 */}
-          <div className="bg-white p-6 rounded-lg border">
-            <h5 className="text-md font-medium text-gray-800 mb-4">
-              최근 2주 감정 점수 추이
-            </h5>
-            {trendData.length > 0 ? (
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={trendData}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}`} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      name="감정 점수"
-                      stroke="#16a34a"
-                      strokeWidth={2}
-                      dot={{ r: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                감정 추이 데이터가 없습니다
-              </div>
-            )}
-          </div>
         </div>
       )}
 
@@ -987,4 +886,4 @@ function SentimentChartContent({
       </div>
     </div>
   );
-}
+})

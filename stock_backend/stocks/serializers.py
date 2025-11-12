@@ -36,6 +36,7 @@ class StockDetailSerializer(serializers.ModelSerializer):
         fields = [
             'stock_code', 'stock_name', 'market', 'sector',
             'current_price', 'market_cap', 'per', 'pbr', 'roe', 'dividend_yield',
+            'shares_outstanding',  # 발행주식수 추가 (프론트엔드에서 시가총액 실시간 계산용)
             'price_data', 'financial_data', 'price_history', 'technical_indicators'
         ]
 
