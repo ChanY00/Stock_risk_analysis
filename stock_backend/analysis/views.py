@@ -5,13 +5,14 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg, Count
 from stocks.models import Stock
-from .models import ClusteringCriterion, ClusteringResult, TechnicalIndicator, MarketIndex, Watchlist, Alert, SpectralCluster, AgglomerativeCluster, ClusterAnalysis, StockSimilarity
+from .models import ClusteringCriterion, ClusteringResult, TechnicalIndicator, MarketIndex, Watchlist, Alert, SpectralCluster, AgglomerativeCluster, ClusterAnalysis, StockSimilarity, SharesVerification
 from .serializers import (
     ClusteringResultSerializer, TechnicalIndicatorSerializer, MarketIndexSerializer,
     WatchlistSerializer, WatchlistCreateSerializer, AlertSerializer, AlertCreateSerializer,
     StockAnalysisSerializer, MarketOverviewSerializer, StockSummarySerializer,
     ClusterAnalysisSerializer, ClusterStockListSerializer,
-    SpectralClusterSerializer, AgglomerativeClusterSerializer, SimilarStockSerializer, StockSimilaritySerializer
+    SpectralClusterSerializer, AgglomerativeClusterSerializer, SimilarStockSerializer, StockSimilaritySerializer,
+    SharesVerificationSerializer
 )
 from sentiment.models import SentimentAnalysis
 from stocks.serializers import StockListSerializer
@@ -351,56 +352,9 @@ def stock_cluster_info_api(request, stock_code):
 @permission_classes([IsAuthenticated])
 def generate_report_view(request, stock_code):
     """AI 기반 종합 리포트 생성 API"""
-    # from .gemini_utils import generate_stock_report # 실제로는 gemini_utils.py 파일에 구현
+    from .gemini_utils import generate_stock_report
 
     try:
-        # Gemini API 호출을 모킹하는 함수입니다. 실제 구현 시에는 이 부분을 Gemini API 호출 코드로 대체해야 합니다.
-        def generate_stock_report(data):
-            opinion = "관망"
-            tech_data = data.get('technical', {})
-            senti_data = data.get('sentiment', {})
-
-            if tech_data and senti_data and tech_data.get('rsi', 50) > 70 and senti_data.get('sentiment_score', 0.5) < 0.4:
-                opinion = "매도 타이밍"
-            elif tech_data and senti_data and tech_data.get('rsi', 50) < 30 and senti_data.get('sentiment_score', 0.5) > 0.6:
-                opinion = "매수 타이밍"
-
-            recommendation_stock = "추천 종목 없음"
-            recommendation_reason = "유사 그룹 내 추천할 만한 종목을 찾지 못했습니다."
-            recommendations = []
-            if data.get('similar_stocks'):
-                # 상위 3개 추천 생성
-                for sim in data['similar_stocks'][:3]:
-                    name = sim.get('stock_name', '추천 종목')
-                    reasons = []
-                    if sim.get('per') is not None:
-                        reasons.append("밸류에이션이 안정적")
-                    if sim.get('pbr') is not None:
-                        reasons.append("자산가치 대비 합리적")
-                    if sim.get('market_cap'):
-                        reasons.append("시가총액 규모 적정")
-                    reason_text = ", ".join(reasons) if reasons else "재무적으로 안정적인 모습"
-                    recommendations.append({
-                        'stock_name': name,
-                        'reason': f"{name}은(는) {reason_text}을 보이고 있습니다."
-                    })
-                if recommendations:
-                    recommendation_stock = recommendations[0]['stock_name']
-                    recommendation_reason = recommendations[0]['reason']
-
-            return {
-                "investment_opinion": opinion,
-                "financial_analysis": f"{data['stock_name']}의 재무 상태는 안정적으로 보입니다.",
-                "technical_analysis": "기술적 지표상 현재 주가는 과매수/과매도 구간에 있습니다.",
-                "sentiment_analysis": "시장의 감정은 현재 긍정적/부정적입니다.",
-                "recommendation": {
-                    "stock_name": recommendation_stock,
-                    "reason": recommendation_reason
-                },
-                # 다건 추천 (옵션)
-                "recommendations": recommendations,
-                "excluded_sections": data.get('excluded_sections', [])
-            }
 
         try:
             stock = Stock.objects.select_related('technical', 'sentiment').get(stock_code=stock_code)
@@ -667,3 +621,51 @@ def watchlist_remove_stock_view(request, watchlist_id, stock_code):
         'watchlist_id': watchlist_id,
         'stock_code': stock_code
     }, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def shares_verification_list_api(request):
+    """발행주식수 검증 결과 목록 API"""
+    status_filter = request.query_params.get('status')
+    match_filter = request.query_params.get('match')
+    
+    queryset = SharesVerification.objects.select_related('stock').all()
+    
+    if status_filter:
+        queryset = queryset.filter(status=status_filter)
+    
+    if match_filter is not None:
+        match_bool = match_filter.lower() == 'true'
+        queryset = queryset.filter(match=match_bool)
+    
+    # 통계 계산
+    total = queryset.count()
+    matches = queryset.filter(match=True).count()
+    minor_diffs = queryset.filter(status='MINOR_DIFF').count()
+    major_diffs = queryset.filter(status='MAJOR_DIFF').count()
+    errors = queryset.filter(status='DART_API_ERROR').count()
+    
+    serializer = SharesVerificationSerializer(queryset, many=True)
+    
+    return Response({
+        'results': serializer.data,
+        'summary': {
+            'total': total,
+            'matches': matches,
+            'minor_diffs': minor_diffs,
+            'major_diffs': major_diffs,
+            'errors': errors,
+        }
+    })
+
+@api_view(['GET'])
+def shares_verification_detail_api(request, stock_code):
+    """특정 종목의 발행주식수 검증 결과 조회 API"""
+    try:
+        stock = Stock.objects.get(stock_code=stock_code)
+        verification = SharesVerification.objects.get(stock=stock)
+        serializer = SharesVerificationSerializer(verification)
+        return Response(serializer.data)
+    except Stock.DoesNotExist:
+        return Response({'error': 'Stock not found'}, status=status.HTTP_404_NOT_FOUND)
+    except SharesVerification.DoesNotExist:
+        return Response({'error': 'Verification not found'}, status=status.HTTP_404_NOT_FOUND)
